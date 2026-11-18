@@ -6,7 +6,8 @@
 --   /if <text>          search items by name (substring), output in chat; shift-click an item to look it up
 --   /if #<id>           show sources for an item ID in chat
 --   /if tooltip         toggle the "Drops from" line on item tooltips
---   /if clear           remove ItemFinder's world map pins
+--   /if clear           remove the selected mob's world map pins
+--   /if farmpins        toggle map skulls on every mob that drops a farm item
 --   /if prof            open the window on the Professions tab
 --   /if farm            open the window on the Farm tab
 --   /if status          check that QuestieDB is available and its contract matches
@@ -190,11 +191,17 @@ SlashCmdList["ITEMFINDER"] = function(input)
 
     if input == "" then ns.UI.Toggle(); return end
     if lower == "help" then
-        say("/if  (window)  |  /if <item name>  |  /if #<id>  |  /if tooltip (toggle)  |  /if clear (map pins)  |  /if prof  |  /if farm  |  /if status  |  /if raw item|npc <id>")
+        say("/if  (window)  |  /if <item name>  |  /if #<id>  |  /if tooltip (toggle)  |  /if clear (map pins)  |  /if farmpins (toggle)  |  /if prof  |  /if farm  |  /if status  |  /if raw item|npc <id>")
         return
     end
     if lower == "prof" then ns.UI.ShowTab("prof"); return end
     if lower == "farm" then ns.UI.ShowTab("farm"); return end
+    if lower == "farmpins" then
+        ItemFinderDB.farmPins = ItemFinderDB.farmPins == false -- nil (default) counts as on
+        ns.Map.RefreshFarmPins(true)
+        say("Map skulls for farm mobs: " .. (ItemFinderDB.farmPins ~= false and "on" or "off"))
+        return
+    end
     if lower == "clear" then ns.Map.Clear(); say("Map pins cleared."); return end
     if lower == "tooltip" then
         ItemFinderDB.tooltip = ItemFinderDB.tooltip == false -- nil (default) counts as on

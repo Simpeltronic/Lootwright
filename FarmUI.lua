@@ -13,6 +13,8 @@ local function itemName(id)
     return ns.Data.ItemName(id) or (C_Item.GetItemNameByID and C_Item.GetItemNameByID(id)) or ("item " .. id)
 end
 
+local READY = " |TInterface\\RaidFrame\\ReadyCheck-Ready:12:12|t" -- green check mark
+
 local function setBar(bar, n, goal)
     if not goal or goal <= 0 then bar:Hide(); return end
     bar:SetMinMaxValues(0, goal)
@@ -96,12 +98,13 @@ local function initRow(button, d)
         setBar(button.bar, n, d.target)
     elseif d.kind == "mat" then
         button.name:SetText(itemName(d.id) .. (d.crafted and " |cffc0a060(craft)|r" or ""))
+        local mark = (d.need > 0 and n >= d.need) and READY or ""
         if d.vendorOnly then
             button.name:SetTextColor(0.5, 0.5, 0.5)
-            button.count:SetText("|cff808080" .. n .. " / " .. d.need .. "|r")
+            button.count:SetText("|cff808080" .. n .. " / " .. d.need .. "|r" .. mark)
         else
             button.name:SetTextColor(0.25, 1, 0.25)
-            button.count:SetText(n .. " / " .. d.need)
+            button.count:SetText(n .. " / " .. d.need .. mark)
         end
         setBar(button.bar, n, d.need)
     else

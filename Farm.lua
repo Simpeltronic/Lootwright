@@ -98,6 +98,7 @@ function Farm.Toggle(itemId)
     local l = list()
     l[itemId] = (not l[itemId]) or nil
     changed()
+    if ns.Map and ns.Map.RefreshFarmPins then ns.Map.RefreshFarmPins() end
 end
 
 -- Goal count for a single farm item, or nil.
@@ -129,11 +130,42 @@ end
 local function notify()
     changed()
     if ns.UI.OnFarmChanged then ns.UI.OnFarmChanged() end
+    if ns.Map and ns.Map.RefreshFarmPins then ns.Map.RefreshFarmPins() end
 end
 
 local function announce(msg)
     ns.say(msg)
     if UIErrorsFrame then UIErrorsFrame:AddMessage(msg, 0.25, 1, 0.25) end
+end
+
+-- Sub-goals: announce a material the moment it becomes ready (have >= need), and a recipe the
+-- moment all its top-level materials are ready. State is kept in memory only, and the first time a
+-- row is seen (login, a new recipe) it's just recorded, so nothing fires for what was already ready.
+local readyState = {} -- [recipeKey .. ":" .. depth .. ":" .. itemId] or [recipeKey .. ":all"] = bool
+
+local function checkSubGoals()
+    for key, r in pairs(recipes()) do
+        local allReady, anyTop = true, false
+        for _, row in ipairs(Farm.Rows(r)) do
+            local ready = row.need > 0 and have(row.itemId) >= row.need
+            local k = key .. ":" .. row.depth .. ":" .. row.itemId
+            if ready and readyState[k] == false then
+                announce(r.name .. ": " .. (ns.Data.ItemName(row.itemId) or ("item " .. row.itemId))
+                    .. " ready (" .. have(row.itemId) .. "/" .. row.need .. ").")
+            end
+            readyState[k] = ready
+            if row.depth == 1 then
+                anyTop = true
+                if not ready then allReady = false end
+            end
+        end
+        local k = key .. ":all"
+        local all = anyTop and allReady
+        if all and readyState[k] == false then
+            announce(r.name .. ": all materials ready. Craft it!")
+        end
+        readyState[k] = all
+    end
 end
 
 -- Removes single items and recipe groups whose goal is reached. Returns true if anything changed.
@@ -159,6 +191,7 @@ local function checkGoals()
         end
     end
     if any then notify() end
+    checkSubGoals()
     return any
 end
 
@@ -217,6 +250,17 @@ function Farm.RecipeList()
     return t
 end
 
+-- Items to show on the map: single farm items, plus farmable recipe materials still needed.
+-- Returns { [itemId] = true }.
+function Farm.WantedItems()
+    local t = {}
+    for id in pairs(list()) do t[id] = true end
+    for id, m in pairs(materials()) do
+        if m.farmable and (Farm.Need(id) or 0) > 0 then t[id] = true end
+    end
+    return t
+end
+
 -- Single farm item IDs, sorted.
 function Farm.Ids()
     local t = {}
@@ -265,7 +309,11 @@ end
 local watcher = CreateFrame("Frame")
 watcher:RegisterEvent("BAG_UPDATE_DELAYED")
 watcher:SetScript("OnEvent", function()
-    if next(list()) or next(recipes()) then checkGoals() end
+    if next(list()) or next(recipes()) then
+        checkGoals()
+        -- A material can stop being needed without the list changing (e.g. the bolts are made).
+        if ns.Map and ns.Map.RefreshFarmPins then ns.Map.RefreshFarmPins() end
+    end
 end)
 
 -- NPC ID from a creature GUID ("Creature-0-server-instance-zone-NPCID-spawn"), or nil.
