@@ -56,7 +56,7 @@ code { font: 13px var(--mono); }
 <div class="wrap">
   <header>
     <h1>Lootwright phases</h1>
-    <p class="lede">A WoW Forever addon: search an item, see which mobs drop it, where, at what level and drop rate, then farm it with map skulls, goals and recipes. Eight of ten phases are done. Renamed from ItemFinder, a name already taken on CurseForge.</p>
+    <p class="lede">A WoW Forever addon: search an item, see which mobs drop it, where, at what level and drop rate, then farm it with map skulls, goals and recipes. Nine of ten phases are done. Renamed from ItemFinder, a name already taken on CurseForge.</p>
   </header>
 
   <div class="legend" aria-label="Status legend">
@@ -129,21 +129,29 @@ code { font: 13px var(--mono); }
       </div>
       <div class="commits">68d7b8e · 86fcf9b</div>
     </li>
-    <li class="phase current">
+    <li class="phase">
       <span class="num">9</span>
-      <div class="head"><h3 class="name">Design</h3><span class="chip next">In testing</span></div>
+      <div class="head"><h3 class="name">Design</h3><span class="chip done">Done</span></div>
       <div class="what">
         <ul>
-          <li>Built: the "dark field guide" look. A flat dark window, tab pills in the header, item icons and recipe counts in the list, drop-rate bars.</li>
-          <li>Built: the new emblem (a loot bag with a route to a red X) in the header, as the addon icon, and as a minimap button that works with MinimapButtonButton.</li>
-          <li>Also made: a design brief and a CurseForge kit (logo, banner, page text). The kit still shows the earlier hammer-and-anvil crest.</li>
+          <li>The "dark field guide" look: a flat dark window, big header tabs with a brass underline, item icons and recipe counts in the list, drop-rate bars.</li>
+          <li>The emblem (a loot bag with a route to a red X) in the header, as the addon icon, and as a minimap button that works with MinimapButtonButton.</li>
+          <li>Farm amount popup, and an experimental on-screen farm tracker.</li>
+          <li>Pre-release review: faster search, no per-frame waste in the arrow, cached farm needs, 760 KB of unused textures removed.</li>
         </ul>
       </div>
+      <div class="commits">b830be1 · f52f254 · 5f2424a</div>
     </li>
-    <li class="phase">
+    <li class="phase current">
       <span class="num">10</span>
-      <div class="head"><h3 class="name">Release</h3><span class="chip plan">Planned</span></div>
-      <div class="what">GPL-3.0 licence (required by the QuestieDB and ForeverDB data), packaging, a CurseForge page, and a fresh data build right before release.</div>
+      <div class="head"><h3 class="name">Release</h3><span class="chip next">In progress</span></div>
+      <div class="what">
+        <ul>
+          <li>Done: CurseForge kit with the new emblem logo and banner, the full page text, real in-game shots and a page preview.</li>
+          <li>Decided: first release 0.9.0 as a Beta, Ko-fi for support, a public GitHub repo.</li>
+          <li>To do: Ko-fi and GitHub set up, banner font swapped for an open one, GPL-3.0 licence file, version bump, packaging, upload.</li>
+        </ul>
+      </div>
     </li>
   </ol>
 

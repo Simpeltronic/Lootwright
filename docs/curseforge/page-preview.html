@@ -1,0 +1,185 @@
+<title>Lootwright Page Preview</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: a project-page preview in Lootwright's own dark field guide look (single dark theme, by choice):
+   header band with logo and summary, then the description column and a details sidebar. */
+:root {
+  --bg: #0f1216; --surface: #14171c; --panel: #1a1e25; --line: #2f3540;
+  --text: #d6dae1; --muted: #8a93a3; --white: #ffffff; --brass: #c9a24a; --green: #4fd36a;
+  --body: "Inter", "Segoe UI", system-ui, sans-serif;
+  color-scheme: dark;
+}
+body { background: var(--bg); color: var(--text); font: 15px/1.65 var(--body);
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+.note { max-width: 1080px; margin: 16px auto 0; font-size: 13px; color: var(--muted); border: 1px dashed var(--line); padding: 8px 12px; }
+.page { max-width: 1080px; margin: 0 auto; padding-block: 18px 56px; display: grid; gap: 20px; }
+.head { display: flex; gap: 18px; align-items: center; background: var(--surface); border: 1px solid var(--line); padding: 18px; flex-wrap: wrap; }
+.head img { width: 92px; height: 92px; flex: none; }
+.head h1 { margin: 0; font-size: 28px; color: var(--white); font-weight: 700; letter-spacing: -0.01em; }
+.head .sum { margin: 4px 0 8px; color: var(--text); max-width: 62ch; }
+.meta { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 13px; color: var(--muted); }
+.tag { border: 1px solid var(--line); padding: 1px 8px; font-size: 12px; color: var(--muted); }
+.tag.beta { border-color: #6b5a14; color: var(--brass); }
+.grid { display: grid; grid-template-columns: minmax(0, 1fr) 280px; gap: 20px; align-items: start; }
+@media (max-width: 820px) { .grid { grid-template-columns: minmax(0, 1fr); } }
+.desc { background: var(--surface); border: 1px solid var(--line); padding: 22px 26px; min-width: 0; }
+.desc img { display: block; max-width: 100%; height: auto; border: 1px solid var(--line); margin: 10px 0 4px; }
+.desc img.banner { border: 0; margin-top: 0; }
+.desc h2 { color: var(--white); font-size: 20px; margin: 26px 0 6px; padding-bottom: 6px; border-bottom: 1px solid var(--line); text-wrap: balance; }
+.desc h3 { color: var(--white); font-size: 16px; margin: 18px 0 4px; }
+.desc h1 { color: var(--white); font-size: 26px; margin: 14px 0 6px; }
+.desc p, .desc li { max-width: 68ch; }
+.desc ul { padding-left: 20px; margin: 6px 0; }
+.desc li { margin: 3px 0; }
+.desc code { font: 13px Consolas, monospace; background: var(--panel); border: 1px solid var(--line); padding: 0 5px; color: var(--white); }
+.desc strong { color: var(--white); font-weight: 600; }
+.desc a { color: var(--green); }
+.badges { display: flex; gap: 6px; flex-wrap: wrap; margin: 0 0 10px; }
+.badge { font-size: 11px; display: inline-flex; border: 1px solid var(--line); }
+.badge span { padding: 2px 7px; }
+.badge span:first-child { background: #262b33; color: var(--muted); }
+.badge span:last-child { background: var(--panel); color: var(--white); }
+.badge.b span:last-child { color: var(--brass); }
+.caption { font-size: 12px; color: var(--muted); margin: 0 0 6px; }
+.small img { max-width: 340px; }
+.support { margin-top: 26px; padding-top: 14px; border-top: 1px solid var(--line); font-size: 14px; color: var(--muted); }
+.side { display: grid; gap: 14px; }
+.box { background: var(--surface); border: 1px solid var(--line); padding: 14px 16px; }
+.box h4 { margin: 0 0 8px; font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+.box dl { margin: 0; display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 4px 12px; font-size: 13px; }
+.box dt { color: var(--muted); }
+.box dd { margin: 0; color: var(--text); overflow-wrap: anywhere; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { font-size: 12px; border: 1px solid var(--line); padding: 2px 8px; color: var(--text); }
+.chip.main { border-color: #2f6b3c; color: var(--green); }
+.ph { color: var(--brass); }
+.gallery { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.gallery img { width: 100%; height: 86px; object-fit: cover; border: 1px solid var(--line); }
+</style>
+
+<p class="note">Preview of the Lootwright project page: the real description text and images in a generic project-page layout. Gold text marks links you still fill in (GitHub, Ko-fi).</p>
+
+<div class="page">
+  <header class="head">
+    <img src="logo-400.png" alt="Lootwright logo: a loot bag with a dotted route to a red X, in a brass ring">
+    <div>
+      <h1>Lootwright</h1>
+      <p class="sum">Find which mobs drop any item, where and how often, then farm it with goals, map skulls and recipe material lists.</p>
+      <div class="meta"><span class="tag beta">Beta 0.9.0</span><span>WoW Forever</span><span>GPL-3.0</span><span>Main category: Professions</span></div>
+    </div>
+  </header>
+
+  <div class="grid">
+    <article class="desc">
+      <img class="banner" src="banner.png" alt="Lootwright. Find any item. Farm what you need.">
+      <h1>Lootwright</h1>
+      <div class="badges">
+        <span class="badge"><span>source</span><span>GitHub</span></span>
+        <span class="badge"><span>issues</span><span>GitHub</span></span>
+        <span class="badge b"><span>status</span><span>beta</span></span>
+      </div>
+      <p><strong>Find any item. Farm what you need.</strong> Type an item's name and Lootwright shows every mob that drops it, where they are, what level they are and how often it drops. Put it on your farm list with a goal, and the mobs you need get marked on your map and tooltips until your bags hold enough.</p>
+      <p>Made for <strong>WoW Forever</strong>, with crafting materials front and centre.</p>
+
+      <h2>Features</h2>
+      <h3>Find where anything drops</h3>
+      <p>Search by name, or shift-click any item. See every mob that drops it with level (coloured by difficulty), rank, zone and drop rate, best rates first and your current zone on top. Filter by Reagents, Quest items, Gear, Other or Dungeon boss drops. Reagents show how many recipes use them.</p>
+      <img src="screens/search-window.png" alt="The Search tab listing 19 mobs that drop Gooey Spider Leg with levels, zones and drop rates">
+      <p class="caption">The Search tab (in-game)</p>
+
+      <h3>Farm with goals</h3>
+      <p>Press <strong>Farm…</strong> on an item and choose how many you want, like splitting a stack: type a number, use the mouse wheel, or pick +10, +20 or a stack. Mobs that drop it get a "Farm:" line on their tooltip and a skull on the world map. When your bags hold enough, it leaves the list by itself.</p>
+      <img src="screens/map-skulls.png" alt="World map of Hillsbrad Foothills with skull markers on mob spawns">
+      <p class="caption">Skulls on the world map (in-game)</p>
+
+      <h3>Farm a whole recipe</h3>
+      <p>On the Professions tab, pick a recipe and press <strong>Farm recipe</strong>. Every material becomes a goal. Crafted materials open up into what they're made from (Bolt of Linen Cloth into Linen Cloth), vendor-only materials are greyed out, and you get a message as each material is ready, and when you can craft.</p>
+
+      <h3>Map skulls and a waypoint arrow</h3>
+      <p>Click a mob to mark all its spawns. Mobs you're farming get small grouped skulls with a count. Click any skull for an arrow and the distance to it.</p>
+
+      <h3>Farm tracker (experimental)</h3>
+      <p>A small panel that keeps your farm list on screen. Drag an item from your bags onto it to start farming it.</p>
+      <div class="small"><img src="screens/tracker.png" alt="The farm tracker showing Gooey Spider Leg 11 of 31"></div>
+      <p class="caption">The farm tracker (in-game)</p>
+
+      <h3>Also</h3>
+      <ul>
+        <li><strong>Every recipe</strong> for every profession, including ones you haven't learned, with how to learn them.</li>
+        <li><strong>Honest numbers:</strong> dungeon boss rates measured in Forever with their kill counts. Rates from very few kills are marked, and items with no known rate say so.</li>
+        <li><strong>Favourites and recent items</strong> at your fingertips.</li>
+        <li><strong>Minimap button</strong> that works with minimap button collectors.</li>
+      </ul>
+
+      <h2>Quick start</h2>
+      <p>Type <code>/if</code> (or <code>/lootwright</code>), or click the minimap button. <code>/if options</code> opens the settings, <code>/if mini</code> toggles the farm tracker, <code>/if help</code> lists every command.</p>
+
+      <h2>Requirements</h2>
+      <ul><li><strong>QuestieDB</strong> (required): Lootwright reads item, mob and map data from it. You don't need Questie itself.</li></ul>
+
+      <h2>Parts you can switch off</h2>
+      <p>Untick what you don't need in the AddOns list:</p>
+      <ul>
+        <li><strong>Lootwright:</strong> search, farm list, map, tooltips.</li>
+        <li><strong>Lootwright - Data:</strong> every recipe and dungeon boss loot. Loads only when needed.</li>
+        <li><strong>Lootwright - Professions:</strong> the Professions tab.</li>
+      </ul>
+      <p>Single features (tooltip lines, map skulls, the arrow, messages, the minimap button, the tracker) can be switched in <code>/if options</code>.</p>
+
+      <h2>Good to know</h2>
+      <ul>
+        <li>This is a <strong>beta</strong>, like WoW Forever itself. Things may change between versions.</li>
+        <li>Drop rates are known for quest items and dungeon bosses. Most other mobs show "rate unknown" rather than a guess.</li>
+        <li>Open each of your profession windows once so Lootwright knows which recipes you have.</li>
+      </ul>
+
+      <h2>Problems and ideas</h2>
+      <p>Report bugs and ideas on <span class="ph">GitHub Issues</span>. If something breaks, type <code>/console scriptErrors 1</code>, do it again, and include the error text.</p>
+
+      <h2>Credits</h2>
+      <ul>
+        <li><strong>Data from ForeverDB.net (https://foreverdb.net)</strong>: recipes and dungeon boss loot with drop rates measured in WoW Forever.</li>
+        <li><strong>QuestieDB</strong> (https://github.com/Questie/QuestieDB): item, mob, spawn and map data.</li>
+        <li>Some boss-loot rates come from CMaNGOS classic-db, via ForeverDB.</li>
+      </ul>
+      <p>Lootwright is free software under the GPL-3.0 licence.</p>
+
+      <p class="support">If Lootwright saves you some farming time, you can <span class="ph">support it on Ko-fi</span>.</p>
+    </article>
+
+    <aside class="side">
+      <section class="box">
+        <h4>About</h4>
+        <dl>
+          <dt>Version</dt><dd>0.9.0 (Beta)</dd>
+          <dt>Game</dt><dd>WoW Forever</dd>
+          <dt>Licence</dt><dd>GPL-3.0</dd>
+          <dt>Requires</dt><dd>QuestieDB</dd>
+          <dt>Parts</dt><dd>3 folders in one zip</dd>
+        </dl>
+      </section>
+      <section class="box">
+        <h4>Categories</h4>
+        <div class="chips"><span class="chip main">Professions</span><span class="chip">Map &amp; Minimap</span><span class="chip">Tooltip</span><span class="chip">Bags &amp; Inventory</span></div>
+      </section>
+      <section class="box">
+        <h4>Links</h4>
+        <dl>
+          <dt>Source</dt><dd class="ph">github.com/YOURNAME/Lootwright</dd>
+          <dt>Issues</dt><dd class="ph">…/Lootwright/issues</dd>
+          <dt>Support</dt><dd class="ph">ko-fi.com/yourpage</dd>
+        </dl>
+      </section>
+      <section class="box">
+        <h4>Gallery</h4>
+        <div class="gallery">
+          <img src="screens/search-window.png" alt="Search tab">
+          <img src="screens/map-skulls.png" alt="Map skulls">
+          <img src="screens/tracker.png" alt="Farm tracker">
+        </div>
+        <p class="caption" style="margin-top:8px">3 of 8 planned shots. The shot list is in the guide.</p>
+      </section>
+    </aside>
+  </div>
+</div>
