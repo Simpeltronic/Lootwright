@@ -63,8 +63,8 @@ Images are drawn by `tools/make_brand.py` from the emblem (`tools/make_icons.py`
 | **Licence** | GNU General Public License v3 (GPL-3.0) |
 | **Game version** | WoW Forever (pick the flavour CurseForge lists for Forever when uploading) |
 | **File** | `Lootwright-0.9.0.zip`, release type **Beta** |
-| **Source** | `GITHUB_URL` |
-| **Issues** | `GITHUB_URL/issues` |
+| **Source** | https://github.com/Simpeltronic/Lootwright |
+| **Issues** | https://github.com/Simpeltronic/Lootwright/issues |
 | **Donation** | `KOFI_URL` (CurseForge has a donation field in the project settings; Ko-fi is one of the supported links) |
 
 The upload is one `.zip` containing the three folders `Lootwright`, `Lootwright_Data` and `Lootwright_Professions`. The packaging step (Phase 10) builds it and leaves out `docs/`, `tools/`, `Art/` and the Markdown files.
@@ -73,14 +73,14 @@ The upload is one `.zip` containing the three folders `Lootwright`, `Lootwright_
 
 ## 5. Description (paste into the Markdown editor)
 
-Replace `BANNER_URL`, `SEARCH_IMG_URL`, `POPUP_IMG_URL`, `MAP_IMG_URL`, `FARMTAB_IMG_URL`, `TRACKER_IMG_URL` (upload the images to the project's Images tab first, then copy their links), `GITHUB_URL` and `KOFI_URL`.
+Replace `BANNER_URL`, `SEARCH_IMG_URL`, `POPUP_IMG_URL`, `MAP_IMG_URL`, `FARMTAB_IMG_URL`, `TRACKER_IMG_URL` (upload the images to the project's Images tab first, then copy their links) and `KOFI_URL`.
 
 ```markdown
 ![Lootwright](BANNER_URL)
 
 # Lootwright
 
-[![Source on GitHub](https://img.shields.io/badge/source-GitHub-2F3540?logo=github)](GITHUB_URL) [![Report a problem](https://img.shields.io/badge/issues-GitHub-2F3540)](GITHUB_URL/issues) ![Beta](https://img.shields.io/badge/status-beta-C9A24A)
+[![Source on GitHub](https://img.shields.io/badge/source-GitHub-2F3540?logo=github)](https://github.com/Simpeltronic/Lootwright) [![Report a problem](https://img.shields.io/badge/issues-GitHub-2F3540)](https://github.com/Simpeltronic/Lootwright/issues) ![Beta](https://img.shields.io/badge/status-beta-C9A24A)
 
 **Find any item. Farm what you need.** Type an item's name and Lootwright shows every mob that drops it, where they are, what level they are and how often it drops. Put it on your farm list with a goal, and the mobs you need get marked on your map and tooltips until your bags hold enough.
 
@@ -144,7 +144,7 @@ Single features (tooltip lines, map skulls, the arrow, messages, the minimap but
 
 ## Problems and ideas
 
-Report bugs and ideas on [GitHub Issues](GITHUB_URL/issues). If something breaks, type `/console scriptErrors 1`, do it again, and include the error text.
+Report bugs and ideas on [GitHub Issues](https://github.com/Simpeltronic/Lootwright/issues). If something breaks, type `/console scriptErrors 1`, do it again, and include the error text.
 
 ## Credits
 
@@ -187,7 +187,7 @@ Privacy note: the person tipping sees your Ko-fi page name. Depending on PayPal 
    git push -u origin main
    ```
 
-3. Your links become `https://github.com/YOURNAME/Lootwright` (`GITHUB_URL`) and `.../issues`.
+3. Your links become https://github.com/Simpeltronic/Lootwright and `.../issues`.
 4. Before pushing, decide about `Art/`: it's 12 MB of source art and not in git now. Leave it out, or add it on purpose.
 5. In the repo's settings, turn on **Issues**.
 
@@ -215,7 +215,7 @@ Use shot 1 as the first Gallery image: it's what shows in search results.
 ## 9. Release checklist
 
 - [ ] Ko-fi page made, `KOFI_URL` filled in.
-- [ ] GitHub repo made and pushed, `GITHUB_URL` filled in, Issues on.
+- [x] GitHub repo made and pushed (https://github.com/Simpeltronic/Lootwright), link filled in, Issues on.
 - [x] Banner font swapped for Inter (OFL), banner re-rendered.
 - [x] Full GPL-3.0 text added as `LICENSE` (repo and every folder of the release zip).
 - [x] Version set to 0.9.0 in all three TOCs and in `Core.lua`.
