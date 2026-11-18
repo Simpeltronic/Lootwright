@@ -46,6 +46,8 @@ local function rowBase(button)
     button:SetScript("OnLeave", function() GameTooltip:Hide() end)
 end
 
+UI.MakeList, UI.RowBase = makeList, rowBase -- shared with ProfUI.lua
+
 local function levelValue(r)
     return (r.minLevel and r.minLevel > 0) and r.minLevel or nil
 end
@@ -367,6 +369,7 @@ local function build()
     frame:SetSize(720, 440)
     frame:SetPoint("CENTER")
     frame:SetFrameStrata("HIGH")
+    frame:SetToplevel(true) -- comes to the front when clicked (vs. the Professions window)
     frame:SetClampedToScreen(true)
     frame:SetMovable(true)
     frame:EnableMouse(true)
@@ -403,9 +406,15 @@ local function build()
 
     itemBox = makeList(frame, 18, initItemRow)
     itemBox:SetPoint("TOPLEFT", 12, -72)
-    itemBox:SetPoint("BOTTOMLEFT", 12, 12)
+    itemBox:SetPoint("BOTTOMLEFT", 12, 38)
     itemBox:SetWidth(222)
     runSearch("") -- recent items
+
+    local profB = CreateFrame("Button", nil, frame, "UIPanelButtonTemplate")
+    profB:SetSize(120, 22)
+    profB:SetPoint("BOTTOMLEFT", 14, 10)
+    profB:SetText("Professions")
+    profB:SetScript("OnClick", function() ns.ProfUI.Toggle() end)
 
     -- Right: selected item
     headerIcon = frame:CreateTexture(nil, "ARTWORK")
@@ -600,6 +609,27 @@ if TooltipDataProcessor and Enum.TooltipDataType then
         local text = tooltipText(id)
         if text then tooltip:AddLine("Drops from: " .. text, 0.4, 0.8, 1, true) end
     end)
+end
+
+-- Opens the window on one item (used by the Professions window). With besideFrame, the window is
+-- placed next to it (right side if it fits on screen, else left) instead of on top of it.
+function UI.ShowItem(itemId, besideFrame)
+    if InCombatLockdown() then return end
+    if not frame then build() end
+    if besideFrame and besideFrame:IsShown() and besideFrame:GetRight() then
+        frame:ClearAllPoints()
+        if besideFrame:GetRight() + frame:GetWidth() <= UIParent:GetRight() then
+            frame:SetPoint("TOPLEFT", besideFrame, "TOPRIGHT", 4, 0)
+        else
+            frame:SetPoint("TOPRIGHT", besideFrame, "TOPLEFT", -4, 0)
+        end
+    end
+    frame:Show()
+    frame:Raise()
+    local name = ns.Data.ItemName(itemId) or ""
+    searchBox:SetText(name)
+    runSearch(name)
+    selectItem(itemId)
 end
 
 -- Called by Farm.lua when a goal removes an item from the farm list.
