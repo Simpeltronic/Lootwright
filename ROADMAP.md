@@ -106,6 +106,8 @@ Questions to answer:
 - Optional: our own recorder (the `LOOT_OPENED` event) saves observed drop counts to `ItemFinderDB`. Show "observed 3/40 (7.5%)" next to the database rate.
 
 ### Phase 8: Modules and options
+**Built (Nov 2026, testing):** `ItemFinder_Data` (load on demand) and `ItemFinder_Professions` sub-addons; an options panel with five feature toggles. `ItemFinder_Map` was not split out: pins and the arrow are small, and have their own toggles instead.
+
 Let players switch off what they don't use. Two levels:
 - **Options** (the game's `Settings` panel, plus `/if` commands): turn single features on or off. Candidates: the "Drops from" item tooltip line, the "Farm:" mob tooltip line, map pins, the waypoint arrow, farm-goal messages, the minimap button, default tab. Each feature checks its option before it does anything (hooks registered but idle when off).
 - **Search filters (built early, with Phase 7)** (checkboxes under the search box, saved; options, not sub-addons, since players flip them often): Reagents, Quest, Gear, Other (every item has exactly one kind; reagents = used in a recipe or trade goods), plus Dungeon (ForeverDB boss loot; normal dungeon mobs aren't covered). Ticked = shown; all start ticked. Reagents are the main selling point, so Phase 9 (design) should put them front and centre. Applied to all matches, with a "N hidden by filters" count.

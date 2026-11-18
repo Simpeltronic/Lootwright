@@ -319,14 +319,18 @@ local IC = Enum.ItemClass or {}
 local QUEST_CLASS, WEAPON_CLASS, ARMOR_CLASS = IC.Questitem or 12, IC.Weapon or 2, IC.Armor or 4
 local TRADE_CLASS, REAGENT_CLASS = IC.Tradegoods or 7, IC.Reagent or 5
 
-local function hasDungeonData() return ns.Gen ~= nil and ns.Gen.bossLoot ~= nil end
+local function hasDungeonData()
+    local gen = ns.GetGen()
+    return gen ~= nil and gen.bossLoot ~= nil
+end
 
 -- [itemId] = number of ForeverDB recipes that use it, built once.
 local recipeUses
 local function usedInRecipes(id)
     if not recipeUses then
         recipeUses = {}
-        for _, rows in pairs(ns.Gen and ns.Gen.recipes or {}) do
+        local gen = ns.GetGen()
+        for _, rows in pairs(gen and gen.recipes or {}) do
             for _, r in ipairs(rows) do
                 for rid in tostring(r[6] or ""):gmatch("(%d+):") do
                     rid = tonumber(rid)
@@ -356,7 +360,7 @@ local function itemPassesFilters(id)
     if db.hideReagent or db.hideQuest or db.hideGear or db.hideOther then
         if db[HIDE_KEY[itemKind(id)]] then return false end
     end
-    if db.hideDungeon and hasDungeonData() and ns.Gen.bossLoot[id] then return false end
+    if db.hideDungeon and hasDungeonData() and ns.GetGen().bossLoot[id] then return false end
     return true
 end
 
@@ -487,6 +491,11 @@ local function build()
         tabButtons[t.key] = b
         prevTab = b
     end
+    local optB = CreateFrame("Button", nil, frame, "UIPanelButtonTemplate")
+    optB:SetSize(80, 24)
+    optB:SetPoint("TOPRIGHT", frame, "BOTTOMRIGHT", -12, 2)
+    optB:SetText("Options")
+    optB:SetScript("OnClick", function() ns.Options.Open() end)
 
     -- Left: search
     searchBox = CreateFrame("EditBox", nil, page, "SearchBoxTemplate")
@@ -702,7 +711,14 @@ local function build()
 
     refreshMobs()
 
-    ns.ProfUI.Build(pages.prof)
+    -- The Professions tab comes from the optional ItemFinder_Professions sub-addon.
+    if ns.ProfUI then
+        ns.ProfUI.Build(pages.prof)
+    else
+        tabButtons.prof:Hide()
+        tabButtons.farm:ClearAllPoints()
+        tabButtons.farm:SetPoint("LEFT", tabButtons.search, "RIGHT", 4, 0)
+    end
     ns.FarmUI.Build(pages.farm)
 
     -- Shift-click hooks (the name moved between client versions; hook whichever exists).
@@ -755,7 +771,7 @@ end
 function UI.ShowTab(key)
     if InCombatLockdown() then ns.say("The window can't be opened in combat."); return end
     if not frame then build() end
-    if not pages[key] then key = "search" end
+    if not pages[key] or (key == "prof" and not ns.ProfUI) then key = "search" end
     for k, pg in pairs(pages) do pg:SetShown(k == key) end
     for k, b in pairs(tabButtons) do
         if k == key then b:LockHighlight() else b:UnlockHighlight() end

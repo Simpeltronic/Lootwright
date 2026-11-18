@@ -6,6 +6,7 @@
 --   /if <text>          search items by name (substring), output in chat; shift-click an item to look it up
 --   /if #<id>           show sources for an item ID in chat
 --   /if tooltip         toggle the "Drops from" line on item tooltips
+--   /if options         open ItemFinder's options panel (feature toggles, sub-addon status)
 --   /if clear           remove the selected mob's world map pins
 --   /if farmpins        toggle map skulls on every mob that drops a farm item
 --   /if prof            open the window on the Professions tab
@@ -17,6 +18,21 @@
 local _, ns = ...
 local VERSION = "0.1.0"
 ItemFinderDB = ItemFinderDB or {}
+
+-- The one global ItemFinder exposes: its namespace, so the sub-addons (ItemFinder_Data,
+-- ItemFinder_Professions) can join it. Each sub-addon is optional; see ns.GetGen and UI.lua.
+ItemFinderNS = ns
+
+-- ForeverDB data (recipes, boss loot) lives in the load-on-demand sub-addon ItemFinder_Data.
+-- Loaded the first time something asks for it; nil when that sub-addon is off or missing.
+local triedData = false
+function ns.GetGen()
+    if ns.Gen then return ns.Gen end
+    if triedData then return nil end
+    triedData = true
+    if C_AddOns and C_AddOns.LoadAddOn then pcall(C_AddOns.LoadAddOn, "ItemFinder_Data") end
+    return ns.Gen
+end
 
 local function say(msg)
     msg = tostring(msg)
@@ -155,8 +171,10 @@ local function cmdStatus()
     end
     say("  contract: needs " .. s.contractWanted .. ", " .. (s.contractOk and "OK" or ("FAILED: " .. tostring(s.contractMsg))))
     say("Item name index: " .. (ns.Search.IsBuilt() and "built" or "not built yet"))
-    say("Recipes and boss loot: " .. (ns.Gen and ("ForeverDB " .. tostring(ns.Gen.version)) or "not loaded")
+    local gen = ns.GetGen()
+    say("Recipes and boss loot (ItemFinder_Data): " .. (gen and ("ForeverDB " .. tostring(gen.version)) or "off or not installed")
         .. ". Data from ForeverDB.net (https://foreverdb.net)")
+    say("Professions (ItemFinder_Professions): " .. (ns.ProfUI and "loaded" or "off or not installed"))
 end
 
 local function cmdRaw(kind, id)
@@ -191,11 +209,16 @@ SlashCmdList["ITEMFINDER"] = function(input)
 
     if input == "" then ns.UI.Toggle(); return end
     if lower == "help" then
-        say("/if  (window)  |  /if <item name>  |  /if #<id>  |  /if tooltip (toggle)  |  /if clear (map pins)  |  /if farmpins (toggle)  |  /if prof  |  /if farm  |  /if status  |  /if raw item|npc <id>")
+        say("/if  (window)  |  /if <item name>  |  /if #<id>  |  /if tooltip (toggle)  |  /if options  |  /if clear (map pins)  |  /if farmpins (toggle)  |  /if prof  |  /if farm  |  /if status  |  /if raw item|npc <id>")
         return
     end
-    if lower == "prof" then ns.UI.ShowTab("prof"); return end
+    if lower == "prof" then
+        if not ns.ProfUI then say("The Professions tab is off: enable \"ItemFinder - Professions\" in the AddOns list."); return end
+        ns.UI.ShowTab("prof")
+        return
+    end
     if lower == "farm" then ns.UI.ShowTab("farm"); return end
+    if lower == "options" or lower == "config" then ns.Options.Open(); return end
     if lower == "farmpins" then
         ItemFinderDB.farmPins = ItemFinderDB.farmPins == false -- nil (default) counts as on
         ns.Map.RefreshFarmPins(true)

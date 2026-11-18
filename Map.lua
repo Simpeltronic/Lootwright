@@ -147,7 +147,7 @@ end
 -- Our own arrow (Forever shows no arrow for the game's waypoint), plus the game's map marker when
 -- available (same calls RareScanner uses). p = { mapId, x, y } (0..1).
 function Map.SetWaypoint(p, m)
-    ns.Arrow.Set(p, m and m.name)
+    if ItemFinderDB.arrow ~= false then ns.Arrow.Set(p, m and m.name) end
     if C_Map.SetUserWaypoint and UiMapPoint and C_SuperTrack
         and (not C_Map.CanSetUserWaypointOnMap or C_Map.CanSetUserWaypointOnMap(p.mapId)) then
         pcall(function()

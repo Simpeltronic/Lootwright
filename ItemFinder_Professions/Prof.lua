@@ -5,7 +5,9 @@
 -- functions; we try modern first, then classic, and log which one worked.
 -- shortcut: no classic "craft" window (old Enchanting UI); add GetCraft* if Enchanting shows nothing.
 
-local _, ns = ...
+-- Part of the ItemFinder_Professions sub-addon: joins ItemFinder's namespace.
+local ns = ItemFinderNS
+if not ns then return end
 local Prof = {}
 ns.Prof = Prof
 
@@ -108,7 +110,8 @@ end
 function Prof.List()
     local mine, other, seen = {}, {}, {}
     for name in pairs(store()) do mine[#mine + 1] = name; seen[name] = true end
-    for name in pairs(ns.Gen and ns.Gen.recipes or {}) do
+    local gen = ns.GetGen()
+    for name in pairs(gen and gen.recipes or {}) do
         if not seen[name] then other[#other + 1] = name end
     end
     table.sort(mine)
@@ -132,7 +135,8 @@ end
 -- recipe = { name, itemId, reagents, known, skill, learn ("t" trainer, "a" automatic, "i<item>" recipe), new }
 function Prof.Recipes(name)
     local scanned = store()[name] and store()[name].recipes or {}
-    local gen = ns.Gen and ns.Gen.recipes and ns.Gen.recipes[name]
+    local all = ns.GetGen()
+    local gen = all and all.recipes and all.recipes[name]
     if not gen then
         for _, r in ipairs(scanned) do r.known = true end
         return scanned

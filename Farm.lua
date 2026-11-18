@@ -135,7 +135,7 @@ end
 
 local function announce(msg)
     ns.say(msg)
-    if UIErrorsFrame then UIErrorsFrame:AddMessage(msg, 0.25, 1, 0.25) end
+    if UIErrorsFrame and ItemFinderDB.farmAlerts ~= false then UIErrorsFrame:AddMessage(msg, 0.25, 1, 0.25) end
 end
 
 -- Sub-goals: announce a material the moment it becomes ready (have >= need), and a recipe the
@@ -327,7 +327,7 @@ end
 if TooltipDataProcessor and Enum.TooltipDataType and Enum.TooltipDataType.Unit then
     TooltipDataProcessor.AddTooltipPostCall(Enum.TooltipDataType.Unit, function(tooltip, data)
         -- Out of combat only: unit data can be restricted during fights.
-        if tooltip ~= GameTooltip or InCombatLockdown() then return end
+        if tooltip ~= GameTooltip or InCombatLockdown() or ItemFinderDB.farmTooltip == false then return end
         if not (next(list()) or next(recipes())) then return end
         local guid = type(data) == "table" and data.guid
         if not guid then

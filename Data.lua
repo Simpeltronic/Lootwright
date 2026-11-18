@@ -162,7 +162,8 @@ end
 -- ForeverDB boss loot (GeneratedData.lua, built by tools/build_data.py), for one item:
 -- { [npcId] = { rate = pct or nil, kills = n, src = "f" measured in Forever | "c" Classic data } }, or nil.
 local function bossLoot(itemId)
-    local s = ns.Gen and ns.Gen.bossLoot and ns.Gen.bossLoot[itemId]
+    local gen = ns.GetGen()
+    local s = gen and gen.bossLoot and gen.bossLoot[itemId]
     if type(s) ~= "string" then return nil end
     local t = {}
     for npc, pct, kills, src in s:gmatch("(%d+):([%d.]+):(%d+):(%a)") do
@@ -226,7 +227,8 @@ function Data.GetSources(itemId)
     -- Bosses ForeverDB has for this item that QuestieDB's list lacks.
     for npcId, b in pairs(boss) do
         if not seen[npcId] then
-            local info = ns.Gen.bosses and ns.Gen.bosses[npcId] or {}
+            local gen = ns.GetGen()
+            local info = gen and gen.bosses and gen.bosses[npcId] or {}
             local lo, hi = tostring(info[3] or ""):match("(%d+)%-?(%d*)")
             local qzone = L.Npc.zoneID(npcId)
             local row = {

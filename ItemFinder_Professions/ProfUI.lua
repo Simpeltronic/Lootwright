@@ -2,7 +2,9 @@
 -- Right: the selected recipe's materials (have / need for N crafts, where they come from) and a
 -- button that puts the missing materials on the farm list with goals.
 
-local _, ns = ...
+-- Part of the ItemFinder_Professions sub-addon: joins ItemFinder's namespace.
+local ns = ItemFinderNS
+if not ns then return end
 local ProfUI = {}
 ns.ProfUI = ProfUI
 

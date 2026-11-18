@@ -1,0 +1,124 @@
+-- ItemFinder Options.lua: the panel in the game's Options > AddOns list (also /if options).
+-- Each feature toggle is ItemFinderDB[key]; nil (default) means on, false means off.
+-- Sub-addons are switched in the AddOns list; this panel only shows whether they're on.
+
+local _, ns = ...
+local Options = {}
+ns.Options = Options
+
+local TOGGLES = {
+    { key = "tooltip", label = "\"Drops from\" line on item tooltips",
+      tip = "Item tooltips list the top 3 mobs that drop the item.",
+      onChange = function() ns.UI.ClearTooltipCache() end },
+    { key = "farmTooltip", label = "\"Farm:\" line on mob tooltips",
+      tip = "Mobs that drop something on your farm list say so on their tooltip." },
+    { key = "farmPins", label = "Map skulls on mobs that drop farm items",
+      tip = "Grouped skulls on every mob that drops a farm item or a material you still need.",
+      onChange = function() ns.Map.RefreshFarmPins(true) end },
+    { key = "arrow", label = "Waypoint arrow when you click a map skull",
+      tip = "Shows an arrow and distance to the spawn. The map marker is set either way." },
+    { key = "farmAlerts", label = "Farm messages in the middle of the screen",
+      tip = "Goal reached, material ready and \"craft it\" messages. They always go to chat." },
+}
+
+-- True unless the player switched the feature off.
+function ns.IsOn(key) return ItemFinderDB[key] ~= false end
+
+local SUBADDONS = {
+    { name = "ItemFinder_Data", label = "ItemFinder - Data", what = "recipes and dungeon boss loot (ForeverDB.net)" },
+    { name = "ItemFinder_Professions", label = "ItemFinder - Professions", what = "the Professions tab" },
+}
+
+local function subAddonState(name)
+    if C_AddOns.IsAddOnLoaded and C_AddOns.IsAddOnLoaded(name) then return "on" end
+    local ok, state = pcall(C_AddOns.GetAddOnEnableState, name, UnitName("player"))
+    if ok and type(state) == "number" and state > 0 then return "on (loads when needed)" end
+    local ok2, exists = pcall(C_AddOns.DoesAddOnExist, name)
+    if ok2 and exists == false then return "not installed" end
+    return "off"
+end
+
+local panel, checks, subLines, category
+
+local function refresh()
+    for _, cb in ipairs(checks) do cb:SetChecked(ns.IsOn(cb.key)) end
+    for _, l in ipairs(subLines) do
+        l.fs:SetText(l.sub.label .. ": |cffffffff" .. subAddonState(l.sub.name) .. "|r  |cff999999(" .. l.sub.what .. ")|r")
+    end
+end
+
+local function build()
+    panel = CreateFrame("Frame")
+    panel.name = "ItemFinder"
+    checks, subLines = {}, {}
+
+    local title = panel:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
+    title:SetPoint("TOPLEFT", 16, -16)
+    title:SetText("ItemFinder")
+    local sub = panel:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+    sub:SetPoint("TOPLEFT", title, "BOTTOMLEFT", 0, -6)
+    sub:SetText("Switch off what you don't use.")
+
+    local prev = sub
+    for i, t in ipairs(TOGGLES) do
+        local cb = CreateFrame("CheckButton", nil, panel, "UICheckButtonTemplate")
+        cb:SetSize(24, 24)
+        cb:SetPoint("TOPLEFT", prev, "BOTTOMLEFT", i == 1 and -2 or 0, i == 1 and -14 or -6)
+        cb.key = t.key
+        local fs = cb:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
+        fs:SetPoint("LEFT", cb, "RIGHT", 4, 1)
+        fs:SetText(t.label)
+        cb:SetScript("OnClick", function(self)
+            ItemFinderDB[t.key] = self:GetChecked() and true or false
+            if t.onChange then t.onChange() end
+        end)
+        cb:SetScript("OnEnter", function(self)
+            GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
+            GameTooltip:AddLine(t.label, 1, 1, 1)
+            GameTooltip:AddLine(t.tip, 0.8, 0.8, 0.8, true)
+            GameTooltip:Show()
+        end)
+        cb:SetScript("OnLeave", function() GameTooltip:Hide() end)
+        checks[#checks + 1] = cb
+        prev = cb
+    end
+
+    local head = panel:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    head:SetPoint("TOPLEFT", prev, "BOTTOMLEFT", 2, -24)
+    head:SetText("Parts")
+    local hint = panel:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
+    hint:SetPoint("TOPLEFT", head, "BOTTOMLEFT", 0, -4)
+    hint:SetText("Turn these on or off in the AddOns list on the character screen, then /reload.")
+    prev = hint
+    for _, s in ipairs(SUBADDONS) do
+        local fs = panel:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+        fs:SetPoint("TOPLEFT", prev, "BOTTOMLEFT", 0, -8)
+        subLines[#subLines + 1] = { fs = fs, sub = s }
+        prev = fs
+    end
+
+    panel:SetScript("OnShow", refresh)
+
+    if Settings and Settings.RegisterCanvasLayoutCategory and Settings.RegisterAddOnCategory then
+        category = Settings.RegisterCanvasLayoutCategory(panel, "ItemFinder")
+        Settings.RegisterAddOnCategory(category)
+    elseif InterfaceOptions_AddCategory then
+        InterfaceOptions_AddCategory(panel)
+    end
+end
+
+function Options.Open()
+    if not panel then build() end
+    if category and Settings and Settings.OpenToCategory then
+        local ok = pcall(Settings.OpenToCategory, category:GetID())
+        if ok then return end
+        pcall(Settings.OpenToCategory, category)
+    elseif InterfaceOptionsFrame_OpenToCategory then
+        InterfaceOptionsFrame_OpenToCategory(panel)
+    end
+end
+
+-- Register the panel once saved variables are loaded.
+local f = CreateFrame("Frame")
+f:RegisterEvent("PLAYER_LOGIN")
+f:SetScript("OnEvent", function() if not panel then build() end end)
