@@ -52,7 +52,11 @@ Contract check available: `LibQuestieDB.RequireContract(n)`.
 - **Do not scrape Wowhead.** Its terms forbid it.
 - **Do not edit files in other addons' folders.**
 
-### Later: better drop rates (Phase 6)
+### Remaining phases (see ROADMAP.md)
+
+6 Dependency review, 7 Data improvements, 8 Design, 9 Release. Next up: Phase 6.
+
+### Later: better drop rates (Phase 7)
 
 The foreverdb.net addon's data files (`ForeverDB\Data\Items.lua`, `Loot.lua`) have measured drop rates. They are GPL-3.0 with an attribution term: keep the `-- Data: ForeverDB.net` header line in any copied file, and credit "Data from ForeverDB.net (https://foreverdb.net)" in the addon's credits. The plan is a build script that generates our own data file from them (plus CMaNGOS classic-db, GPL-3.0). It must not read ForeverDB at runtime.
 

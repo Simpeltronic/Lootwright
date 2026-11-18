@@ -40,6 +40,8 @@ Keep **Data.lua as the only file that knows ForeverDB's format**. If the format 
 
 ## 3. Phases
 
+**Status (Nov 2026):** Phases 1-5 are done, plus extras: farm list with goals, professions (known recipes, "Farm materials"), waypoint arrow, and one window with Search / Professions / Farm tabs. CLAUDE.md has the details. Note that Phases 1-4 ended up built on QuestieDB, not ForeverDB (see CLAUDE.md, "Data sources").
+
 ### Phase 1: Spike (a day or two)
 - Create the folder and a TOC with `## Interface: 16001`, `## Dependencies: ForeverDB`, a `## SavedVariables: ItemFinderDB` line, and a "hello world" slash command.
 - In game, dump `ForeverDB` with `/dump` or `/tinspect ForeverDB` to learn the table layout (items, NPCs, drops, spawns).
@@ -73,12 +75,40 @@ Keep **Data.lua as the only file that knows ForeverDB's format**. If the format 
 - **Auction/tooltip addons:** only if easy.
 - Every integration must be optional. The addon works without any of them.
 
-### Phase 6: Data improvements
-- Show the data version and date (from `ForeverDB.meta`) in the window.
-- Optional: our own recorder (the `LOOT_OPENED` event) saves observed drop counts to `ItemFinderDB`. Show "observed 3/40 (7.5%)" next to the database rate.
-- Fallback build script (Python) that merges CMaNGOS, pfQuest and QuestieDB exports into compact Lua tables, if ForeverDB isn't enough.
+### Phase 6: Dependency review
+Decide what ItemFinder needs installed, and what it could do without. The answer shapes Phase 7.
 
-### Phase 7: Release
+What it uses today:
+
+| Addon | How | Used for | Required? |
+|---|---|---|---|
+| **QuestieDB** | `## Dependencies`, global `LibQuestieDB` | Item names, mob drops, mob level/rank/zone/faction, spawns, area-to-map tables, quest-item drop tables | Yes. Nothing works without it. |
+| **Questie** | `## OptionalDeps`, `QuestieLoader` modules `QuestieDB`, `DropDB` | Drop rates with Questie's manual corrections, and its already-decoded drop tables | No. Without it we decode QuestieDB's drop tables ourselves. |
+
+Everything else is the game's own API (`C_Map`, `C_TradeSkillUI`, `TooltipDataProcessor`, `C_Item`, world map canvas). Code we learned from but don't load: HereBeDragons-Pins (map pin pool), RareScanner (pin clicks, waypoints), ForeverDB_Helper (arrow approach).
+
+Questions to answer:
+- **QuestieDB:** keep it as a required addon, or ship our own data file (built by the Phase 7 script) so ItemFinder works alone? Trade-offs: download size, who keeps the data current through Forever's beta patches, GPL-3.0 attribution.
+- **Questie:** is the optional hook worth keeping? It only adds Questie's manual rate corrections. Check how often its rate differs from QuestieDB's own table.
+- **Private-API risk:** list every place we reach into another addon's internals (`QuestieLoader:ImportModule`, `Support.Get(...).private`, `WorldMapFrame.pinPools`). Each could break on their update; decide which to keep, wrap or replace.
+- **Done when:** every dependency is either kept with a reason, made optional, or removed, and the TOC matches.
+
+### Phase 7: Data improvements
+- Build script (offline, never at runtime) that turns ForeverDB's data files (`Items.lua`, `Loot.lua`) plus CMaNGOS classic-db into our own Lua data file. Keep the `-- Data: ForeverDB.net` header and credit ForeverDB.net. Goal: measured drop rates for the many items that now say "rate unknown".
+- Optional: a full recipe list (incl. unlearned recipes) from the same sources, for the Professions tab.
+- Show the data version and date in the window.
+- Optional: our own recorder (the `LOOT_OPENED` event) saves observed drop counts to `ItemFinderDB`. Show "observed 3/40 (7.5%)" next to the database rate.
+
+### Phase 8: Design
+Make ItemFinder look and feel its own, not like a debug window.
+- A visual identity: icon, colour accents, header, consistent fonts and spacing across all three tabs.
+- Real WoW-style tabs instead of plain buttons (check which tab template works on Forever).
+- Item icons in lists, quality colours, clearer empty states, and a tidier mob table (rank badges, rate bars).
+- Minimap or addon-compartment button.
+- Look at what other Forever addons (Questie, AtlasLoot, RareScanner, ForeverDB) do, and pick what makes ItemFinder stand out instead of copying them.
+- **Done when:** mockups are agreed on first, then built, and every tab follows them.
+
+### Phase 9: Release
 - Localization if wanted, an options panel (`Settings` API), icon, and a CurseForge page.
 - Package with a `.pkgmeta` and GitHub Actions (BigWigs packager).
 - Make the license GPL-3.0-compatible, since ForeverDB is GPL-3.0 and QuestieDB is GPL-3.0.
