@@ -71,9 +71,28 @@ local function mapSize(m)
     return w, h
 end
 
+-- The continent uiMapID a map belongs to (walking up the map hierarchy), or nil.
+local continents = {}
+local function continentOf(m)
+    if continents[m] ~= nil then return continents[m] or nil end
+    local id, found = m, false
+    for _ = 1, 10 do
+        local info = try(C_Map.GetMapInfo, id)
+        if not info then break end
+        if info.mapType == (Enum.UIMapType and Enum.UIMapType.Continent or 2) then found = true; break end
+        if not info.parentMapID or info.parentMapID == 0 then break end
+        id = info.parentMapID
+    end
+    continents[m] = found and id or false
+    return found and id or nil
+end
+
 -- The target's position in map m (0..1), or nil if it's on another continent.
 local function targetIn(t, m)
     if t.mapId == m then return t.x, t.y end
+    -- The world-position conversion returns nonsense across continents, so check first.
+    local tc, pc = continentOf(t.mapId), continentOf(m)
+    if not tc or tc ~= pc then return nil end
     if not (C_Map.GetWorldPosFromMapPos and C_Map.GetMapPosFromWorldPos) then return nil end
     local cont, world = try(C_Map.GetWorldPosFromMapPos, t.mapId, CreateVector2D(t.x, t.y))
     if not cont or not world then return nil end
