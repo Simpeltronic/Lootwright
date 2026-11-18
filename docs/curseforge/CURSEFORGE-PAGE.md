@@ -65,7 +65,7 @@ Images are drawn by `tools/make_brand.py` from the emblem (`tools/make_icons.py`
 | **File** | `Lootwright-0.9.0.zip`, release type **Beta** |
 | **Source** | https://github.com/Simpeltronic/Lootwright |
 | **Issues** | https://github.com/Simpeltronic/Lootwright/issues |
-| **Donation** | `KOFI_URL` (CurseForge has a donation field in the project settings; Ko-fi is one of the supported links) |
+| **Donation** | https://ko-fi.com/simpeltron (CurseForge has a donation field in the project settings; Ko-fi is one of the supported links) |
 
 The upload is one `.zip` containing the three folders `Lootwright`, `Lootwright_Data` and `Lootwright_Professions`. The packaging step (Phase 10) builds it and leaves out `docs/`, `tools/`, `Art/` and the Markdown files.
 
@@ -73,7 +73,7 @@ The upload is one `.zip` containing the three folders `Lootwright`, `Lootwright_
 
 ## 5. Description (paste into the Markdown editor)
 
-Replace `BANNER_URL`, `SEARCH_IMG_URL`, `POPUP_IMG_URL`, `MAP_IMG_URL`, `FARMTAB_IMG_URL`, `TRACKER_IMG_URL` (upload the images to the project's Images tab first, then copy their links) and `KOFI_URL`.
+Replace `BANNER_URL`, `SEARCH_IMG_URL`, `POPUP_IMG_URL`, `MAP_IMG_URL`, `FARMTAB_IMG_URL`, `TRACKER_IMG_URL` (upload the images to the project's Images tab first, then copy their links).
 
 ```markdown
 ![Lootwright](BANNER_URL)
@@ -156,7 +156,7 @@ Lootwright is free software under the GPL-3.0 licence.
 
 ---
 
-If Lootwright saves you some farming time, you can [support it on Ko-fi](KOFI_URL).
+If Lootwright saves you some farming time, you can [support it on Ko-fi](https://ko-fi.com/simpeltron).
 ```
 
 ---
@@ -170,7 +170,7 @@ Ko-fi is a free "buy me a coffee" page. People tip any amount; there's no subscr
 3. Write a one-line "About": *"I make Lootwright, a farming and drop-finder addon for WoW Forever."*
 4. Connect payouts under **Settings → Payments**: link your PayPal account (or Stripe). Tips go straight there.
 5. Optional: turn off memberships and shop if you only want tips.
-6. Copy your link and put it in place of `KOFI_URL` (description and project settings).
+6. Your link is https://ko-fi.com/simpeltron (already filled in above).
 
 Privacy note: the person tipping sees your Ko-fi page name. Depending on PayPal settings, your PayPal name or email can show on their receipt, so check the PayPal account's display name first.
 
@@ -214,7 +214,7 @@ Use shot 1 as the first Gallery image: it's what shows in search results.
 
 ## 9. Release checklist
 
-- [ ] Ko-fi page made, `KOFI_URL` filled in.
+- [x] Ko-fi page made (https://ko-fi.com/simpeltron), link filled in.
 - [x] GitHub repo made and pushed (https://github.com/Simpeltronic/Lootwright), link filled in, Issues on.
 - [x] Banner font swapped for Inter (OFL), banner re-rendered.
 - [x] Full GPL-3.0 text added as `LICENSE` (repo and every folder of the release zip).
