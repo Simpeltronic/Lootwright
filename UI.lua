@@ -81,18 +81,51 @@ local function compareMobs(a, b)
 end
 
 ----------------------------------------------------------------------
+-- Filters (settings in ItemFinderDB: showFriendly, nearLevel; both off by default)
+----------------------------------------------------------------------
+-- True when the mob is friendly to the player's faction (so it can't be attacked).
+local function isFriendly(r)
+    local f = UnitFactionGroup("player")
+    local key = (f == "Alliance" and "A") or (f == "Horde" and "H") or nil
+    return key ~= nil and type(r.friendly) == "string" and r.friendly:find(key, 1, true) ~= nil
+end
+
+local NEAR_LEVELS = 5
+-- True when the mob's level range overlaps player level +/- NEAR_LEVELS. Unknown levels count as near.
+local function isNearLevel(r)
+    local lo = r.minLevel
+    if not lo or lo == 0 then return true end
+    local hi = (r.maxLevel and r.maxLevel > 0) and r.maxLevel or lo
+    local pl = UnitLevel("player")
+    return hi >= pl - NEAR_LEVELS and lo <= pl + NEAR_LEVELS
+end
+
+local function passesFilters(r)
+    if not ItemFinderDB.showFriendly and isFriendly(r) then return false end
+    if ItemFinderDB.nearLevel and not isNearLevel(r) then return false end
+    return true
+end
+
+----------------------------------------------------------------------
 -- Mob list
 ----------------------------------------------------------------------
+local filterText -- "N hidden by filters"
+
 local function refreshMobs()
     hereZone = GetRealZoneText()
     if hereZone == "" then hereZone = nil end
     local filter = zoneBox and zoneBox:GetText():lower() or ""
-    local rows = {}
+    local rows, hidden = {}, 0
     for _, r in ipairs(currentMobs) do
-        if filter == "" or r.zone:lower():find(filter, 1, true) then rows[#rows + 1] = r end
+        if (filter == "" or r.zone:lower():find(filter, 1, true)) and passesFilters(r) then
+            rows[#rows + 1] = r
+        else
+            hidden = hidden + 1
+        end
     end
     table.sort(rows, compareMobs)
     mobBox:SetDataProvider(CreateDataProvider(rows))
+    filterText:SetText(hidden > 0 and (hidden .. " hidden by filters") or "")
     for _, b in ipairs(headerButtons) do
         b.text:SetText(b.col.label .. (b.col.key == sortKey and (sortAsc and " ^" or " v") or ""))
     end
@@ -177,9 +210,22 @@ local function pushRecent(itemId)
     for i = #list, MAX_RECENT + 1, -1 do list[i] = nil end
 end
 
+-- Favourite item IDs: ItemFinderDB.favorites[itemId] = true.
+local function favorites()
+    ItemFinderDB.favorites = ItemFinderDB.favorites or {}
+    return ItemFinderDB.favorites
+end
+
+local favButton
+local function updateFavButton()
+    favButton:SetShown(selectedId ~= nil)
+    favButton:SetText(selectedId and favorites()[selectedId] and "Unfavorite" or "Favorite")
+end
+
 local function selectItem(itemId)
     selectedId = itemId
     pushRecent(itemId)
+    updateFavButton()
     itemBox:ForEachFrame(function(b) b.sel:SetShown(b.itemId == selectedId) end)
 
     local name = ns.Data.ItemName(itemId) or ("item " .. itemId)
@@ -226,7 +272,8 @@ local function initItemRow(button, data)
         end)
     end
     button.itemId = data.id
-    button.text:SetText(data.name .. " |cff777777#" .. data.id .. "|r")
+    local name = data.fav and ("|cffffd100" .. data.name .. "|r") or data.name
+    button.text:SetText(name .. " |cff777777#" .. data.id .. "|r")
     button.sel:SetShown(data.id == selectedId)
 end
 
@@ -239,19 +286,30 @@ local function runSearch(text)
         return
     end
     if #text < 2 then
-        -- Empty search: show recently viewed items.
-        local list = {}
-        for i, id in ipairs(recentList()) do list[i] = { id = id, name = ns.Data.ItemName(id) or ("item " .. id) } end
+        -- Empty search: favourites (gold, by name), then recently viewed items.
+        local list, favs = {}, favorites()
+        for id in pairs(favs) do list[#list + 1] = { id = id, name = ns.Data.ItemName(id) or ("item " .. id), fav = true } end
+        table.sort(list, function(a, b) return a.name < b.name end)
+        for _, id in ipairs(recentList()) do
+            if not favs[id] then list[#list + 1] = { id = id, name = ns.Data.ItemName(id) or ("item " .. id) } end
+        end
         itemBox:SetDataProvider(CreateDataProvider(list))
-        statusText:SetText(#list > 0 and "Recent items. Type 2+ letters to search."
+        statusText:SetText(#list > 0 and "Favorites and recent items. Type 2+ letters to search."
             or "Type at least 2 letters, or shift-click an item.")
         return
     end
     if not ns.Search.IsBuilt() then statusText:SetText("Building item index...") end
     ns.Search.Find(text, function(ids, nExact)
         if token ~= searchToken then return end -- a newer search replaced this one
-        local list = {}
-        for i = 1, math.min(#ids, MAX_ITEMS) do list[i] = { id = ids[i], name = ns.Search.Name(ids[i]) } end
+        -- Matching favourites first (gold), from all matches, not only the first MAX_ITEMS.
+        local list, favs = {}, favorites()
+        for _, id in ipairs(ids) do
+            if favs[id] then list[#list + 1] = { id = id, name = ns.Search.Name(id), fav = true } end
+        end
+        for _, id in ipairs(ids) do
+            if #list >= MAX_ITEMS then break end
+            if not favs[id] then list[#list + 1] = { id = id, name = ns.Search.Name(id) } end
+        end
         itemBox:SetDataProvider(CreateDataProvider(list))
         if #ids == 0 then
             statusText:SetText("No items match.")
@@ -330,13 +388,26 @@ local function build()
 
     headerName = frame:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
     headerName:SetPoint("TOPLEFT", headerIcon, "TOPRIGHT", 8, -1)
-    headerName:SetPoint("RIGHT", frame, "RIGHT", -16, 0)
+    headerName:SetPoint("RIGHT", frame, "RIGHT", -112, 0)
     headerName:SetJustifyH("LEFT")
+    headerName:SetWordWrap(false)
     headerName:SetText("Search for an item")
+
+    favButton = CreateFrame("Button", nil, frame, "UIPanelButtonTemplate")
+    favButton:SetSize(90, 22)
+    favButton:SetPoint("TOPRIGHT", -14, -30)
+    favButton:SetScript("OnClick", function()
+        if not selectedId then return end
+        local favs = favorites()
+        favs[selectedId] = not favs[selectedId] or nil
+        updateFavButton()
+        if #searchBox:GetText() < 2 then runSearch("") end -- refresh the favourites list
+    end)
+    updateFavButton()
 
     summaryText = frame:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
     summaryText:SetPoint("TOPLEFT", headerIcon, "BOTTOMRIGHT", 8, 10)
-    summaryText:SetPoint("RIGHT", frame, "RIGHT", -16, 0)
+    summaryText:SetPoint("RIGHT", frame, "RIGHT", -112, 0) -- leave room for the Favorite button
     summaryText:SetJustifyH("LEFT")
 
     -- Same template as the item search box: InputBoxTemplate didn't take keyboard input on Forever.
@@ -353,6 +424,33 @@ local function build()
     clearPins:SetPoint("LEFT", zoneBox, "RIGHT", 12, 0)
     clearPins:SetText("Clear pins")
     clearPins:SetScript("OnClick", function() ns.Map.Clear() end)
+
+    -- Filter checkboxes; own label font strings since template label keys differ between clients.
+    local function makeCheck(label, key, tip, anchor)
+        local cb = CreateFrame("CheckButton", nil, frame, "UICheckButtonTemplate")
+        cb:SetSize(22, 22)
+        cb:SetPoint("LEFT", anchor, "RIGHT", 6, 0)
+        local fs = cb:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+        fs:SetPoint("LEFT", cb, "RIGHT", 0, 1)
+        fs:SetText(label)
+        cb:SetChecked(ItemFinderDB[key] == true)
+        cb:SetScript("OnClick", function(self)
+            ItemFinderDB[key] = self:GetChecked() and true or false
+            UI.ClearTooltipCache()
+            refreshMobs()
+        end)
+        cb:SetScript("OnEnter", function(self)
+            GameTooltip:SetOwner(self, "ANCHOR_TOP")
+            GameTooltip:AddLine(tip, 1, 1, 1, true)
+            GameTooltip:Show()
+        end)
+        cb:SetScript("OnLeave", function() GameTooltip:Hide() end)
+        return fs -- anchor the next control after the label
+    end
+    local nearLabel = makeCheck("Near lvl", "nearLevel",
+        "Only mobs within " .. NEAR_LEVELS .. " levels of you.", clearPins)
+    makeCheck("Friendly", "showFriendly",
+        "Also show mobs friendly to your faction (you can't attack them).", nearLabel)
 
     -- Column headers (click to sort)
     headerButtons = {}
@@ -382,9 +480,12 @@ local function build()
 
     local foot = frame:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
     foot:SetPoint("BOTTOMLEFT", 260, 12)
-    foot:SetPoint("BOTTOMRIGHT", -16, 12)
     foot:SetJustifyH("LEFT")
-    foot:SetText("Rates from Questie / QuestieDB data. * = very few kills. Many items have no known rate.")
+    foot:SetText("Rates: Questie / QuestieDB data. * = very few kills.")
+
+    filterText = frame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+    filterText:SetPoint("BOTTOMRIGHT", -16, 12)
+    filterText:SetJustifyH("RIGHT")
 
     refreshMobs()
 
@@ -406,7 +507,10 @@ local function tooltipText(itemId)
     if tipCache[itemId] ~= nil then return tipCache[itemId] end
     local ok, src = pcall(ns.Data.GetSources, itemId)
     if not ok then return nil end -- don't cache errors
-    local mobs = src.mobs
+    local mobs = {}
+    for _, m in ipairs(src.mobs) do
+        if passesFilters(m) then mobs[#mobs + 1] = m end
+    end
     table.sort(mobs, ns.SortByRate)
     local parts = {}
     for i = 1, math.min(3, #mobs) do
@@ -417,6 +521,8 @@ local function tooltipText(itemId)
     tipCache[itemId] = text or false
     return text
 end
+
+function UI.ClearTooltipCache() wipe(tipCache) end
 
 if TooltipDataProcessor and Enum.TooltipDataType then
     TooltipDataProcessor.AddTooltipPostCall(Enum.TooltipDataType.Item, function(tooltip, data)

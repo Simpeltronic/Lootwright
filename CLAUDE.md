@@ -13,7 +13,9 @@ Read `ROADMAP.md` for the full plan. This file is the short version plus the fac
 - **Phase 3 part 1 done** (verified in game): level colours by difficulty, colour-coded rates, current zone sorted first (matched by zone name), recent items (`ItemFinderDB.recent`), and a "Drops from" tooltip line via `TooltipDataProcessor` (`/if tooltip` toggles `ItemFinderDB.tooltip`).
 - **Phase 4 done** (verified in game): clicking a mob row puts skull pins on the world map (`Map.lua`), opening the mob's main zone. "Clear pins" button and `/if clear`. World map only; no minimap pins or clustering.
 - Map pins copy HereBeDragons-Pins (in Questie's `Libs`): a Lua pin pool in `WorldMapFrame.pinPools` + a `MapCanvasDataProviderMixin` provider. Pins must NOT set their own `OnEnter`/`OnLeave` scripts (the canvas asserts); define `OnMouseEnter`/`OnMouseLeave` methods instead.
-- Next: the rest of Phase 3 (favorites, farm list, faction/level filters), or Phase 5 (Questie/TomTom integration).
+- Drop rates from <= 10 kills are detected (exact k/n fractions in Wowhead data), shown with `*` and sorted after real rates.
+- **Phase 3 done** (part 2 verified in game). Search results list matching favorites first, in gold. Favorite button (`ItemFinderDB.favorites`, shown in gold above recent items), "Near lvl" filter (+/-5 levels, `ItemFinderDB.nearLevel`) and "Friendly" checkbox (mobs friendly to your faction are hidden unless `ItemFinderDB.showFriendly`; uses `Npc.friendlyToFaction`). Filters also apply to the tooltip line. No separate farm list (favorites cover it).
+- Next: Phase 5 (integrations).
 
 ## Reading game output from here
 

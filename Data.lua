@@ -135,6 +135,7 @@ end
 -- Returns {
 --   mobs = { { npcId, name, minLevel, maxLevel, rank, zone, zones, rate, source, fewKills }, ... },
 --   fewKills = true when the rate looks like it comes from 10 or fewer kills.
+--   friendly = player factions the mob is friendly to: "A", "H", "AH" or nil.
 --   fromDropTable = true if the mob list came from the drop-table fallback,
 --   objects = count, vendors = count }
 -- rank: 0 normal, 1 elite, 2 rare elite, 3 boss, 4 rare. rate is nil when unknown.
@@ -161,6 +162,7 @@ function Data.GetSources(itemId)
             rate = rate,
             source = src,
             fewKills = fewKills(rate, src),
+            friendly = L.Npc.friendlyToFaction(npcId), -- "A", "H", "AH" or nil
         }
     end
 
