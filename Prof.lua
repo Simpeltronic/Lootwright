@@ -49,7 +49,7 @@ local function scanModern()
         if info and info.learned ~= false then
             local s = try(T.GetRecipeSchematic, id, false)
             if type(s) == "table" then
-                local rec = { name = info.name or s.name or ("recipe " .. id), itemId = s.outputItemID, reagents = {} }
+                local rec = { id = id, name = info.name or s.name or ("recipe " .. id), itemId = s.outputItemID, reagents = {} }
                 for _, slot in ipairs(s.reagentSlotSchematics or {}) do
                     local rg = slot.reagents and slot.reagents[1]
                     if rg and rg.itemID and (not BASIC or slot.reagentType == nil or slot.reagentType == BASIC) then
@@ -72,7 +72,9 @@ local function scanClassic()
     for i = 1, n do
         local rn, rtype = try(GetTradeSkillInfo, i)
         if rn and rtype ~= "header" and rtype ~= "subheader" then
-            local rec = { name = rn, itemId = itemIdFromLink(try(GetTradeSkillItemLink, i)), reagents = {} }
+            local link = GetTradeSkillRecipeLink and try(GetTradeSkillRecipeLink, i)
+            local rec = { id = type(link) == "string" and tonumber(link:match("enchant:(%d+)") or link:match("spell:(%d+)")),
+                name = rn, itemId = itemIdFromLink(try(GetTradeSkillItemLink, i)), reagents = {} }
             for j = 1, (try(GetTradeSkillNumReagents, i) or 0) do
                 local _, _, count = try(GetTradeSkillReagentInfo, i, j)
                 local id = itemIdFromLink(try(GetTradeSkillReagentItemLink, i, j))
@@ -100,17 +102,67 @@ local function scan()
     end
 end
 
--- Profession names saved for this character, sorted.
+-- Professions: this character's (scanned) first, then the rest from ForeverDB's recipe list.
 function Prof.List()
+    local mine, other, seen = {}, {}, {}
+    for name in pairs(store()) do mine[#mine + 1] = name; seen[name] = true end
+    for name in pairs(ns.Gen and ns.Gen.recipes or {}) do
+        if not seen[name] then other[#other + 1] = name end
+    end
+    table.sort(mine)
+    table.sort(other)
+    for _, n in ipairs(other) do mine[#mine + 1] = n end
+    return mine
+end
+
+function Prof.IsMine(name) return store()[name] ~= nil end
+
+local function parseReagents(s)
     local t = {}
-    for name in pairs(store()) do t[#t + 1] = name end
-    table.sort(t)
+    for id, n in tostring(s or ""):gmatch("(%d+):(%d+)") do
+        t[#t + 1] = { itemId = tonumber(id), count = tonumber(n) }
+    end
     return t
 end
 
+-- All recipes of a profession: ForeverDB's full list (GeneratedData.lua) with known = true for the
+-- ones this character has (matched by spell ID, else by name), plus scanned recipes ForeverDB lacks.
+-- recipe = { name, itemId, reagents, known, skill, learn ("t" trainer, "a" automatic, "i<item>" recipe), new }
 function Prof.Recipes(name)
-    local p = store()[name]
-    return p and p.recipes or {}
+    local scanned = store()[name] and store()[name].recipes or {}
+    local gen = ns.Gen and ns.Gen.recipes and ns.Gen.recipes[name]
+    if not gen then
+        for _, r in ipairs(scanned) do r.known = true end
+        return scanned
+    end
+    local byId, byName = {}, {}
+    for _, r in ipairs(scanned) do
+        if r.id then byId[r.id] = r end
+        byName[r.name] = r
+    end
+    local list, used = {}, {}
+    for _, g in ipairs(gen) do
+        local mine = byId[g[1]] or byName[g[2]]
+        if mine then used[mine] = true end
+        list[#list + 1] = {
+            id = g[1], name = g[2], skill = g[3], itemId = g[4], learn = g[7], new = g[8] == 1,
+            reagents = mine and #mine.reagents > 0 and mine.reagents or parseReagents(g[6]),
+            known = mine ~= nil,
+        }
+    end
+    for _, r in ipairs(scanned) do
+        if not used[r] then
+            r.known = true
+            list[#list + 1] = r
+        end
+    end
+    -- By skill needed, like the trainer list; then by name.
+    table.sort(list, function(a, b)
+        local sa, sb = a.skill or 0, b.skill or 0
+        if sa ~= sb then return sa < sb end
+        return a.name < b.name
+    end)
+    return list
 end
 
 -- Rescan shortly after profession events (they fire in bursts). Unknown event names error on

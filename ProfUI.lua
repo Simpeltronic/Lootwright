@@ -92,14 +92,29 @@ local function refreshRecipes()
     profs = ns.Prof.List()
     if profIndex > #profs then profIndex = 1 end
     local prof = profs[profIndex]
-    profLabel:SetText(prof or "No professions saved")
+    profLabel:SetText(prof and (ns.Prof.IsMine(prof) and prof or ("|cff999999" .. prof .. "|r")) or "No professions")
     emptyText:SetShown(prof == nil)
     local filter = filterBox:GetText():lower()
+    local knownOnly = ItemFinderDB.profKnownOnly == true
     local rows = {}
     for _, rec in ipairs(prof and ns.Prof.Recipes(prof) or {}) do
-        if filter == "" or rec.name:lower():find(filter, 1, true) then rows[#rows + 1] = rec end
+        if (filter == "" or rec.name:lower():find(filter, 1, true)) and (rec.known or not knownOnly) then
+            rows[#rows + 1] = rec
+        end
     end
     recipeBox:SetDataProvider(CreateDataProvider(rows))
+end
+
+local function sameRecipe(a, b)
+    return a and b and a.name == b.name and a.id == b.id
+end
+
+local function learnText(learn)
+    if learn == "t" then return "Trainer" end
+    if learn == "a" then return "Learned automatically" end
+    local id = tonumber(tostring(learn or ""):match("^i(%d+)"))
+    if id then return "Recipe: " .. (ns.Data.ItemName(id) or ("item " .. id)) end
+    return nil
 end
 
 local function initRecipeRow(button, rec)
@@ -112,19 +127,29 @@ local function initRecipeRow(button, rec)
         button.text:SetWordWrap(false)
         button:SetScript("OnClick", function(self)
             selected = self.recipe
-            recipeBox:ForEachFrame(function(b) b.sel:SetShown(b.recipe == selected) end)
+            recipeBox:ForEachFrame(function(b) b.sel:SetShown(sameRecipe(b.recipe, selected)) end)
             refreshMats()
         end)
         button:SetScript("OnEnter", function(self)
-            if not self.recipe.itemId then return end
+            local r = self.recipe
             GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
-            GameTooltip:SetItemByID(self.recipe.itemId)
+            if r.itemId then GameTooltip:SetItemByID(r.itemId) else GameTooltip:AddLine(r.name) end
+            if r.known then
+                GameTooltip:AddLine("You know this recipe", 0.25, 1, 0.25)
+            else
+                GameTooltip:AddLine("Not learned" .. (r.skill and (" - needs skill " .. r.skill) or ""), 1, 0.5, 0.25)
+                local how = learnText(r.learn)
+                if how then GameTooltip:AddLine(how, 1, 1, 1) end
+            end
+            if r.new then GameTooltip:AddLine("New in Forever", 0.4, 0.8, 1) end
+            GameTooltip:AddLine("Recipe data from ForeverDB.net", 0.5, 0.5, 0.5)
             GameTooltip:Show()
         end)
     end
     button.recipe = rec
-    button.text:SetText(rec.name)
-    button.sel:SetShown(rec == selected)
+    local skill = rec.skill and (" |cff777777" .. rec.skill .. "|r") or ""
+    button.text:SetText((rec.known and rec.name or ("|cff999999" .. rec.name .. "|r")) .. skill)
+    button.sel:SetShown(sameRecipe(rec, selected))
 end
 
 ----------------------------------------------------------------------
@@ -187,13 +212,25 @@ function ProfUI.Build(parent)
     filterBox:HookScript("OnTextChanged", function() refreshRecipes() end)
     filterBox:HookScript("OnEnterPressed", filterBox.ClearFocus)
 
+    local known = CreateFrame("CheckButton", nil, frame, "UICheckButtonTemplate")
+    known:SetSize(22, 22)
+    known:SetPoint("TOPLEFT", 14, -80)
+    local knownLabel = known:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+    knownLabel:SetPoint("LEFT", known, "RIGHT", 0, 1)
+    knownLabel:SetText("Known recipes only")
+    known:SetChecked(ItemFinderDB.profKnownOnly == true)
+    known:SetScript("OnClick", function(self)
+        ItemFinderDB.profKnownOnly = self:GetChecked() and true or false
+        refreshRecipes()
+    end)
+
     recipeBox = ns.UI.MakeList(frame, 18, initRecipeRow)
-    recipeBox:SetPoint("TOPLEFT", 12, -84)
+    recipeBox:SetPoint("TOPLEFT", 12, -104)
     recipeBox:SetPoint("BOTTOMLEFT", 12, 12)
     recipeBox:SetWidth(222)
 
     emptyText = frame:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
-    emptyText:SetPoint("TOPLEFT", 16, -90)
+    emptyText:SetPoint("TOPLEFT", 16, -110)
     emptyText:SetWidth(214)
     emptyText:SetJustifyH("LEFT")
     emptyText:SetText("Open each of your profession windows once. ItemFinder saves the recipes you know.")

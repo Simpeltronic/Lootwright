@@ -174,7 +174,10 @@ local function initMobRow(button, r)
             GameTooltip:AddLine(m.name)
             GameTooltip:AddLine("NPC ID " .. m.npcId, 0.7, 0.7, 0.7)
             if m.zones > 1 then GameTooltip:AddLine("Spawns in " .. m.zones .. " zones", 1, 1, 1) end
-            if m.fewKills then
+            if m.kills and m.kills > 0 then
+                GameTooltip:AddLine("Measured in Forever over " .. m.kills .. " kills (ForeverDB.net)",
+                    m.fewKills and 1 or 0.7, m.fewKills and 0.5 or 0.7, m.fewKills and 0.25 or 0.7)
+            elseif m.fewKills then
                 GameTooltip:AddLine("* Rate from very few kills (10 or fewer), unreliable", 1, 0.5, 0.25)
             elseif m.rate then
                 GameTooltip:AddLine("Drop rate from " .. (m.source or "?") .. " data", 0.7, 0.7, 0.7)
@@ -295,6 +298,8 @@ local function initItemRow(button, data)
         button:SetScript("OnEnter", function(self)
             GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
             GameTooltip:SetItemByID(self.itemId)
+            local uses = UI.UsedInRecipes(self.itemId)
+            if uses > 0 then GameTooltip:AddLine("Used in " .. uses .. " recipe(s)", 0.4, 0.8, 1) end
             GameTooltip:Show()
         end)
     end
@@ -304,6 +309,55 @@ local function initItemRow(button, data)
         or data.name
     button.text:SetText(name .. " |cff777777#" .. data.id .. "|r")
     button.sel:SetShown(data.id == selectedId)
+end
+
+-- Search filters. Every item has exactly one kind (reagent, quest, gear, other); Dungeon is a separate
+-- box about where it drops. Settings ItemFinderDB.hideReagent / hideQuest / hideGear / hideOther /
+-- hideDungeon are all off by default, so every box starts ticked: ticked = shown (user's rule).
+-- GetItemInfoInstant answers from the client's item table, so it works for items never seen.
+local IC = Enum.ItemClass or {}
+local QUEST_CLASS, WEAPON_CLASS, ARMOR_CLASS = IC.Questitem or 12, IC.Weapon or 2, IC.Armor or 4
+local TRADE_CLASS, REAGENT_CLASS = IC.Tradegoods or 7, IC.Reagent or 5
+
+local function hasDungeonData() return ns.Gen ~= nil and ns.Gen.bossLoot ~= nil end
+
+-- [itemId] = number of ForeverDB recipes that use it, built once.
+local recipeUses
+local function usedInRecipes(id)
+    if not recipeUses then
+        recipeUses = {}
+        for _, rows in pairs(ns.Gen and ns.Gen.recipes or {}) do
+            for _, r in ipairs(rows) do
+                for rid in tostring(r[6] or ""):gmatch("(%d+):") do
+                    rid = tonumber(rid)
+                    recipeUses[rid] = (recipeUses[rid] or 0) + 1
+                end
+            end
+        end
+    end
+    return recipeUses[id] or 0
+end
+UI.UsedInRecipes = usedInRecipes
+
+-- "reagent", "quest", "gear" or "other"; checked in that order.
+local function itemKind(id)
+    if usedInRecipes(id) > 0 then return "reagent" end
+    local classID = select(6, C_Item.GetItemInfoInstant(id))
+    if classID == TRADE_CLASS or classID == REAGENT_CLASS then return "reagent" end
+    if classID == QUEST_CLASS then return "quest" end
+    if classID == WEAPON_CLASS or classID == ARMOR_CLASS then return "gear" end
+    return "other"
+end
+
+local HIDE_KEY = { reagent = "hideReagent", quest = "hideQuest", gear = "hideGear", other = "hideOther" }
+
+local function itemPassesFilters(id)
+    local db = ItemFinderDB
+    if db.hideReagent or db.hideQuest or db.hideGear or db.hideOther then
+        if db[HIDE_KEY[itemKind(id)]] then return false end
+    end
+    if db.hideDungeon and hasDungeonData() and ns.Gen.bossLoot[id] then return false end
+    return true
 end
 
 -- After a farm/favourite change: rebuild the empty-search list, or recolour the visible result rows
@@ -347,8 +401,17 @@ function runSearch(text)
         return
     end
     if not ns.Search.IsBuilt() then statusText:SetText("Building item index...") end
-    ns.Search.Find(text, function(ids, nExact)
+    ns.Search.Find(text, function(all, allExact)
         if token ~= searchToken then return end -- a newer search replaced this one
+        -- Search filters, over all matches; exact-name matches stay first.
+        local ids, nExact = {}, 0
+        for i, id in ipairs(all) do
+            if itemPassesFilters(id) then
+                ids[#ids + 1] = id
+                if i <= allExact then nExact = nExact + 1 end
+            end
+        end
+        local hidden = #all - #ids
         -- Matching farm items, then favourites first, from all matches, not only the first MAX_ITEMS.
         local list = {}
         for group = 0, 2 do
@@ -358,10 +421,11 @@ function runSearch(text)
             end
         end
         itemBox:SetDataProvider(CreateDataProvider(list))
+        local hiddenText = hidden > 0 and (", " .. hidden .. " hidden by filters") or ""
         if #ids == 0 then
-            statusText:SetText("No items match.")
+            statusText:SetText("No items match" .. hiddenText .. ".")
         else
-            statusText:SetText(#ids .. " match(es)" .. (#ids > MAX_ITEMS and (", showing " .. MAX_ITEMS) or ""))
+            statusText:SetText(#ids .. " match(es)" .. (#ids > MAX_ITEMS and (", showing " .. MAX_ITEMS) or "") .. hiddenText)
         end
         if nExact >= 1 or #ids == 1 then selectItem(ids[1]) end
     end)
@@ -446,8 +510,45 @@ local function build()
     statusText:SetWidth(226)
     statusText:SetJustifyH("LEFT")
 
+    -- Search filter checkboxes: ticked = that kind of item is shown. All start ticked.
+    local function filterCheck(label, key, invert, tip, anchor, top)
+        local cb = CreateFrame("CheckButton", nil, page, "UICheckButtonTemplate")
+        cb:SetSize(20, 20)
+        if anchor then cb:SetPoint("LEFT", anchor, "RIGHT", 4, -1) else cb:SetPoint("TOPLEFT", 14, top) end
+        local fs = cb:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+        fs:SetPoint("LEFT", cb, "RIGHT", 0, 1)
+        fs:SetText(label)
+        local function value() return ItemFinderDB[key] == true end
+        if invert then cb:SetChecked(not value()) else cb:SetChecked(value()) end
+        cb:SetScript("OnClick", function(self)
+            local on = self:GetChecked() and true or false
+            if invert then on = not on end
+            ItemFinderDB[key] = on
+            runSearch(searchBox:GetText())
+        end)
+        cb:SetScript("OnEnter", function(self)
+            GameTooltip:SetOwner(self, "ANCHOR_TOP")
+            GameTooltip:AddLine(tip, 1, 1, 1, true)
+            GameTooltip:Show()
+        end)
+        cb:SetScript("OnLeave", function() GameTooltip:Hide() end)
+        return cb, fs
+    end
+    -- Row 1: what the item is. Row 2: the rest, and where it drops.
+    local _, reagentLabel = filterCheck("Reagents", "hideReagent", true,
+        "Show crafting materials: anything used in a recipe, plus trade goods (cloth, leather, herbs, ore, meat...).",
+        nil, -70)
+    local _, questLabel = filterCheck("Quest", "hideQuest", true, "Show quest items.", reagentLabel)
+    filterCheck("Gear", "hideGear", true, "Show equipment (weapons and armor).", questLabel)
+    local _, otherLabel = filterCheck("Other", "hideOther", true,
+        "Show everything else: potions, food, containers, junk...", nil, -90)
+    local dungeonCb = filterCheck("Dungeon", "hideDungeon", true,
+        "Show items that dungeon or raid bosses drop (ForeverDB boss loot; normal dungeon mobs aren't covered).",
+        otherLabel)
+    if not hasDungeonData() then dungeonCb:Hide() end -- needs GeneratedData.lua
+
     itemBox = makeList(page, 18, initItemRow)
-    itemBox:SetPoint("TOPLEFT", 12, -72)
+    itemBox:SetPoint("TOPLEFT", 12, -114)
     itemBox:SetPoint("BOTTOMLEFT", 12, 12)
     itemBox:SetWidth(222)
     runSearch("") -- recent items

@@ -154,6 +154,8 @@ local function cmdStatus()
     end
     say("  contract: needs " .. s.contractWanted .. ", " .. (s.contractOk and "OK" or ("FAILED: " .. tostring(s.contractMsg))))
     say("Item name index: " .. (ns.Search.IsBuilt() and "built" or "not built yet"))
+    say("Recipes and boss loot: " .. (ns.Gen and ("ForeverDB " .. tostring(ns.Gen.version)) or "not loaded")
+        .. ". Data from ForeverDB.net (https://foreverdb.net)")
 end
 
 local function cmdRaw(kind, id)

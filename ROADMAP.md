@@ -100,12 +100,24 @@ Questions to answer:
 - Phase 7 (own data file) is about *adding* measured rates, not replacing QuestieDB.
 
 ### Phase 7: Data improvements
-- Build script (offline, never at runtime) that turns ForeverDB's data files (`Items.lua`, `Loot.lua`) plus CMaNGOS classic-db into our own Lua data file. Keep the `-- Data: ForeverDB.net` header and credit ForeverDB.net. Goal: measured drop rates for the many items that now say "rate unknown".
-- Optional: a full recipe list (incl. unlearned recipes) from the same sources, for the Professions tab.
-- Show the data version and date in the window.
+- **Built:** `tools/build_data.py` turns ForeverDB's `Recipes.lua`, `Loot.lua` and `Meta.lua` into `GeneratedData.lua` (every recipe, and boss loot with rates measured in Forever and kill counts). Keeps the `-- Data: ForeverDB.net` line; credits in the TOC, `/if status` and NOTICE.md.
+- **Not available from ForeverDB:** per-mob rates for normal mobs (`Items.lua` only names one best source per item). That needs CMaNGOS classic-db's loot tables, a separate download; ask first.
+- Show the data version and date in the window (Phase 9).
 - Optional: our own recorder (the `LOOT_OPENED` event) saves observed drop counts to `ItemFinderDB`. Show "observed 3/40 (7.5%)" next to the database rate.
 
-### Phase 8: Design
+### Phase 8: Modules and options
+Let players switch off what they don't use. Two levels:
+- **Options** (the game's `Settings` panel, plus `/if` commands): turn single features on or off. Candidates: the "Drops from" item tooltip line, the "Farm:" mob tooltip line, map pins, the waypoint arrow, farm-goal messages, the minimap button, default tab. Each feature checks its option before it does anything (hooks registered but idle when off).
+- **Search filters (built early, with Phase 7)** (checkboxes under the search box, saved; options, not sub-addons, since players flip them often): Reagents, Quest, Gear, Other (every item has exactly one kind; reagents = used in a recipe or trade goods), plus Dungeon (ForeverDB boss loot; normal dungeon mobs aren't covered). Ticked = shown; all start ticked. Reagents are the main selling point, so Phase 9 (design) should put them front and centre. Applied to all matches, with a "N hidden by filters" count.
+- **Sub-addons** (separate folders players can untick in the AddOns list, like `AtlasLootContinued_Crafting`), each with `## Dependencies: ItemFinder`:
+  - `ItemFinder_Data`: `GeneratedData.lua` (ForeverDB recipes and boss loot, ~284 KB), `## LoadOnDemand: 1`, loaded the first time it's needed. Without it ItemFinder carries no ForeverDB data and runs on QuestieDB alone.
+  - `ItemFinder_Professions`: `Prof.lua` and `ProfUI.lua` (recipe scanning and the Professions tab). Without it the tab is hidden and no profession events are registered.
+  - Maybe `ItemFinder_Map`: map pins and the arrow, if they turn out heavy.
+- The core (`ItemFinder`: search, mob table, farm list) has to work with every sub-addon off, and pick them up when they're on (check for their `ns` hooks or a small registration call, never assume).
+- Development: one git repo with all folders side by side; each gets its own junction into AddOns.
+- **Done when:** each option and each sub-addon can be turned off without errors, the features it owns disappear cleanly, and memory use drops when they're off.
+
+### Phase 9: Design
 Make ItemFinder look and feel its own, not like a debug window.
 - A visual identity: icon, colour accents, header, consistent fonts and spacing across all three tabs.
 - Real WoW-style tabs instead of plain buttons (check which tab template works on Forever).
@@ -114,8 +126,9 @@ Make ItemFinder look and feel its own, not like a debug window.
 - Look at what other Forever addons (Questie, AtlasLoot, RareScanner, ForeverDB) do, and pick what makes ItemFinder stand out instead of copying them.
 - **Done when:** mockups are agreed on first, then built, and every tab follows them.
 
-### Phase 9: Release
-- Localization if wanted, an options panel (`Settings` API), icon, and a CurseForge page.
+### Phase 10: Release
+- Localization if wanted, icon, and a CurseForge page. (The options panel is built in Phase 8.)
+- Re-run `tools/build_data.py` right before packaging, so the ForeverDB data is current.
 - Package with a `.pkgmeta` and GitHub Actions (BigWigs packager).
 - Make the license GPL-3.0-compatible, since ForeverDB is GPL-3.0 and QuestieDB is GPL-3.0.
 

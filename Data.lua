@@ -159,8 +159,34 @@ end
 -- Sources
 ----------------------------------------------------------------------
 
+-- ForeverDB boss loot (GeneratedData.lua, built by tools/build_data.py), for one item:
+-- { [npcId] = { rate = pct or nil, kills = n, src = "f" measured in Forever | "c" Classic data } }, or nil.
+local function bossLoot(itemId)
+    local s = ns.Gen and ns.Gen.bossLoot and ns.Gen.bossLoot[itemId]
+    if type(s) ~= "string" then return nil end
+    local t = {}
+    for npc, pct, kills, src in s:gmatch("(%d+):([%d.]+):(%d+):(%a)") do
+        pct = tonumber(pct)
+        t[tonumber(npc)] = { rate = (pct and pct > 0) and pct or nil, kills = tonumber(kills) or 0, src = src }
+    end
+    return t
+end
+
+-- Applies a boss-loot entry to a mob row. A rate measured in Forever wins over QuestieDB's;
+-- ForeverDB's Classic-data rate only fills an unknown one.
+local function applyBossLoot(row, b)
+    if not b or not b.rate then return end
+    if b.src == "f" then
+        row.rate, row.source, row.kills = b.rate, "foreverdb", b.kills
+        row.fewKills = b.kills > 0 and b.kills <= 10
+    elseif row.rate == nil then
+        row.rate, row.source, row.fewKills = b.rate, "cmangos", false
+    end
+end
+
 -- Returns {
---   mobs = { { npcId, name, minLevel, maxLevel, rank, zone, zones, rate, source, fewKills }, ... },
+--   mobs = { { npcId, name, minLevel, maxLevel, rank, zone, zones, rate, source, fewKills, kills }, ... },
+--   kills = number of looted kills a ForeverDB-measured rate is based on (source "foreverdb"), else nil.
 --   fewKills = true when the rate looks like it comes from 10 or fewer kills.
 --   friendly = player factions the mob is friendly to: "A", "H", "AH" or nil.
 --   fromDropTable = true if the mob list came from the drop-table fallback,
@@ -175,9 +201,11 @@ function Data.GetSources(itemId)
         npcs = fallbackNpcs(itemId)
         result.fromDropTable = #npcs > 0
     end
+    local boss = bossLoot(itemId) or {}
+    local seen = {}
     for _, npcId in ipairs(npcs) do
         local rate, src = dropRate(itemId, npcId)
-        result.mobs[#result.mobs + 1] = {
+        local row = {
             npcId = npcId,
             name = L.Npc.name(npcId) or ("npc " .. npcId),
             minLevel = L.Npc.minLevel(npcId),
@@ -190,6 +218,31 @@ function Data.GetSources(itemId)
             fewKills = fewKills(rate, src),
             friendly = L.Npc.friendlyToFaction(npcId), -- "A", "H", "AH" or nil
         }
+        applyBossLoot(row, boss[npcId])
+        seen[npcId] = true
+        result.mobs[#result.mobs + 1] = row
+    end
+
+    -- Bosses ForeverDB has for this item that QuestieDB's list lacks.
+    for npcId, b in pairs(boss) do
+        if not seen[npcId] then
+            local info = ns.Gen.bosses and ns.Gen.bosses[npcId] or {}
+            local lo, hi = tostring(info[3] or ""):match("(%d+)%-?(%d*)")
+            local qzone = L.Npc.zoneID(npcId)
+            local row = {
+                npcId = npcId,
+                name = L.Npc.name(npcId) or info[1] or ("npc " .. npcId),
+                minLevel = L.Npc.minLevel(npcId) or tonumber(lo),
+                maxLevel = L.Npc.maxLevel(npcId) or tonumber(hi ~= "" and hi or lo),
+                rank = L.Npc.rank(npcId) or 3,
+                zone = (qzone and zoneName(qzone)) or info[2] or "?",
+                zones = countKeys(L.Npc.spawns(npcId)),
+                friendly = L.Npc.friendlyToFaction(npcId),
+                fewKills = false,
+            }
+            applyBossLoot(row, b)
+            result.mobs[#result.mobs + 1] = row
+        end
     end
 
     local objs = L.Item.objectDrops(itemId)
