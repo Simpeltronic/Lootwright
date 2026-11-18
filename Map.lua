@@ -28,10 +28,15 @@ local function setup()
         self:UseFrameLevelType("PIN_FRAME_LEVEL_AREA_POI")
         self:SetScalingLimits(1, 1.0, 1.2)
     end
-    function pinMixin:OnAcquired(x, y, m)
+    function pinMixin:OnAcquired(p, m)
         self:UseFrameLevelType("PIN_FRAME_LEVEL_AREA_POI")
-        self:SetPosition(x, y)
-        self.mob = m
+        self:SetPosition(p.x, p.y)
+        self.point, self.mob = p, m
+    end
+    -- Click: set the game's own waypoint (arrow + distance) on this spawn.
+    function pinMixin:OnMouseDown(button)
+        if button ~= "LeftButton" or not self.point then return end
+        Map.SetWaypoint(self.point, self.mob)
     end
     function pinMixin:OnReleased() self.mob = nil end
     -- The map canvas owns OnEnter/OnLeave and calls these instead.
@@ -41,7 +46,7 @@ local function setup()
         GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
         GameTooltip:AddLine(m.name)
         GameTooltip:AddLine("Level " .. ns.LevelText(m.minLevel, m.maxLevel), 1, 1, 1)
-        GameTooltip:AddLine("ItemFinder", 0.2, 1, 0.6)
+        GameTooltip:AddLine("Click: set waypoint", 0.2, 1, 0.6)
         GameTooltip:Show()
     end
     function pinMixin:OnMouseLeave() GameTooltip:Hide() end
@@ -61,6 +66,8 @@ local function setup()
         tex:SetAllPoints()
         tex:SetTexture(ICON)
         f:EnableMouse(true) -- hover goes through pinMixin:OnMouseEnter/Leave; the map asserts on own OnEnter scripts
+        -- OnMouseDown as a script is fine (RareScanner's pins do the same on this client).
+        f:SetScript("OnMouseDown", function(self, button) self:OnMouseDown(button) end)
         return Mixin(f, pinMixin)
     end
     pool.resetFunc = function(_, pin)
@@ -82,7 +89,7 @@ local function setup()
         self:RemoveAllData()
         local mapId = self:GetMap():GetMapID()
         for _, p in ipairs(pins) do
-            if p.mapId == mapId then self:GetMap():AcquirePin(TEMPLATE, p.x, p.y, mob) end
+            if p.mapId == mapId then self:GetMap():AcquirePin(TEMPLATE, p, mob) end
         end
     end
     WorldMapFrame:AddDataProvider(provider)
@@ -106,6 +113,21 @@ function Map.ShowMob(m)
         WorldMapFrame:SetMapID(mainMap)
     end
     provider:RefreshAllData()
+end
+
+-- Our own arrow (Forever shows no arrow for the game's waypoint), plus the game's map marker when
+-- available (same calls RareScanner uses). p = { mapId, x, y } (0..1).
+function Map.SetWaypoint(p, m)
+    ns.Arrow.Set(p, m and m.name)
+    if C_Map.SetUserWaypoint and UiMapPoint and C_SuperTrack
+        and (not C_Map.CanSetUserWaypointOnMap or C_Map.CanSetUserWaypointOnMap(p.mapId)) then
+        pcall(function()
+            C_Map.ClearUserWaypoint()
+            C_Map.SetUserWaypoint(UiMapPoint.CreateFromCoordinates(p.mapId, p.x, p.y))
+            C_SuperTrack.SetSuperTrackedUserWaypoint(true)
+        end)
+    end
+    ns.say(string.format("Waypoint set: %s at %.1f, %.1f", m and m.name or "spawn", p.x * 100, p.y * 100))
 end
 
 function Map.Clear()

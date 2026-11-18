@@ -15,7 +15,8 @@ Read `ROADMAP.md` for the full plan. This file is the short version plus the fac
 - Map pins copy HereBeDragons-Pins (in Questie's `Libs`): a Lua pin pool in `WorldMapFrame.pinPools` + a `MapCanvasDataProviderMixin` provider. Pins must NOT set their own `OnEnter`/`OnLeave` scripts (the canvas asserts); define `OnMouseEnter`/`OnMouseLeave` methods instead.
 - Drop rates from <= 10 kills are detected (exact k/n fractions in Wowhead data), shown with `*` and sorted after real rates.
 - **Phase 3 done** (part 2 verified in game). Search results list matching favorites first, in gold. Favorite button (`ItemFinderDB.favorites`, shown in gold above recent items), "Near lvl" filter (+/-5 levels, `ItemFinderDB.nearLevel`) and "Friendly" checkbox (mobs friendly to your faction are hidden unless `ItemFinderDB.showFriendly`; uses `Npc.friendlyToFaction`). Filters also apply to the tooltip line. No separate farm list (favorites cover it).
-- Next: Phase 5 (integrations).
+- **Phase 5 done** (arrow verified in game in the same zone; across zones on one continent it points via world-position conversion, grey "In <zone>" otherwise): clicking a map pin sets a waypoint. Forever does NOT show the game's own waypoint arrow (`C_Map.SetUserWaypoint` + `C_SuperTrack` only gives a map ping; verified), so `Arrow.lua` draws our own arrow + distance from `C_Map.GetPlayerMapPosition` and `GetPlayerFacing`, both wrapped in `pcall` and checked with `issecretvalue`. Right-click clears it; it clears itself within 10 yards. Questie's public API (`Questie.API`: RegisterOnReady, RegisterForQuestUpdates, GetQuestObjectiveIconForUnit) has no custom pins, so our own pins stay. TomTom and HandyNotes are not installed, so no integration for them.
+- Pin clicks: an `OnMouseDown` script on the pin is allowed (RareScanner does it); only `OnEnter`/`OnLeave` scripts trip the canvas assert.
 
 ## Reading game output from here
 
