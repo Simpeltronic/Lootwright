@@ -220,12 +220,17 @@ local function favorites()
     return ItemFinderDB.favorites
 end
 
-local favButton, farmButton
+local favButton, farmButton, goalBox
 local function updateFavButton()
     favButton:SetShown(selectedId ~= nil)
     favButton:SetText(selectedId and favorites()[selectedId] and "Unfavorite" or "Favorite")
     farmButton:SetShown(selectedId ~= nil)
     farmButton:SetText(selectedId and ns.Farm.Has(selectedId) and "Stop farm" or "Farm")
+    goalBox:SetShown(selectedId ~= nil)
+    if not goalBox:HasFocus() then
+        local goal = selectedId and ns.Farm.Has(selectedId) and ns.Farm.Goal(selectedId)
+        goalBox:SetText(goal and tostring(goal) or "")
+    end
 end
 
 -- Item-list order: farm items (green), then favourites (gold), then the rest.
@@ -410,7 +415,7 @@ local function build()
 
     headerName = frame:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
     headerName:SetPoint("TOPLEFT", headerIcon, "TOPRIGHT", 8, -1)
-    headerName:SetPoint("RIGHT", frame, "RIGHT", -196, 0)
+    headerName:SetPoint("RIGHT", frame, "RIGHT", -262, 0)
     headerName:SetJustifyH("LEFT")
     headerName:SetWordWrap(false)
     headerName:SetText("Search for an item")
@@ -442,6 +447,29 @@ local function build()
         GameTooltip:Show()
     end)
     farmButton:SetScript("OnLeave", function() GameTooltip:Hide() end)
+
+    -- Goal: applied on Enter only (focus changes while switching items must not touch goals).
+    goalBox = CreateFrame("EditBox", nil, frame, "SearchBoxTemplate")
+    goalBox:SetSize(58, 20)
+    goalBox:SetPoint("RIGHT", farmButton, "LEFT", -6, 0)
+    goalBox:SetAutoFocus(false)
+    goalBox:SetNumeric(true)
+    goalBox:SetMaxLetters(5)
+    if goalBox.Instructions then goalBox.Instructions:SetText("Goal") end
+    goalBox:HookScript("OnEnterPressed", function(self)
+        if selectedId then ns.Farm.SetGoal(selectedId, self:GetText()) end
+        self:ClearFocus()
+        updateFavButton()
+        if #searchBox:GetText() < 2 then runSearch("") end
+    end)
+    goalBox:HookScript("OnEnter", function(self)
+        GameTooltip:SetOwner(self, "ANCHOR_TOP")
+        GameTooltip:AddLine("Farm goal", 1, 1, 1)
+        GameTooltip:AddLine("Type how many you want and press Enter. The item leaves the farm list "
+            .. "once your bags hold that many. Empty + Enter removes the goal.", 0.8, 0.8, 0.8, true)
+        GameTooltip:Show()
+    end)
+    goalBox:HookScript("OnLeave", function() GameTooltip:Hide() end)
     updateFavButton()
 
     summaryText = frame:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
@@ -572,6 +600,13 @@ if TooltipDataProcessor and Enum.TooltipDataType then
         local text = tooltipText(id)
         if text then tooltip:AddLine("Drops from: " .. text, 0.4, 0.8, 1, true) end
     end)
+end
+
+-- Called by Farm.lua when a goal removes an item from the farm list.
+function UI.OnFarmChanged()
+    if not frame then return end
+    updateFavButton()
+    if #searchBox:GetText() < 2 then runSearch("") end
 end
 
 function UI.Toggle()
