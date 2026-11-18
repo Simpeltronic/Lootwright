@@ -7,6 +7,7 @@
 --   /if #<id>           show sources for an item ID in chat
 --   /if tooltip         toggle the "Drops from" line on item tooltips
 --   /if options         open Lootwright's options panel (feature toggles, sub-addon status)
+--   /if mini            toggle the farm tracker (experimental)
 --   /if clear           remove the selected mob's world map pins
 --   /if farmpins        toggle map skulls on every mob that drops a farm item
 --   /if prof            open the window on the Professions tab
@@ -209,7 +210,7 @@ SlashCmdList["LOOTWRIGHT"] = function(input)
 
     if input == "" then ns.UI.Toggle(); return end
     if lower == "help" then
-        say("/if  (window)  |  /if <item name>  |  /if #<id>  |  /if tooltip (toggle)  |  /if options  |  /if clear (map pins)  |  /if farmpins (toggle)  |  /if prof  |  /if farm  |  /if status  |  /if raw item|npc <id>")
+        say("/if  (window)  |  /if <item name>  |  /if #<id>  |  /if tooltip (toggle)  |  /if options  |  /if mini (farm tracker)  |  /if clear (map pins)  |  /if farmpins (toggle)  |  /if prof  |  /if farm  |  /if status  |  /if raw item|npc <id>")
         return
     end
     if lower == "prof" then
@@ -219,6 +220,12 @@ SlashCmdList["LOOTWRIGHT"] = function(input)
     end
     if lower == "farm" then ns.UI.ShowTab("farm"); return end
     if lower == "options" or lower == "config" then ns.Options.Open(); return end
+    if lower == "mini" then
+        LootwrightDB.tracker = LootwrightDB.tracker ~= true -- off by default; this flips it
+        ns.Tracker.Refresh()
+        say("Farm tracker (experimental): " .. (LootwrightDB.tracker and "on" or "off"))
+        return
+    end
     if lower == "farmpins" then
         LootwrightDB.farmPins = LootwrightDB.farmPins == false -- nil (default) counts as on
         ns.Map.RefreshFarmPins(true)

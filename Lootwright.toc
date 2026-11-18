@@ -18,5 +18,7 @@ Map.lua
 Arrow.lua
 Farm.lua
 FarmUI.lua
+FarmPopup.lua
+Tracker.lua
 Options.lua
 MinimapButton.lua

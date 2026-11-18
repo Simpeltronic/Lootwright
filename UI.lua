@@ -251,16 +251,17 @@ local function favorites()
     return LootwrightDB.favorites
 end
 
-local favButton, farmButton, goalBox
+local favButton, farmButton
 local function updateFavButton()
     favButton:SetShown(selectedId ~= nil)
     favButton:SetText(selectedId and favorites()[selectedId] and "Unfavorite" or "Favorite")
     farmButton:SetShown(selectedId ~= nil)
-    farmButton:SetText(selectedId and ns.Farm.IsSingle(selectedId) and "Stop farm" or "Farm")
-    goalBox:SetShown(selectedId ~= nil)
-    if not goalBox:HasFocus() then
-        local goal = selectedId and ns.Farm.IsSingle(selectedId) and ns.Farm.Goal(selectedId)
-        goalBox:SetText(goal and tostring(goal) or "")
+    -- "Farming 12/40" for items on the list (click to change the goal or stop), else "Farm...".
+    if selectedId and ns.Farm.IsSingle(selectedId) then
+        local goal = ns.Farm.Goal(selectedId)
+        farmButton:SetText("Farming " .. ns.Farm.Have(selectedId) .. (goal and ("/" .. goal) or ""))
+    else
+        farmButton:SetText("Farm...")
     end
 end
 
@@ -624,7 +625,7 @@ local function build()
 
     headerName = page:CreateFontString(nil, "OVERLAY", "GameFontHighlightLarge")
     headerName:SetPoint("TOPLEFT", headerIcon, "TOPRIGHT", 8, -1)
-    headerName:SetPoint("RIGHT", frame, "RIGHT", -262, 0)
+    headerName:SetPoint("RIGHT", frame, "RIGHT", -216, 0) -- clear of the Farm and Favorite buttons
     headerName:SetJustifyH("LEFT")
     headerName:SetWordWrap(false)
     headerName:SetText("Search for an item")
@@ -639,50 +640,25 @@ local function build()
         refreshItemRows()
     end)
 
-    farmButton = T.Button(page, "Farm", 76, 22)
+    farmButton = T.Button(page, "Farm...", 104, 22)
     farmButton:SetPoint("RIGHT", favButton, "LEFT", -6, 0)
-    farmButton:SetScript("OnClick", function()
-        if not selectedId then return end
-        ns.Farm.Toggle(selectedId)
-        updateFavButton()
-        refreshItemRows()
+    -- Opens the amount popup (FarmPopup.lua), where you set the goal, farm with no goal, or stop.
+    farmButton:SetScript("OnClick", function(self)
+        if selectedId then ns.FarmPopup.Open(selectedId, self) end
     end)
     farmButton:HookScript("OnEnter", function(self)
         GameTooltip:SetOwner(self, "ANCHOR_TOP")
         GameTooltip:AddLine("Farm list", 1, 1, 1)
-        GameTooltip:AddLine("Mobs that drop farm items get a \"Farm:\" line on their tooltip in the game.", 0.8, 0.8, 0.8, true)
+        GameTooltip:AddLine("Choose how many you want. Mobs that drop it get a \"Farm:\" line on their "
+            .. "tooltip and a skull on the map until your bags hold that many.", 0.8, 0.8, 0.8, true)
         GameTooltip:Show()
     end)
     farmButton:HookScript("OnLeave", function() GameTooltip:Hide() end)
-
-    -- Goal: applied on Enter only (focus changes while switching items must not touch goals).
-    goalBox = CreateFrame("EditBox", nil, page, "SearchBoxTemplate")
-    goalBox:SetSize(58, 20)
-    goalBox:SetPoint("RIGHT", farmButton, "LEFT", -6, 0)
-    goalBox:SetAutoFocus(false)
-    goalBox:SetNumeric(true)
-    goalBox:SetMaxLetters(5)
-    if goalBox.Instructions then goalBox.Instructions:SetText("Goal") end
-    goalBox:HookScript("OnEnterPressed", function(self)
-        if selectedId then ns.Farm.SetGoal(selectedId, self:GetText()) end
-        self:ClearFocus()
-        updateFavButton()
-        refreshItemRows()
-    end)
-    goalBox:HookScript("OnEnter", function(self)
-        GameTooltip:SetOwner(self, "ANCHOR_TOP")
-        GameTooltip:AddLine("Farm goal", 1, 1, 1)
-        GameTooltip:AddLine("Type how many you want and press Enter. The item leaves the farm list "
-            .. "once your bags hold that many. Empty + Enter removes the goal.", 0.8, 0.8, 0.8, true)
-        GameTooltip:Show()
-    end)
-    goalBox:HookScript("OnLeave", function() GameTooltip:Hide() end)
-    T.StyleEditBox(goalBox)
     updateFavButton()
 
     summaryText = page:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
     summaryText:SetPoint("TOPLEFT", headerIcon, "BOTTOMRIGHT", 8, 10)
-    summaryText:SetPoint("RIGHT", frame, "RIGHT", -196, 0) -- leave room for the Farm/Favorite buttons
+    summaryText:SetPoint("RIGHT", frame, "RIGHT", -216, 0) -- leave room for the Farm/Favorite buttons
     summaryText:SetJustifyH("LEFT")
 
     -- Same template as the item search box: InputBoxTemplate didn't take keyboard input on Forever.
@@ -851,6 +827,7 @@ end
 
 -- Called by Farm.lua when a goal removes an item from the farm list.
 function UI.OnFarmChanged()
+    if ns.Tracker then ns.Tracker.Refresh() end
     if not frame then return end
     updateFavButton()
     refreshItemRows()

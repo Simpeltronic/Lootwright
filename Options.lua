@@ -22,10 +22,20 @@ local TOGGLES = {
     { key = "minimapButton", label = "Minimap button",
       tip = "The Lootwright emblem on the minimap. Left-click opens the window, right-click opens these options.",
       onChange = function() ns.MinimapButton.Refresh() end },
+    -- Off by default (defaultOff): only true turns it on.
+    { key = "tracker", label = "Farm tracker on screen (experimental)", defaultOff = true,
+      tip = "A small panel that shows your farm list all the time. Drag an item from your bags onto it to farm it. "
+          .. "Also /if mini.",
+      onChange = function() ns.Tracker.Refresh() end },
 }
 
 -- True unless the player switched the feature off.
 function ns.IsOn(key) return LootwrightDB[key] ~= false end
+
+local function isChecked(t)
+    if t.defaultOff then return LootwrightDB[t.key] == true end
+    return LootwrightDB[t.key] ~= false
+end
 
 local SUBADDONS = {
     { name = "Lootwright_Data", label = "Lootwright - Data", what = "recipes and dungeon boss loot (ForeverDB.net)" },
@@ -44,7 +54,7 @@ end
 local panel, checks, subLines, category
 
 local function refresh()
-    for _, cb in ipairs(checks) do cb:SetChecked(ns.IsOn(cb.key)) end
+    for _, cb in ipairs(checks) do cb:SetChecked(isChecked(cb.toggle)) end
     for _, l in ipairs(subLines) do
         l.fs:SetText(l.sub.label .. ": |cffffffff" .. subAddonState(l.sub.name) .. "|r  |cff999999(" .. l.sub.what .. ")|r")
     end
@@ -67,7 +77,7 @@ local function build()
         local cb = CreateFrame("CheckButton", nil, panel, "UICheckButtonTemplate")
         cb:SetSize(24, 24)
         cb:SetPoint("TOPLEFT", prev, "BOTTOMLEFT", i == 1 and -2 or 0, i == 1 and -14 or -6)
-        cb.key = t.key
+        cb.key, cb.toggle = t.key, t
         local fs = cb:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
         fs:SetPoint("LEFT", cb, "RIGHT", 4, 1)
         fs:SetText(t.label)
