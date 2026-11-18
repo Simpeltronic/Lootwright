@@ -2,7 +2,7 @@
 ## Title: Lootwright - Data
 ## Notes: Recipes and dungeon boss loot for Lootwright. Data from ForeverDB.net (https://foreverdb.net). Turn it off to run Lootwright on QuestieDB alone.
 ## Author: Simpeltronic
-## Version: 0.1.0
+## Version: 0.9.0
 ## Dependencies: Lootwright
 ## LoadOnDemand: 1
 ## X-Credits: Data from ForeverDB.net (https://foreverdb.net), GPL-3.0 with an attribution term.

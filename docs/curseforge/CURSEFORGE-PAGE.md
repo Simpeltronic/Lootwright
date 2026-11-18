@@ -206,10 +206,10 @@ Use shot 1 as the first Gallery image: it's what shows in search results.
 - [ ] Ko-fi page made, `KOFI_URL` filled in.
 - [ ] GitHub repo made and pushed, `GITHUB_URL` filled in, Issues on.
 - [ ] Banner font swapped for an openly licensed one, banner re-rendered.
-- [ ] Full GPL-3.0 text added as `LICENSE` (repo and release zip).
-- [ ] Version set to 0.9.0 in all three TOCs and in `Core.lua`.
-- [ ] `tools/build_data.py` re-run right before packaging.
-- [ ] Release zip built with the three addon folders only.
+- [x] Full GPL-3.0 text added as `LICENSE` (repo and every folder of the release zip).
+- [x] Version set to 0.9.0 in all three TOCs and in `Core.lua`.
+- [x] `tools/build_data.py` re-run right before packaging (ForeverDB data 2026-11-18).
+- [x] Release zip built with the three addon folders only: `python -I tools/package.py` writes `dist/Lootwright-0.9.0.zip` (25 files, 183 KB). Re-run both scripts if anything changes before upload.
 - [ ] Logo, banner and screenshots uploaded; image links pasted into the description.
 - [ ] File uploaded as **Beta**.
 

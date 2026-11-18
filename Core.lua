@@ -17,7 +17,7 @@
 --   /if raw npc <id>    dump raw fields for an NPC, including the spawn table layout
 
 local _, ns = ...
-local VERSION = "0.1.0"
+local VERSION = "0.9.0"
 LootwrightDB = LootwrightDB or {}
 
 -- The one global Lootwright exposes: its namespace, so the sub-addons (Lootwright_Data,
