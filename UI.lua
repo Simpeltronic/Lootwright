@@ -11,6 +11,13 @@ local selectedId, currentMobs = nil, {}
 local sortKey, sortAsc = "rate", false
 local searchToken, searchTimer = 0, nil
 
+local TABS = {
+    { key = "search", label = "Search" },
+    { key = "prof", label = "Professions" },
+    { key = "farm", label = "Farm" },
+}
+local pages, tabButtons = {}, {}
+
 local MAX_ITEMS = 200
 local RANK_COLORS = { [1] = "ffd100", [2] = "c0c0c0", [3] = "ff4040", [4] = "c0c0c0" }
 
@@ -291,7 +298,7 @@ local function initItemRow(button, data)
             GameTooltip:Show()
         end)
     end
-    button.itemId = data.id
+    button.itemId, button.data = data.id, data
     local g = itemGroup(data.id)
     local name = (g == 0 and ("|cff40ff40" .. data.name .. "|r")) or (g == 1 and ("|cffffd100" .. data.name .. "|r"))
         or data.name
@@ -299,7 +306,18 @@ local function initItemRow(button, data)
     button.sel:SetShown(data.id == selectedId)
 end
 
-local function runSearch(text)
+-- After a farm/favourite change: rebuild the empty-search list, or recolour the visible result rows
+-- (rows are coloured when drawn, so they'd keep the old green/gold otherwise).
+local runSearch
+local function refreshItemRows()
+    if #searchBox:GetText() < 2 then
+        runSearch("")
+    else
+        itemBox:ForEachFrame(function(b) if b.data then initItemRow(b, b.data) end end)
+    end
+end
+
+function runSearch(text)
     text = (text or ""):match("^%s*(.-)%s*$")
     searchToken = searchToken + 1
     local token = searchToken
@@ -369,7 +387,6 @@ local function build()
     frame:SetSize(720, 440)
     frame:SetPoint("CENTER")
     frame:SetFrameStrata("HIGH")
-    frame:SetToplevel(true) -- comes to the front when clicked (vs. the Professions window)
     frame:SetClampedToScreen(true)
     frame:SetMovable(true)
     frame:EnableMouse(true)
@@ -382,8 +399,33 @@ local function build()
     title:SetPoint("TOP", 0, -5)
     title:SetText("ItemFinder")
 
+    -- One page per tab, each covering the window; the Search content is built on the first.
+    for _, t in ipairs(TABS) do
+        local pg = CreateFrame("Frame", nil, frame)
+        pg:SetAllPoints()
+        pg:Hide()
+        pages[t.key] = pg
+    end
+    local page = pages.search
+
+    -- Bottom tabs, like the character sheet. Plain panel buttons: they are known to work on Forever.
+    local prevTab
+    for _, t in ipairs(TABS) do
+        local b = CreateFrame("Button", nil, frame, "UIPanelButtonTemplate")
+        b:SetSize(100, 24)
+        if prevTab then
+            b:SetPoint("LEFT", prevTab, "RIGHT", 4, 0)
+        else
+            b:SetPoint("TOPLEFT", frame, "BOTTOMLEFT", 12, 2)
+        end
+        b:SetText(t.label)
+        b:SetScript("OnClick", function() UI.ShowTab(t.key) end)
+        tabButtons[t.key] = b
+        prevTab = b
+    end
+
     -- Left: search
-    searchBox = CreateFrame("EditBox", nil, frame, "SearchBoxTemplate")
+    searchBox = CreateFrame("EditBox", nil, page, "SearchBoxTemplate")
     searchBox:SetSize(214, 20)
     searchBox:SetPoint("TOPLEFT", 18, -32)
     searchBox:SetAutoFocus(false)
@@ -399,37 +441,31 @@ local function build()
         self:ClearFocus()
     end)
 
-    statusText = frame:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
+    statusText = page:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
     statusText:SetPoint("TOPLEFT", searchBox, "BOTTOMLEFT", -4, -4)
     statusText:SetWidth(226)
     statusText:SetJustifyH("LEFT")
 
-    itemBox = makeList(frame, 18, initItemRow)
+    itemBox = makeList(page, 18, initItemRow)
     itemBox:SetPoint("TOPLEFT", 12, -72)
-    itemBox:SetPoint("BOTTOMLEFT", 12, 38)
+    itemBox:SetPoint("BOTTOMLEFT", 12, 12)
     itemBox:SetWidth(222)
     runSearch("") -- recent items
 
-    local profB = CreateFrame("Button", nil, frame, "UIPanelButtonTemplate")
-    profB:SetSize(120, 22)
-    profB:SetPoint("BOTTOMLEFT", 14, 10)
-    profB:SetText("Professions")
-    profB:SetScript("OnClick", function() ns.ProfUI.Toggle() end)
-
     -- Right: selected item
-    headerIcon = frame:CreateTexture(nil, "ARTWORK")
+    headerIcon = page:CreateTexture(nil, "ARTWORK")
     headerIcon:SetSize(28, 28)
     headerIcon:SetPoint("TOPLEFT", 260, -30)
     headerIcon:SetTexture(134400) -- question mark
 
-    headerName = frame:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
+    headerName = page:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
     headerName:SetPoint("TOPLEFT", headerIcon, "TOPRIGHT", 8, -1)
     headerName:SetPoint("RIGHT", frame, "RIGHT", -262, 0)
     headerName:SetJustifyH("LEFT")
     headerName:SetWordWrap(false)
     headerName:SetText("Search for an item")
 
-    favButton = CreateFrame("Button", nil, frame, "UIPanelButtonTemplate")
+    favButton = CreateFrame("Button", nil, page, "UIPanelButtonTemplate")
     favButton:SetSize(90, 22)
     favButton:SetPoint("TOPRIGHT", -14, -30)
     favButton:SetScript("OnClick", function()
@@ -437,17 +473,17 @@ local function build()
         local favs = favorites()
         favs[selectedId] = not favs[selectedId] or nil
         updateFavButton()
-        if #searchBox:GetText() < 2 then runSearch("") end -- refresh the favourites list
+        refreshItemRows()
     end)
 
-    farmButton = CreateFrame("Button", nil, frame, "UIPanelButtonTemplate")
+    farmButton = CreateFrame("Button", nil, page, "UIPanelButtonTemplate")
     farmButton:SetSize(80, 22)
     farmButton:SetPoint("RIGHT", favButton, "LEFT", -4, 0)
     farmButton:SetScript("OnClick", function()
         if not selectedId then return end
         ns.Farm.Toggle(selectedId)
         updateFavButton()
-        if #searchBox:GetText() < 2 then runSearch("") end
+        refreshItemRows()
     end)
     farmButton:SetScript("OnEnter", function(self)
         GameTooltip:SetOwner(self, "ANCHOR_TOP")
@@ -458,7 +494,7 @@ local function build()
     farmButton:SetScript("OnLeave", function() GameTooltip:Hide() end)
 
     -- Goal: applied on Enter only (focus changes while switching items must not touch goals).
-    goalBox = CreateFrame("EditBox", nil, frame, "SearchBoxTemplate")
+    goalBox = CreateFrame("EditBox", nil, page, "SearchBoxTemplate")
     goalBox:SetSize(58, 20)
     goalBox:SetPoint("RIGHT", farmButton, "LEFT", -6, 0)
     goalBox:SetAutoFocus(false)
@@ -469,7 +505,7 @@ local function build()
         if selectedId then ns.Farm.SetGoal(selectedId, self:GetText()) end
         self:ClearFocus()
         updateFavButton()
-        if #searchBox:GetText() < 2 then runSearch("") end
+        refreshItemRows()
     end)
     goalBox:HookScript("OnEnter", function(self)
         GameTooltip:SetOwner(self, "ANCHOR_TOP")
@@ -481,13 +517,13 @@ local function build()
     goalBox:HookScript("OnLeave", function() GameTooltip:Hide() end)
     updateFavButton()
 
-    summaryText = frame:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+    summaryText = page:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
     summaryText:SetPoint("TOPLEFT", headerIcon, "BOTTOMRIGHT", 8, 10)
     summaryText:SetPoint("RIGHT", frame, "RIGHT", -196, 0) -- leave room for the Farm/Favorite buttons
     summaryText:SetJustifyH("LEFT")
 
     -- Same template as the item search box: InputBoxTemplate didn't take keyboard input on Forever.
-    zoneBox = CreateFrame("EditBox", nil, frame, "SearchBoxTemplate")
+    zoneBox = CreateFrame("EditBox", nil, page, "SearchBoxTemplate")
     zoneBox:SetSize(160, 20)
     zoneBox:SetPoint("TOPLEFT", 266, -68)
     zoneBox:SetAutoFocus(false)
@@ -495,7 +531,7 @@ local function build()
     zoneBox:HookScript("OnTextChanged", function() if selectedId then refreshMobs() end end)
     zoneBox:HookScript("OnEnterPressed", zoneBox.ClearFocus)
 
-    local clearPins = CreateFrame("Button", nil, frame, "UIPanelButtonTemplate")
+    local clearPins = CreateFrame("Button", nil, page, "UIPanelButtonTemplate")
     clearPins:SetSize(90, 22)
     clearPins:SetPoint("LEFT", zoneBox, "RIGHT", 12, 0)
     clearPins:SetText("Clear pins")
@@ -503,7 +539,7 @@ local function build()
 
     -- Filter checkboxes; own label font strings since template label keys differ between clients.
     local function makeCheck(label, key, tip, anchor)
-        local cb = CreateFrame("CheckButton", nil, frame, "UICheckButtonTemplate")
+        local cb = CreateFrame("CheckButton", nil, page, "UICheckButtonTemplate")
         cb:SetSize(22, 22)
         cb:SetPoint("LEFT", anchor, "RIGHT", 6, 0)
         local fs = cb:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
@@ -531,7 +567,7 @@ local function build()
     -- Column headers (click to sort)
     headerButtons = {}
     for _, col in ipairs(COLS) do
-        local b = CreateFrame("Button", nil, frame)
+        local b = CreateFrame("Button", nil, page)
         b:SetSize(col.w, 16)
         b:SetPoint("TOPLEFT", 256 + col.x, -94)
         b.col = col
@@ -550,20 +586,23 @@ local function build()
         headerButtons[#headerButtons + 1] = b
     end
 
-    mobBox = makeList(frame, 18, initMobRow)
+    mobBox = makeList(page, 18, initMobRow)
     mobBox:SetPoint("TOPLEFT", 256, -112)
     mobBox:SetPoint("BOTTOMRIGHT", -30, 30)
 
-    local foot = frame:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
+    local foot = page:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
     foot:SetPoint("BOTTOMLEFT", 260, 12)
     foot:SetJustifyH("LEFT")
     foot:SetText("Rates: Questie / QuestieDB data. * = very few kills.")
 
-    filterText = frame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+    filterText = page:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     filterText:SetPoint("BOTTOMRIGHT", -16, 12)
     filterText:SetJustifyH("RIGHT")
 
     refreshMobs()
+
+    ns.ProfUI.Build(pages.prof)
+    ns.FarmUI.Build(pages.farm)
 
     -- Shift-click hooks (the name moved between client versions; hook whichever exists).
     if ChatFrameUtil and ChatFrameUtil.InsertLink then hooksecurefunc(ChatFrameUtil, "InsertLink", onInsertLink) end
@@ -611,21 +650,27 @@ if TooltipDataProcessor and Enum.TooltipDataType then
     end)
 end
 
--- Opens the window on one item (used by the Professions window). With besideFrame, the window is
--- placed next to it (right side if it fits on screen, else left) instead of on top of it.
-function UI.ShowItem(itemId, besideFrame)
-    if InCombatLockdown() then return end
+-- Shows one tab ("search", "prof" or "farm") and remembers it. Opens the window if needed.
+function UI.ShowTab(key)
+    if InCombatLockdown() then ns.say("The window can't be opened in combat."); return end
     if not frame then build() end
-    if besideFrame and besideFrame:IsShown() and besideFrame:GetRight() then
-        frame:ClearAllPoints()
-        if besideFrame:GetRight() + frame:GetWidth() <= UIParent:GetRight() then
-            frame:SetPoint("TOPLEFT", besideFrame, "TOPRIGHT", 4, 0)
-        else
-            frame:SetPoint("TOPRIGHT", besideFrame, "TOPLEFT", -4, 0)
-        end
+    if not pages[key] then key = "search" end
+    for k, pg in pairs(pages) do pg:SetShown(k == key) end
+    for k, b in pairs(tabButtons) do
+        if k == key then b:LockHighlight() else b:UnlockHighlight() end
     end
+    ItemFinderDB.tab = key
     frame:Show()
-    frame:Raise()
+    if key == "prof" then ns.ProfUI.Refresh()
+    elseif key == "farm" then ns.FarmUI.Refresh()
+    else searchBox:SetFocus() end
+end
+
+-- Switches to the Search tab on one item (used by the Professions and Farm tabs).
+function UI.ShowItem(itemId)
+    if InCombatLockdown() then return end
+    UI.ShowTab("search")
+    searchBox:ClearFocus()
     local name = ns.Data.ItemName(itemId) or ""
     searchBox:SetText(name)
     runSearch(name)
@@ -636,12 +681,12 @@ end
 function UI.OnFarmChanged()
     if not frame then return end
     updateFavButton()
-    if #searchBox:GetText() < 2 then runSearch("") end
+    refreshItemRows()
+    ns.FarmUI.Refresh()
 end
 
+-- /if: open on the last used tab, or close.
 function UI.Toggle()
-    if InCombatLockdown() then ns.say("The window can't be opened in combat."); return end
-    if not frame then build() end
-    frame:SetShown(not frame:IsShown())
-    if frame:IsShown() then searchBox:SetFocus() end
+    if frame and frame:IsShown() then frame:Hide(); return end
+    UI.ShowTab(ItemFinderDB.tab or "search")
 end

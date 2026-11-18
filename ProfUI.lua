@@ -1,6 +1,6 @@
--- ItemFinder ProfUI.lua: Professions window. Left: profession switcher, recipe filter, recipe list.
+-- ItemFinder ProfUI.lua: the Professions tab. Left: profession switcher, recipe filter, recipe list.
 -- Right: the selected recipe's materials (have / need for N crafts, where they come from) and a
--- button that puts the missing materials on the farm list with goals. Out of combat only.
+-- button that puts the missing materials on the farm list with goals.
 
 local _, ns = ...
 local ProfUI = {}
@@ -64,11 +64,11 @@ local function initMatRow(button, rg)
             fs:SetWordWrap(false)
             button.cells[i] = fs
         end
-        button:SetScript("OnClick", function(self) ns.UI.ShowItem(self.itemId, frame) end)
+        button:SetScript("OnClick", function(self) ns.UI.ShowItem(self.itemId) end)
         button:SetScript("OnEnter", function(self)
             GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
             GameTooltip:SetItemByID(self.itemId)
-            GameTooltip:AddLine("Click: show where it drops", 0.2, 1, 0.6)
+            GameTooltip:AddLine("Click: show where it drops (Search tab)", 0.2, 1, 0.6)
             GameTooltip:Show()
         end)
     end
@@ -153,24 +153,9 @@ end
 ----------------------------------------------------------------------
 -- Frame
 ----------------------------------------------------------------------
-local function build()
-    frame = CreateFrame("Frame", "ItemFinderProfFrame", UIParent, "BasicFrameTemplateWithInset")
-    frame:Hide()
-    frame:SetSize(600, 420)
-    frame:SetPoint("CENTER", 40, -20)
-    frame:SetFrameStrata("HIGH")
-    frame:SetToplevel(true) -- comes to the front when clicked
-    frame:SetClampedToScreen(true)
-    frame:SetMovable(true)
-    frame:EnableMouse(true)
-    frame:RegisterForDrag("LeftButton")
-    frame:SetScript("OnDragStart", frame.StartMoving)
-    frame:SetScript("OnDragStop", frame.StopMovingOrSizing)
-    tinsert(UISpecialFrames, "ItemFinderProfFrame")
-
-    local title = frame:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
-    title:SetPoint("TOP", 0, -5)
-    title:SetText("ItemFinder - Professions")
+-- Builds the Professions tab into `parent` (a page of the main window, see UI.lua).
+function ProfUI.Build(parent)
+    frame = parent
 
     -- Profession switcher: < Name >
     local prev = CreateFrame("Button", nil, frame, "UIPanelButtonTemplate")
@@ -258,24 +243,11 @@ local function build()
     matBox:SetPoint("TOPLEFT", 260, -106)
     matBox:SetPoint("BOTTOMRIGHT", -30, 12)
 
-    frame:RegisterEvent("PLAYER_REGEN_DISABLED")
     frame:RegisterEvent("BAG_UPDATE_DELAYED")
-    frame:SetScript("OnEvent", function(self, event)
-        if event == "PLAYER_REGEN_DISABLED" then self:Hide() else refreshMats() end
-    end)
+    frame:SetScript("OnEvent", function(self) if self:IsVisible() then refreshMats() end end)
 end
 
-function ProfUI.Toggle()
-    if InCombatLockdown() then ns.say("The window can't be opened in combat."); return end
-    if not frame then build() end
-    frame:SetShown(not frame:IsShown())
-    if frame:IsShown() then
-        refreshRecipes()
-        refreshMats()
-    end
-end
-
--- Called by Prof.lua after a new scan.
+-- Called when the tab is shown and by Prof.lua after a new scan.
 function ProfUI.Refresh()
     if frame and frame:IsShown() then
         refreshRecipes()

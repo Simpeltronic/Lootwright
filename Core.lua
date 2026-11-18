@@ -2,12 +2,13 @@
 -- Data access lives in Data.lua, the name index in Search.lua, the window in UI.lua.
 --
 -- Commands:
---   /if                 open / close the search window
+--   /if                 open / close the window (on the last used tab)
 --   /if <text>          search items by name (substring), output in chat; shift-click an item to look it up
 --   /if #<id>           show sources for an item ID in chat
 --   /if tooltip         toggle the "Drops from" line on item tooltips
 --   /if clear           remove ItemFinder's world map pins
---   /if prof            open / close the Professions window
+--   /if prof            open the window on the Professions tab
+--   /if farm            open the window on the Farm tab
 --   /if status          check that QuestieDB / Questie are available
 --   /if raw item <id>   dump raw fields for an item
 --   /if raw npc <id>    dump raw fields for an NPC, including the spawn table layout
@@ -187,10 +188,11 @@ SlashCmdList["ITEMFINDER"] = function(input)
 
     if input == "" then ns.UI.Toggle(); return end
     if lower == "help" then
-        say("/if  (window)  |  /if <item name>  |  /if #<id>  |  /if tooltip (toggle)  |  /if clear (map pins)  |  /if prof  |  /if status  |  /if raw item|npc <id>")
+        say("/if  (window)  |  /if <item name>  |  /if #<id>  |  /if tooltip (toggle)  |  /if clear (map pins)  |  /if prof  |  /if farm  |  /if status  |  /if raw item|npc <id>")
         return
     end
-    if lower == "prof" then ns.ProfUI.Toggle(); return end
+    if lower == "prof" then ns.UI.ShowTab("prof"); return end
+    if lower == "farm" then ns.UI.ShowTab("farm"); return end
     if lower == "clear" then ns.Map.Clear(); say("Map pins cleared."); return end
     if lower == "tooltip" then
         ItemFinderDB.tooltip = ItemFinderDB.tooltip == false -- nil (default) counts as on
