@@ -6,9 +6,15 @@ Read `ROADMAP.md` for the full plan. This file is the short version plus the fac
 
 ## Current state
 
-- **Phase 1 (prototype)** is in progress. `Core.lua` (v0.0.2) has `/if <item name>`, `/if #<id>`, shift-click lookup, `/if status` and `/if raw item|npc <id>`. Output goes to chat only. There is no UI yet.
-- **Not yet verified in game.** The code was written without running it and without a Lua syntax check. The first job is to run it in game, read any errors, and fix them.
-- Next: confirm `/if status` and `/if Linen Cloth` work, then Phase 2 (search window and results list).
+- **Phase 1 done** (commit a6ea043): `/if status` and `/if Linen Cloth` verified in game.
+- **Phase 2 written, not yet verified in game** (v0.1.0): split into `Core.lua` (slash, log, shared formatting), `Data.lua` (all QuestieDB/Questie access), `Search.lua` (name index) and `UI.lua` (window). `/if` alone opens the window; the chat commands still work.
+- QuestieDB's `Item.npcDrops` is empty for many common items (e.g. Linen Cloth). `Data.lua` falls back to QuestieDB's quest-item drop tables (`QuestieClassicItemDrops`, ~2k items, `[itemId][npcId] = rate`), using Questie's decoded `DropDB.tableWowhead` / `tablePserver` when Questie is loaded. This fallback is not yet verified in game.
+- Next: test the window and the fallback; then Phase 3.
+
+## Reading game output from here
+
+- All `say()` output is also saved to `ItemFinderDB.log` (last 500 lines). Read it after a `/reload` from `Z:\Blizzard\World of Warcraft\_forever_\WTF\Account\<ACCOUNT>\SavedVariables\ItemFinder.lua`.
+- `Logs\WoWChatLog.txt` (`/chatlog`) does not capture addon `print()` output. Lua errors are not in the log; they need BugSack or a screenshot.
 
 ## Environment facts
 

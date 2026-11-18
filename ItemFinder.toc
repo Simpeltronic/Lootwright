@@ -2,10 +2,13 @@
 ## Title: ItemFinder
 ## Notes: Search an item and see which mobs drop it, where, at what level and drop rate.
 ## Author: You
-## Version: 0.0.2
+## Version: 0.1.0
 ## Dependencies: QuestieDB
 ## OptionalDeps: Questie
 ## SavedVariables: ItemFinderDB
 ## IconTexture: Interface\Icons\INV_Misc_Spyglass_02
 
 Core.lua
+Data.lua
+Search.lua
+UI.lua
