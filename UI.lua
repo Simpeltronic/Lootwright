@@ -56,8 +56,15 @@ local SORT_VALUE = {
     rate = function(r) return r.rate end,
 }
 
--- Unknown values always sort last; ties break by name, then NPC ID.
+local hereZone -- player's zone name, refreshed on each list refresh
+
+-- Mobs in the player's zone first; then the chosen column. Unknown values always sort last;
+-- ties break by name, then NPC ID.
 local function compareMobs(a, b)
+    if hereZone then
+        local ia, ib = a.zone == hereZone, b.zone == hereZone
+        if ia ~= ib then return ia end
+    end
     local va, vb = SORT_VALUE[sortKey](a), SORT_VALUE[sortKey](b)
     if (va == nil) ~= (vb == nil) then return va ~= nil end
     if va ~= nil and va ~= vb then
@@ -72,6 +79,8 @@ end
 -- Mob list
 ----------------------------------------------------------------------
 local function refreshMobs()
+    hereZone = GetRealZoneText()
+    if hereZone == "" then hereZone = nil end
     local filter = zoneBox and zoneBox:GetText():lower() or ""
     local rows = {}
     for _, r in ipairs(currentMobs) do
@@ -82,6 +91,22 @@ local function refreshMobs()
     for _, b in ipairs(headerButtons) do
         b.text:SetText(b.col.label .. (b.col.key == sortKey and (sortAsc and " ^" or " v") or ""))
     end
+end
+
+-- Same colours the game uses for mob difficulty (grey / green / yellow / orange / red).
+local function levelColor(level)
+    local fn = _G.GetCreatureDifficultyColor or _G.GetQuestDifficultyColor
+    if not level or not fn then return 1, 1, 1 end
+    local c = fn(level)
+    if type(c) ~= "table" then return 1, 1, 1 end
+    return c.r, c.g, c.b
+end
+
+local function rateColor(rate)
+    if not rate then return 0.6, 0.6, 0.6 end
+    if rate >= 25 then return 0.25, 1, 0.25 end
+    if rate >= 5 then return 1, 0.82, 0 end
+    return 1, 0.5, 0.25
 end
 
 local function initMobRow(button, r)
@@ -116,15 +141,36 @@ local function initMobRow(button, r)
     if rank ~= "" then name = name .. " |cff" .. (RANK_COLORS[r.rank] or "ffffff") .. "(" .. rank .. ")|r" end
     button.cells[1]:SetText(name)
     button.cells[2]:SetText(ns.LevelText(r.minLevel, r.maxLevel))
-    button.cells[3]:SetText(r.zone .. (r.zones > 1 and (" |cff999999+" .. (r.zones - 1) .. "|r") or ""))
-    button.cells[4]:SetText(r.rate and ns.RateText(r.rate) or "|cff999999?|r")
+    button.cells[2]:SetTextColor(levelColor(levelValue(r)))
+    local zone = r.zone == hereZone and ("|cff40ff40" .. r.zone .. "|r") or r.zone
+    button.cells[3]:SetText(zone .. (r.zones > 1 and (" |cff999999+" .. (r.zones - 1) .. "|r") or ""))
+    button.cells[4]:SetText(r.rate and ns.RateText(r.rate) or "?")
+    button.cells[4]:SetTextColor(rateColor(r.rate))
 end
 
 ----------------------------------------------------------------------
 -- Item selection
 ----------------------------------------------------------------------
+local MAX_RECENT = 10
+
+-- Recently selected item IDs, newest first, kept in SavedVariables.
+local function recentList()
+    ItemFinderDB.recent = ItemFinderDB.recent or {}
+    return ItemFinderDB.recent
+end
+
+local function pushRecent(itemId)
+    local list = recentList()
+    for i = #list, 1, -1 do
+        if list[i] == itemId then table.remove(list, i) end
+    end
+    table.insert(list, 1, itemId)
+    for i = #list, MAX_RECENT + 1, -1 do list[i] = nil end
+end
+
 local function selectItem(itemId)
     selectedId = itemId
+    pushRecent(itemId)
     itemBox:ForEachFrame(function(b) b.sel:SetShown(b.itemId == selectedId) end)
 
     local name = ns.Data.ItemName(itemId) or ("item " .. itemId)
@@ -179,13 +225,17 @@ local function runSearch(text)
     text = (text or ""):match("^%s*(.-)%s*$")
     searchToken = searchToken + 1
     local token = searchToken
-    if #text < 2 then
-        itemBox:SetDataProvider(CreateDataProvider({}))
-        statusText:SetText("Type at least 2 letters, or shift-click an item.")
-        return
-    end
     if not ns.Data.Available() then
         statusText:SetText("|cffff4040QuestieDB is not available.|r")
+        return
+    end
+    if #text < 2 then
+        -- Empty search: show recently viewed items.
+        local list = {}
+        for i, id in ipairs(recentList()) do list[i] = { id = id, name = ns.Data.ItemName(id) or ("item " .. id) } end
+        itemBox:SetDataProvider(CreateDataProvider(list))
+        statusText:SetText(#list > 0 and "Recent items. Type 2+ letters to search."
+            or "Type at least 2 letters, or shift-click an item.")
         return
     end
     if not ns.Search.IsBuilt() then statusText:SetText("Building item index...") end
@@ -240,7 +290,8 @@ local function build()
     searchBox:SetPoint("TOPLEFT", 18, -32)
     searchBox:SetAutoFocus(false)
     searchBox:HookScript("OnTextChanged", function(self, userInput)
-        if not userInput then return end
+        -- The clear (x) button sets "" without userInput; still show the recent list then.
+        if not userInput and self:GetText() ~= "" then return end
         if searchTimer then searchTimer:Cancel() end
         searchTimer = C_Timer.NewTimer(0.3, function() runSearch(self:GetText()) end)
     end)
@@ -254,12 +305,12 @@ local function build()
     statusText:SetPoint("TOPLEFT", searchBox, "BOTTOMLEFT", -4, -4)
     statusText:SetWidth(226)
     statusText:SetJustifyH("LEFT")
-    statusText:SetText("Type at least 2 letters, or shift-click an item.")
 
     itemBox = makeList(frame, 18, initItemRow)
     itemBox:SetPoint("TOPLEFT", 12, -72)
     itemBox:SetPoint("BOTTOMLEFT", 12, 12)
     itemBox:SetWidth(222)
+    runSearch("") -- recent items
 
     -- Right: selected item
     headerIcon = frame:CreateTexture(nil, "ARTWORK")
@@ -328,6 +379,38 @@ local function build()
     -- Keep the window out of combat.
     frame:RegisterEvent("PLAYER_REGEN_DISABLED")
     frame:SetScript("OnEvent", function(self) self:Hide() end)
+end
+
+----------------------------------------------------------------------
+-- Item tooltip line: "Drops from: A 45.0%, B 30.0%, C +12 more"
+----------------------------------------------------------------------
+local tipCache = {} -- [itemId] = text, or false when no mobs drop it
+
+local function tooltipText(itemId)
+    if tipCache[itemId] ~= nil then return tipCache[itemId] end
+    local ok, src = pcall(ns.Data.GetSources, itemId)
+    if not ok then return nil end -- don't cache errors
+    local mobs = src.mobs
+    table.sort(mobs, ns.SortByRate)
+    local parts = {}
+    for i = 1, math.min(3, #mobs) do
+        local m = mobs[i]
+        parts[i] = m.name .. (m.rate and (" " .. ns.RateText(m.rate)) or "")
+    end
+    local text = #parts > 0 and (table.concat(parts, ", ") .. (#mobs > 3 and (" +" .. (#mobs - 3) .. " more") or ""))
+    tipCache[itemId] = text or false
+    return text
+end
+
+if TooltipDataProcessor and Enum.TooltipDataType then
+    TooltipDataProcessor.AddTooltipPostCall(Enum.TooltipDataType.Item, function(tooltip, data)
+        if ItemFinderDB.tooltip == false or InCombatLockdown() then return end
+        if tooltip ~= GameTooltip and tooltip ~= ItemRefTooltip then return end -- skip compare tooltips
+        local id = type(data) == "table" and data.id
+        if type(id) ~= "number" or not ns.Data.Available() then return end
+        local text = tooltipText(id)
+        if text then tooltip:AddLine("Drops from: " .. text, 0.4, 0.8, 1, true) end
+    end)
 end
 
 function UI.Toggle()

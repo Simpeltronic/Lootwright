@@ -10,7 +10,8 @@ Read `ROADMAP.md` for the full plan. This file is the short version plus the fac
 - **Phase 2 done** (v0.1.0, commit 4e273c3, verified in game): split into `Core.lua` (slash, log, shared formatting), `Data.lua` (all QuestieDB/Questie access), `Search.lua` (name index) and `UI.lua` (window). `/if` alone opens the window; the chat commands still work.
 - QuestieDB's `Item.npcDrops` is empty for many common items (e.g. Linen Cloth). `Data.lua` falls back to QuestieDB's quest-item drop tables (`QuestieClassicItemDrops`, ~2k items, `[itemId][npcId] = rate`), using Questie's decoded `DropDB.tableWowhead` / `tablePserver` when Questie is loaded. Verified with Linen Cloth (200 mobs). Known weakness: Wowhead rates for quest mobs are often 100% from tiny samples, so they sort to the top.
 - On Forever, `InputBoxTemplate` edit boxes didn't take keyboard input (keys went to game binds). Use `SearchBoxTemplate`.
-- Next: Phase 3 (quality of life).
+- **Phase 3 part 1 done** (verified in game): level colours by difficulty, colour-coded rates, current zone sorted first (matched by zone name), recent items (`ItemFinderDB.recent`), and a "Drops from" tooltip line via `TooltipDataProcessor` (`/if tooltip` toggles `ItemFinderDB.tooltip`).
+- Next: the rest of Phase 3 (favorites, farm list, faction/level filters) or Phase 4 (map pins).
 
 ## Reading game output from here
 
