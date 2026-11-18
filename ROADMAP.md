@@ -106,7 +106,7 @@ Questions to answer:
 - Optional: our own recorder (the `LOOT_OPENED` event) saves observed drop counts to `LootwrightDB`. Show "observed 3/40 (7.5%)" next to the database rate.
 
 ### Phase 8: Modules and options
-**Built (Nov 2026, testing):** `Lootwright_Data` (load on demand) and `Lootwright_Professions` sub-addons; an options panel with five feature toggles. `Lootwright_Map` was not split out: pins and the arrow are small, and have their own toggles instead.
+**Done (Nov 2026, verified in game):** `Lootwright_Data` (load on demand) and `Lootwright_Professions` sub-addons; an options panel with five feature toggles. `Lootwright_Map` was not split out: pins and the arrow are small, and have their own toggles instead.
 
 Let players switch off what they don't use. Two levels:
 - **Options** (the game's `Settings` panel, plus `/if` commands): turn single features on or off. Candidates: the "Drops from" item tooltip line, the "Farm:" mob tooltip line, map pins, the waypoint arrow, farm-goal messages, the minimap button, default tab. Each feature checks its option before it does anything (hooks registered but idle when off).
