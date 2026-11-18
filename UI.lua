@@ -65,6 +65,11 @@ local function compareMobs(a, b)
         local ia, ib = a.zone == hereZone, b.zone == hereZone
         if ia ~= ib then return ia end
     end
+    if sortKey == "rate" then
+        -- Real rates, then few-kill rates, then unknown, whatever the direction.
+        local ta, tb = ns.RateTier(a), ns.RateTier(b)
+        if ta ~= tb then return ta < tb end
+    end
     local va, vb = SORT_VALUE[sortKey](a), SORT_VALUE[sortKey](b)
     if (va == nil) ~= (vb == nil) then return va ~= nil end
     if va ~= nil and va ~= vb then
@@ -127,7 +132,9 @@ local function initMobRow(button, r)
             GameTooltip:AddLine(m.name)
             GameTooltip:AddLine("NPC ID " .. m.npcId, 0.7, 0.7, 0.7)
             if m.zones > 1 then GameTooltip:AddLine("Spawns in " .. m.zones .. " zones", 1, 1, 1) end
-            if m.rate then
+            if m.fewKills then
+                GameTooltip:AddLine("* Rate from very few kills (10 or fewer), unreliable", 1, 0.5, 0.25)
+            elseif m.rate then
                 GameTooltip:AddLine("Drop rate from " .. (m.source or "?") .. " data", 0.7, 0.7, 0.7)
             else
                 GameTooltip:AddLine("No drop rate in the database", 0.7, 0.7, 0.7)
@@ -146,8 +153,8 @@ local function initMobRow(button, r)
     button.cells[2]:SetTextColor(levelColor(levelValue(r)))
     local zone = r.zone == hereZone and ("|cff40ff40" .. r.zone .. "|r") or r.zone
     button.cells[3]:SetText(zone .. (r.zones > 1 and (" |cff999999+" .. (r.zones - 1) .. "|r") or ""))
-    button.cells[4]:SetText(r.rate and ns.RateText(r.rate) or "?")
-    button.cells[4]:SetTextColor(rateColor(r.rate))
+    button.cells[4]:SetText(r.rate and ns.RateText(r.rate, r.fewKills) or "?")
+    button.cells[4]:SetTextColor(rateColor(not r.fewKills and r.rate or nil)) -- few kills: grey
 end
 
 ----------------------------------------------------------------------
@@ -376,7 +383,7 @@ local function build()
     foot:SetPoint("BOTTOMLEFT", 260, 12)
     foot:SetPoint("BOTTOMRIGHT", -16, 12)
     foot:SetJustifyH("LEFT")
-    foot:SetText("Drop rates from Questie / QuestieDB data. Most non-quest items have no known rate.")
+    foot:SetText("Rates from Questie / QuestieDB data. * = very few kills. Many items have no known rate.")
 
     refreshMobs()
 
@@ -403,7 +410,7 @@ local function tooltipText(itemId)
     local parts = {}
     for i = 1, math.min(3, #mobs) do
         local m = mobs[i]
-        parts[i] = m.name .. (m.rate and (" " .. ns.RateText(m.rate)) or "")
+        parts[i] = m.name .. (m.rate and (" " .. ns.RateText(m.rate, m.fewKills)) or "")
     end
     local text = #parts > 0 and (table.concat(parts, ", ") .. (#mobs > 3 and (" +" .. (#mobs - 3) .. " more") or ""))
     tipCache[itemId] = text or false

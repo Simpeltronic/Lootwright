@@ -101,6 +101,23 @@ local function tableRate(itemId, npcId)
     end
 end
 
+-- Wowhead rates carry 4 decimals and no sample size. A rate from n kills is an exact fraction
+-- k/n (100, 50, 33.3333, 25 ...), so an exact fraction with n <= 10 means "very few kills".
+-- Checked on QuestieDB's data: flags ~10% of Wowhead rates, incl. every 100% on Linen Cloth.
+local function fewKills(rate, source)
+    if source ~= "wowhead" or type(rate) ~= "number" then return false end
+    for n = 1, 10 do
+        local k = rate * n / 100
+        if math.abs(k - math.floor(k + 0.5)) < 0.001 then return true end
+    end
+    return false
+end
+Data.FewKills = fewKills -- exposed for the self-check below
+
+-- Self-check (runs once at load; cheap).
+assert(fewKills(100, "wowhead") and fewKills(33.3333, "wowhead") and fewKills(75, "wowhead"))
+assert(not fewKills(97.9381, "wowhead") and not fewKills(43.7355, "wowhead") and not fewKills(100, "cmangos"))
+
 ----------------------------------------------------------------------
 -- Zones
 ----------------------------------------------------------------------
@@ -116,7 +133,8 @@ end
 ----------------------------------------------------------------------
 
 -- Returns {
---   mobs = { { npcId, name, minLevel, maxLevel, rank, zone, zones, rate, source }, ... },
+--   mobs = { { npcId, name, minLevel, maxLevel, rank, zone, zones, rate, source, fewKills }, ... },
+--   fewKills = true when the rate looks like it comes from 10 or fewer kills.
 --   fromDropTable = true if the mob list came from the drop-table fallback,
 --   objects = count, vendors = count }
 -- rank: 0 normal, 1 elite, 2 rare elite, 3 boss, 4 rare. rate is nil when unknown.
@@ -142,6 +160,7 @@ function Data.GetSources(itemId)
             zones = countKeys(L.Npc.spawns(npcId)),
             rate = rate,
             source = src,
+            fewKills = fewKills(rate, src),
         }
     end
 

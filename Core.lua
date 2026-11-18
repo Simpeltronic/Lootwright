@@ -45,15 +45,23 @@ function ns.LevelText(lo, hi)
     return lo .. "-" .. hi
 end
 
-function ns.RateText(rate)
+-- rate text; "*" marks a rate from very few kills.
+function ns.RateText(rate, fewKills)
     if not rate then return "rate unknown" end
-    return string.format("%.1f%%", rate)
+    return string.format("%.1f%%", rate) .. (fewKills and "*" or "")
 end
 
--- Highest rate first, unknown rates last, then by name.
+-- 0 = real rate, 1 = rate from very few kills, 2 = unknown.
+function ns.RateTier(r)
+    if not r.rate then return 2 end
+    return r.fewKills and 1 or 0
+end
+
+-- Highest rate first within each tier (real, few kills, unknown), then by name.
 function ns.SortByRate(a, b)
-    if (a.rate ~= nil) ~= (b.rate ~= nil) then return a.rate ~= nil end
-    if a.rate and b.rate and a.rate ~= b.rate then return a.rate > b.rate end
+    local ta, tb = ns.RateTier(a), ns.RateTier(b)
+    if ta ~= tb then return ta < tb end
+    if a.rate and a.rate ~= b.rate then return a.rate > b.rate end
     if a.name ~= b.name then return a.name < b.name end
     return a.npcId < b.npcId
 end
@@ -84,8 +92,11 @@ local function showItem(itemId)
                 r.name, rank ~= "" and (" (" .. rank .. ")") or "",
                 ns.LevelText(r.minLevel, r.maxLevel), r.zone,
                 r.zones > 1 and (" +" .. (r.zones - 1) .. " more zone(s)") or "",
-                ns.RateText(r.rate), r.source and (" [" .. r.source .. "]") or ""))
+                ns.RateText(r.rate, r.fewKills), r.source and (" [" .. r.source .. "]") or ""))
         end
+    end
+    for _, r in ipairs(rows) do
+        if r.fewKills then say("  * rate from very few kills, unreliable") break end
     end
     if src.objects > 0 then say("  Also found in " .. src.objects .. " object(s) (chests, nodes).") end
     if src.vendors > 0 then say("  Sold by " .. src.vendors .. " vendor(s).") end
