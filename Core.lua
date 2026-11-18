@@ -9,7 +9,7 @@
 --   /if clear           remove ItemFinder's world map pins
 --   /if prof            open the window on the Professions tab
 --   /if farm            open the window on the Farm tab
---   /if status          check that QuestieDB / Questie are available
+--   /if status          check that QuestieDB is available and its contract matches
 --   /if raw item <id>   dump raw fields for an item
 --   /if raw npc <id>    dump raw fields for an NPC, including the spawn table layout
 
@@ -152,7 +152,7 @@ local function cmdStatus()
         say("  Item API: " .. tostring(s.itemApi) .. "  Npc API: " .. tostring(s.npcApi))
         if s.itemCount then say("  item IDs: " .. s.itemCount) end
     end
-    say("QuestieLoader (Questie): " .. (s.questie and "found" or "not found") .. " (needed only for drop rates)")
+    say("  contract: needs " .. s.contractWanted .. ", " .. (s.contractOk and "OK" or ("FAILED: " .. tostring(s.contractMsg))))
     say("Item name index: " .. (ns.Search.IsBuilt() and "built" or "not built yet"))
 end
 
@@ -219,4 +219,7 @@ local f = CreateFrame("Frame")
 f:RegisterEvent("PLAYER_LOGIN")
 f:SetScript("OnEvent", function()
     say("v" .. VERSION .. " loaded. Type /if to open the window, /if help for commands.")
+    -- A QuestieDB update that breaks the API we use should say so, not fail silently.
+    local ok, msg = ns.Data.CheckContract()
+    if not ok then say("|cffff4040" .. tostring(msg) .. "|r ItemFinder can't read its data until this is fixed.") end
 end)

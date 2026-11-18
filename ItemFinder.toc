@@ -4,7 +4,7 @@
 ## Author: You
 ## Version: 0.1.0
 ## Dependencies: QuestieDB
-## OptionalDeps: Questie
+## X-QuestieDB-Contract: 4
 ## SavedVariables: ItemFinderDB
 ## IconTexture: Interface\Icons\INV_Misc_Spyglass_02
 

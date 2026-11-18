@@ -1,21 +1,43 @@
--- ItemFinder Data.lua: the ONLY file that knows QuestieDB / Questie data formats.
+-- ItemFinder Data.lua: the ONLY file that knows QuestieDB's data formats.
 -- Everything else works with the plain tables returned here.
 --   LibQuestieDB.Item.GetAllIds / .name / .npcDrops / .objectDrops / .vendors
---   LibQuestieDB.Npc.name / .minLevel / .maxLevel / .rank / .zoneID / .spawns
---   Drop rates (optional): Questie's QuestieDB.GetItemDroprate(itemId, npcId), else QuestieDB's drop tables.
+--   LibQuestieDB.Npc.name / .minLevel / .maxLevel / .rank / .zoneID / .spawns / .friendlyToFaction
+--   LibQuestieDB.Support.Get(...): drop tables, drop corrections, area -> uiMapID tables
+-- QuestieDB is the only addon we need. We don't use Questie: its drop-rate rules are copied below
+-- (Phase 6 dependency review, see ROADMAP.md).
 
 local _, ns = ...
 local Data = {}
 ns.Data = Data
 
+-- The QuestieDB contract version this code was written against (LibQuestieDB.RequireContract).
+Data.CONTRACT = 4
+
 local function lib()
     return _G.LibQuestieDB
+end
+
+local contractOk, contractMsg
+-- Checks QuestieDB's contract once. Returns ok, message.
+function Data.CheckContract()
+    if contractOk ~= nil then return contractOk, contractMsg end
+    local L = lib()
+    if not L then
+        contractOk, contractMsg = false, "QuestieDB is not loaded."
+    elseif type(L.RequireContract) ~= "function" then
+        contractOk = true -- older QuestieDB without the check; the API calls below are still guarded
+    else
+        local ok, a, b = pcall(L.RequireContract, Data.CONTRACT)
+        contractOk = ok and a == true
+        contractMsg = (not contractOk) and tostring(b or a) or nil
+    end
+    return contractOk, contractMsg
 end
 
 -- True when QuestieDB's API is usable.
 function Data.Available()
     local L = lib()
-    return L ~= nil and L.Item ~= nil and L.Npc ~= nil
+    return L ~= nil and L.Item ~= nil and L.Npc ~= nil and (Data.CheckContract())
 end
 
 function Data.AllItemIds()
@@ -37,49 +59,62 @@ Data.CountKeys = countKeys
 -- Drop rates
 ----------------------------------------------------------------------
 
--- Questie's drop-rate lookup (optional). Returns rate (percent) and source name, or nil.
-local function questieRate(itemId, npcId)
-    if not _G.QuestieLoader then return nil end
-    local ok, QDB = pcall(function() return QuestieLoader:ImportModule("QuestieDB") end)
-    if not ok or type(QDB) ~= "table" or type(QDB.GetItemDroprate) ~= "function" then return nil end
-    local ok2, a, b = pcall(QDB.GetItemDroprate, itemId, npcId)
-    if not ok2 or a == nil then return nil end
-    if type(a) == "table" then return a[1], a[2] end
-    return a, b
+-- QuestieDB ships three drop tables, all [itemId][npcId] = rate (percent), covering ~2k quest items:
+--   wowhead     Wowhead's crowd-sourced rates
+--   cmangos     CMaNGOS rates, only for quest-only drops
+--   corrections QuestieDB's manual fixes (Era); a negative value points at one of the other tables
+-- Rule (same as Questie's DropDB): correction, then cmangos, then wowhead.
+local drops -- { wowhead = t, cmangos = t, corrections = t }, decoded once (~570 KB, a short hitch)
+
+local function decode(src)
+    local fn = type(src) == "string" and loadstring(src)
+    if not fn then return nil end
+    local ok, t = pcall(fn)
+    return ok and type(t) == "table" and t or nil
 end
 
--- Drop tables ([itemId][npcId] = rate) shipped with QuestieDB; they cover ~2k quest-objective items.
--- Used when Item.npcDrops is empty (e.g. Linen Cloth). Prefer Questie's already-decoded copy.
-local dropTables
-local function getDropTables()
-    if dropTables then return dropTables end
-    dropTables = {}
-    if _G.QuestieLoader then
-        local ok, DDB = pcall(function() return QuestieLoader:ImportModule("DropDB") end)
-        if ok and type(DDB) == "table" then
-            if type(DDB.tableWowhead) == "table" then dropTables[#dropTables + 1] = DDB.tableWowhead end
-            if type(DDB.tablePserver) == "table" then dropTables[#dropTables + 1] = DDB.tablePserver end
-        end
+local function getDrops()
+    if drops then return drops end
+    drops = {}
+    local L = lib()
+    local ok, sup = pcall(function() return L.Support.Get("QuestieClassicItemDrops") end)
+    if ok and type(sup) == "table" then
+        drops.wowhead = decode(sup.wowheadData)
+        drops.cmangos = decode(sup.cmangosData)
     end
-    if #dropTables == 0 then
-        -- Questie not loaded: decode QuestieDB's raw string once (~570 KB, a short one-time hitch).
-        local L = lib()
-        local ok, sup = pcall(function() return L.Support.Get("QuestieClassicItemDrops") end)
-        if ok and type(sup) == "table" then
-            for _, field in ipairs({ "wowheadData", "cmangosData" }) do
-                local fn = type(sup[field]) == "string" and loadstring(sup[field])
-                local ok2, t = false, nil
-                if fn then ok2, t = pcall(fn) end
-                if ok2 and type(t) == "table" then dropTables[#dropTables + 1] = t end
-            end
-        end
+    local ok2, cor = pcall(function() return L.Support.Get("QuestieItemDropCorrections") end)
+    if ok2 and type(cor) == "table" and type(cor.Era) == "table" then drops.corrections = cor.Era end
+    return drops
+end
+
+local function cell(t, itemId, npcId)
+    local r = t and type(t[itemId]) == "table" and t[itemId][npcId]
+    return type(r) == "number" and r or nil
+end
+
+-- Returns rate (percent) and source ("questie", "cmangos" or "wowhead"), or nil.
+local function dropRate(itemId, npcId)
+    local d = getDrops()
+    local keys = lib().Enum and lib().Enum.dropCorrectionKeys or {}
+    local WOWHEAD, PSERVER = keys.WOWHEAD or -1, keys.PSERVER or -2
+    local c = cell(d.corrections, itemId, npcId)
+    if c then
+        if c >= 0 then return c, "questie" end
+        -- A reference correction picks the table; if that table has no value, fall through.
+        if c == WOWHEAD and cell(d.wowhead, itemId, npcId) then return cell(d.wowhead, itemId, npcId), "wowhead" end
+        if c == PSERVER and cell(d.cmangos, itemId, npcId) then return cell(d.cmangos, itemId, npcId), "cmangos" end
     end
-    return dropTables
+    local p = cell(d.cmangos, itemId, npcId)
+    if p and p >= 0 then return p, "cmangos" end
+    local w = cell(d.wowhead, itemId, npcId)
+    if w and w >= 0 then return w, "wowhead" end
+    return nil
 end
 
 local function fallbackNpcs(itemId)
     local seen, list = {}, {}
-    for _, t in ipairs(getDropTables()) do
+    local d = getDrops()
+    for _, t in ipairs({ d.wowhead or {}, d.cmangos or {} }) do
         if type(t[itemId]) == "table" then
             for npcId in pairs(t[itemId]) do
                 -- Skip NPCs QuestieDB doesn't know (the Wowhead data includes Season of Discovery IDs).
@@ -91,14 +126,6 @@ local function fallbackNpcs(itemId)
         end
     end
     return list
-end
-
--- Rate straight from the drop tables, for when Questie's GetItemDroprate isn't available.
-local function tableRate(itemId, npcId)
-    for _, t in ipairs(getDropTables()) do
-        local r = type(t[itemId]) == "table" and t[itemId][npcId]
-        if type(r) == "number" and r >= 0 then return r, "questiedb" end
-    end
 end
 
 -- Wowhead rates carry 4 decimals and no sample size. A rate from n kills is an exact fraction
@@ -149,8 +176,7 @@ function Data.GetSources(itemId)
         result.fromDropTable = #npcs > 0
     end
     for _, npcId in ipairs(npcs) do
-        local rate, src = questieRate(itemId, npcId)
-        if rate == nil then rate, src = tableRate(itemId, npcId) end
+        local rate, src = dropRate(itemId, npcId)
         result.mobs[#result.mobs + 1] = {
             npcId = npcId,
             name = L.Npc.name(npcId) or ("npc " .. npcId),
@@ -229,7 +255,8 @@ end
 ----------------------------------------------------------------------
 function Data.Status()
     local L = lib()
-    local s = { lib = L ~= nil, questie = _G.QuestieLoader ~= nil }
+    local ok, msg = Data.CheckContract()
+    local s = { lib = L ~= nil, contractOk = ok, contractMsg = msg, contractWanted = Data.CONTRACT }
     if L then
         s.contractVersion, s.readMode, s.addonName = L.contractVersion, L.readMode, L.addonName
         s.itemApi, s.npcApi = L.Item ~= nil, L.Npc ~= nil

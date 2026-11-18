@@ -93,6 +93,12 @@ Questions to answer:
 - **Private-API risk:** list every place we reach into another addon's internals (`QuestieLoader:ImportModule`, `Support.Get(...).private`, `WorldMapFrame.pinPools`). Each could break on their update; decide which to keep, wrap or replace.
 - **Done when:** every dependency is either kept with a reason, made optional, or removed, and the TOC matches.
 
+**Findings and decisions (Nov 2026):**
+- **QuestieDB: kept, required.** Every Questie user already has it (Questie reads its data from it); it's 36 MB of data we'd otherwise ship and keep current through Forever's beta patches; it's actively updated for Forever (1.1.2); and `LibQuestieDB` is a public, versioned API (`contractVersion` 4, `RequireContract`). ItemFinder now checks the contract at login and in `/if status`, and the TOC carries `## X-QuestieDB-Contract: 4`.
+- **Questie: removed.** Everything we read through it is QuestieDB data: the Wowhead and CMaNGOS drop tables and the manual corrections (154 items, 178 entries, `Support.Get("QuestieItemDropCorrections").Era`). Questie only added the lookup order, now copied into `Data.lua` (correction, then CMaNGOS, then Wowhead). This also fixed our no-Questie fallback, which checked Wowhead before CMaNGOS. Cost: the drop tables are decoded once by us even when Questie has its own copy (a one-time hitch and some memory).
+- **Internals kept on purpose:** `Support.Get("ZoneDB").private.areaIdToUiMapId` (no game API maps area IDs to map IDs; pcall'd, only pins fail if it breaks), `Support.Get(...)` drop tables (QuestieDB's documented whole-table access), and `WorldMapFrame.pinPools` (Blizzard internal that Questie and HereBeDragons also rely on).
+- Phase 7 (own data file) is about *adding* measured rates, not replacing QuestieDB.
+
 ### Phase 7: Data improvements
 - Build script (offline, never at runtime) that turns ForeverDB's data files (`Items.lua`, `Loot.lua`) plus CMaNGOS classic-db into our own Lua data file. Keep the `-- Data: ForeverDB.net` header and credit ForeverDB.net. Goal: measured drop rates for the many items that now say "rate unknown".
 - Optional: a full recipe list (incl. unlearned recipes) from the same sources, for the Professions tab.

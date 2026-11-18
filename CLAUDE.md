@@ -42,7 +42,7 @@ Read `ROADMAP.md` for the full plan. This file is the short version plus the fac
 |---|---|---|
 | Item names, mobs that drop an item | `LibQuestieDB.Item` (`GetAllIds`, `name`, `npcDrops`, `objectDrops`, `vendors`) | Public API of the **QuestieDB** addon. Global `LibQuestieDB`. |
 | Mob name, level range, rank, zone, spawns | `LibQuestieDB.Npc` (`name`, `minLevel`, `maxLevel`, `rank`, `zoneID`, `spawns`) | Spawn table layout still to be confirmed with `/if raw npc <id>`. |
-| Drop rate | `QuestieLoader:ImportModule("QuestieDB").GetItemDroprate(itemId, npcId)` | From the **Questie** addon, optional. Returns `{rate, source}` or `nil`. **Only has rates for quest items**, so most items show "rate ?". |
+| Drop rate | QuestieDB support tables via `LibQuestieDB.Support.Get`: `QuestieClassicItemDrops` (`wowheadData`, `cmangosData`, Lua strings) and `QuestieItemDropCorrections` (`.Era`) | Lookup order copied from Questie's DropDB: correction, then cmangos, then wowhead. **Only quest items (~2k) have rates**, so most items show "rate ?". Questie itself is **not** used (Phase 6 decision). |
 
 Contract check available: `LibQuestieDB.RequireContract(n)`.
 
@@ -54,7 +54,7 @@ Contract check available: `LibQuestieDB.RequireContract(n)`.
 
 ### Remaining phases (see ROADMAP.md)
 
-6 Dependency review, 7 Data improvements, 8 Design, 9 Release. Next up: Phase 6.
+6 Dependency review, 7 Data improvements, 8 Design, 9 Release. **Phase 6 done** (verified: `/if status` shows "contract: needs 4, OK"): QuestieDB is the only dependency; Questie removed. Next up: Phase 7.
 
 ### Later: better drop rates (Phase 7)
 
