@@ -153,26 +153,17 @@ local function initRecipeRow(button, rec)
 end
 
 ----------------------------------------------------------------------
--- Farm the missing materials
+-- Farm the recipe: one group on the Farm tab, with every material as a sub-goal
 ----------------------------------------------------------------------
 local function farmMaterials()
     if not selected then return end
     local n = crafts()
-    local added, done, bought = 0, 0, 0
-    for _, rg in ipairs(selected.reagents) do
-        local need = rg.count * n
-        if vendorOnly(sources(rg.itemId)) then
-            bought = bought + 1
-        elseif have(rg.itemId) >= need then
-            done = done + 1
-        else
-            ns.Farm.SetGoal(rg.itemId, need)
-            added = added + 1
-        end
-    end
-    ns.say(string.format("%s x%d: %d material(s) added to the farm list, %d already in your bags, %d from vendors.",
-        selected.name, n, added, done, bought))
-    if ns.UI.OnFarmChanged then ns.UI.OnFarmChanged() end
+    ns.Farm.AddRecipe(selected, n,
+        function(itemId) return vendorOnly(sources(itemId)) end,
+        function(itemId) return (ns.Prof.RecipeFor(itemId, profs[profIndex])) end)
+    local makes = math.max(1, tonumber(selected.makes) or 1)
+    ns.say(string.format("Farming %s x%d: %d material(s) on the Farm tab%s.", selected.name, n, #selected.reagents,
+        selected.itemId and (", done when your bags hold " .. n * makes) or ", remove it by hand when done"))
 end
 
 ----------------------------------------------------------------------
@@ -258,13 +249,14 @@ function ProfUI.Build(parent)
     local farmB = CreateFrame("Button", nil, frame, "UIPanelButtonTemplate")
     farmB:SetSize(140, 22)
     farmB:SetPoint("LEFT", craftsBox, "RIGHT", 10, 0)
-    farmB:SetText("Farm materials")
+    farmB:SetText("Farm recipe")
     farmB:SetScript("OnClick", farmMaterials)
     farmB:SetScript("OnEnter", function(self)
         GameTooltip:SetOwner(self, "ANCHOR_TOP")
-        GameTooltip:AddLine("Farm materials", 1, 1, 1)
-        GameTooltip:AddLine("Adds every missing material to the farm list with a goal for this many crafts. "
-            .. "Vendor-only materials are skipped.", 0.8, 0.8, 0.8, true)
+        GameTooltip:AddLine("Farm recipe", 1, 1, 1)
+        GameTooltip:AddLine("Adds this recipe to the Farm tab with every material as a sub-goal for this many "
+            .. "crafts. Vendor-only materials are listed greyed out. The recipe and its materials leave the list "
+            .. "once your bags hold the crafted items.", 0.8, 0.8, 0.8, true)
         GameTooltip:Show()
     end)
     farmB:SetScript("OnLeave", function() GameTooltip:Hide() end)

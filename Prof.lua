@@ -87,6 +87,7 @@ local function scanClassic()
 end
 
 local reported = {} -- [profession] = recipe count already reported this session
+local makers        -- [itemId] = recipes that make it (Prof.RecipeFor); nil = rebuild
 
 local function scan()
     if InCombatLockdown() then return end
@@ -95,6 +96,7 @@ local function scan()
     if not name or #recipes == 0 then return end
     table.sort(recipes, function(a, b) return a.name < b.name end)
     store()[name] = { recipes = recipes, scanned = time() }
+    makers = nil
     if reported[name] ~= #recipes then
         reported[name] = #recipes
         ns.say("Saved " .. #recipes .. " " .. name .. " recipes (" .. api .. " profession API).")
@@ -145,7 +147,7 @@ function Prof.Recipes(name)
         local mine = byId[g[1]] or byName[g[2]]
         if mine then used[mine] = true end
         list[#list + 1] = {
-            id = g[1], name = g[2], skill = g[3], itemId = g[4], learn = g[7], new = g[8] == 1,
+            id = g[1], name = g[2], skill = g[3], itemId = g[4], makes = g[5], learn = g[7], new = g[8] == 1,
             reagents = mine and #mine.reagents > 0 and mine.reagents or parseReagents(g[6]),
             known = mine ~= nil,
         }
@@ -163,6 +165,29 @@ function Prof.Recipes(name)
         return a.name < b.name
     end)
     return list
+end
+
+-- The recipe that makes an item, or nil. Prefers (in order) a known recipe in preferProf, any recipe
+-- in preferProf, any known recipe, any recipe. Index built on first use; reset after each scan.
+function Prof.RecipeFor(itemId, preferProf)
+    if not makers then
+        makers = {}
+        for _, prof in ipairs(Prof.List()) do
+            for _, r in ipairs(Prof.Recipes(prof)) do
+                if r.itemId then
+                    local t = makers[r.itemId] or {}
+                    makers[r.itemId] = t
+                    t[#t + 1] = { prof = prof, recipe = r }
+                end
+            end
+        end
+    end
+    local best, bestScore
+    for _, c in ipairs(makers[itemId] or {}) do
+        local score = (c.prof == preferProf and 2 or 0) + (c.recipe.known and 1 or 0)
+        if not bestScore or score > bestScore then best, bestScore = c, score end
+    end
+    return best and best.recipe, best and best.prof
 end
 
 -- Rescan shortly after profession events (they fire in bursts). Unknown event names error on

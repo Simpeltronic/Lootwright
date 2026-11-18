@@ -237,10 +237,10 @@ local function updateFavButton()
     favButton:SetShown(selectedId ~= nil)
     favButton:SetText(selectedId and favorites()[selectedId] and "Unfavorite" or "Favorite")
     farmButton:SetShown(selectedId ~= nil)
-    farmButton:SetText(selectedId and ns.Farm.Has(selectedId) and "Stop farm" or "Farm")
+    farmButton:SetText(selectedId and ns.Farm.IsSingle(selectedId) and "Stop farm" or "Farm")
     goalBox:SetShown(selectedId ~= nil)
     if not goalBox:HasFocus() then
-        local goal = selectedId and ns.Farm.Has(selectedId) and ns.Farm.Goal(selectedId)
+        local goal = selectedId and ns.Farm.IsSingle(selectedId) and ns.Farm.Goal(selectedId)
         goalBox:SetText(goal and tostring(goal) or "")
     end
 end

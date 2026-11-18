@@ -1,5 +1,7 @@
--- ItemFinder FarmUI.lua: the Farm tab. One row per farm item: name, have/goal, a progress bar and a
--- Remove button. Clicking a row opens the item on the Search tab.
+-- ItemFinder FarmUI.lua: the Farm tab.
+--   Recipe group: the crafted item (have / target, bar, Remove), then its materials indented below
+--   (have / need, bar; vendor-only ones greyed out). Then single farm items (have / goal, Remove).
+-- Clicking a row opens that item on the Search tab.
 
 local _, ns = ...
 local FarmUI = {}
@@ -7,31 +9,35 @@ ns.FarmUI = FarmUI
 
 local page, list, emptyText
 
-local function have(itemId)
-    local ok, n = pcall(C_Item.GetItemCount, itemId)
-    return (ok and type(n) == "number") and n or 0
+local function itemName(id)
+    return ns.Data.ItemName(id) or (C_Item.GetItemNameByID and C_Item.GetItemNameByID(id)) or ("item " .. id)
+end
+
+local function setBar(bar, n, goal)
+    if not goal or goal <= 0 then bar:Hide(); return end
+    bar:SetMinMaxValues(0, goal)
+    bar:SetValue(math.min(n, goal))
+    if n >= goal then bar:SetStatusBarColor(0.25, 1, 0.25) else bar:SetStatusBarColor(0.25, 0.7, 0.25) end
+    bar:Show()
 end
 
 local function initRow(button, d)
     if not button.name then
         ns.UI.RowBase(button)
         button.name = button:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
-        button.name:SetPoint("LEFT", 8, 0)
         button.name:SetWidth(230)
         button.name:SetJustifyH("LEFT")
         button.name:SetWordWrap(false)
-        button.name:SetTextColor(0.25, 1, 0.25)
 
         button.count = button:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-        button.count:SetPoint("LEFT", 244, 0)
-        button.count:SetWidth(70)
+        button.count:SetPoint("LEFT", 254, 0)
+        button.count:SetWidth(80)
         button.count:SetJustifyH("RIGHT")
 
         button.bar = CreateFrame("StatusBar", nil, button)
-        button.bar:SetSize(240, 10)
-        button.bar:SetPoint("LEFT", 324, 0)
+        button.bar:SetSize(220, 10)
+        button.bar:SetPoint("LEFT", 344, 0)
         button.bar:SetStatusBarTexture("Interface\\TargetingFrame\\UI-StatusBar")
-        button.bar:SetStatusBarColor(0.25, 0.8, 0.25)
         local bg = button.bar:CreateTexture(nil, "BACKGROUND")
         bg:SetAllPoints()
         bg:SetColorTexture(0, 0, 0, 0.4)
@@ -41,29 +47,68 @@ local function initRow(button, d)
         button.remove:SetPoint("RIGHT", -6, 0)
         button.remove:SetText("Remove")
         button.remove:SetScript("OnClick", function(self)
-            ns.Farm.Toggle(self:GetParent().itemId)
+            local row = self:GetParent().data
+            if row.kind == "recipe" then ns.Farm.RemoveRecipe(row.key) else ns.Farm.Toggle(row.id) end
             ns.UI.OnFarmChanged()
         end)
 
-        button:SetScript("OnClick", function(self) ns.UI.ShowItem(self.itemId) end)
+        button:SetScript("OnClick", function(self)
+            if self.data.id then ns.UI.ShowItem(self.data.id) end
+        end)
         button:SetScript("OnEnter", function(self)
+            local row = self.data
             GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
-            GameTooltip:SetItemByID(self.itemId)
-            GameTooltip:AddLine("Click: show where it drops (Search tab)", 0.2, 1, 0.6)
+            if row.id then GameTooltip:SetItemByID(row.id) else GameTooltip:AddLine(row.name) end
+            if row.kind == "recipe" then
+                if row.target then
+                    GameTooltip:AddLine("Recipe goal: " .. row.target .. " in your bags (" .. row.crafts .. " crafts)", 1, 1, 1)
+                else
+                    GameTooltip:AddLine("This recipe makes no item to count. Remove it when you're done.", 1, 0.5, 0.25)
+                end
+                GameTooltip:AddLine("Its materials stay on the list until then.", 0.7, 0.7, 0.7)
+            elseif row.kind == "mat" then
+                if row.vendorOnly then
+                    GameTooltip:AddLine("Sold by vendors only: buy it, it can't be farmed.", 1, 0.82, 0)
+                end
+                GameTooltip:AddLine("Needed for " .. row.recipe .. ": " .. row.need, 1, 1, 1)
+                if row.crafted then
+                    GameTooltip:AddLine("Crafted with " .. (row.subName or "a recipe")
+                        .. ". Its materials are listed below while you still need more.", 0.75, 0.63, 0.38, true)
+                end
+            end
+            if row.id then GameTooltip:AddLine("Click: show where it drops (Search tab)", 0.2, 1, 0.6) end
             GameTooltip:Show()
         end)
     end
-    button.itemId = d.id
-    local n = have(d.id)
-    button.name:SetText(ns.Data.ItemName(d.id) or ("item " .. d.id))
-    if d.goal then
-        button.count:SetText(n .. " / " .. d.goal)
-        button.bar:SetMinMaxValues(0, d.goal)
-        button.bar:SetValue(math.min(n, d.goal))
-        button.bar:Show()
+    button.data = d
+    local n = d.id and ns.Farm.Have(d.id) or 0
+
+    button.name:ClearAllPoints()
+    local indent = d.kind == "mat" and (8 + 20 * (d.depth or 1)) or 8
+    button.name:SetPoint("LEFT", indent, 0)
+    button.name:SetWidth(246 - indent)
+    button.remove:SetShown(d.kind ~= "mat")
+
+    if d.kind == "recipe" then
+        button.name:SetText(d.name)
+        button.name:SetTextColor(1, 0.82, 0)
+        button.count:SetText(d.target and (n .. " / " .. d.target) or (d.crafts .. " crafts"))
+        setBar(button.bar, n, d.target)
+    elseif d.kind == "mat" then
+        button.name:SetText(itemName(d.id) .. (d.crafted and " |cffc0a060(craft)|r" or ""))
+        if d.vendorOnly then
+            button.name:SetTextColor(0.5, 0.5, 0.5)
+            button.count:SetText("|cff808080" .. n .. " / " .. d.need .. "|r")
+        else
+            button.name:SetTextColor(0.25, 1, 0.25)
+            button.count:SetText(n .. " / " .. d.need)
+        end
+        setBar(button.bar, n, d.need)
     else
-        button.count:SetText(n .. "  (no goal)")
-        button.bar:Hide()
+        button.name:SetText(itemName(d.id))
+        button.name:SetTextColor(0.25, 1, 0.25)
+        button.count:SetText(d.goal and (n .. " / " .. d.goal) or (n .. "  (no goal)"))
+        setBar(button.bar, n, d.goal)
     end
 end
 
@@ -75,9 +120,9 @@ function FarmUI.Build(parent)
     head:SetText("Farm list")
     local hint = page:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
     hint:SetPoint("LEFT", head, "RIGHT", 12, -1)
-    hint:SetText("Counts are your bags. Items leave the list when their goal is reached.")
+    hint:SetText("Counts are your bags. Recipes stay until you have the crafted items.")
 
-    list = ns.UI.MakeList(page, 26, initRow)
+    list = ns.UI.MakeList(page, 24, initRow)
     list:SetPoint("TOPLEFT", 12, -58)
     list:SetPoint("BOTTOMRIGHT", -30, 12)
 
@@ -85,7 +130,7 @@ function FarmUI.Build(parent)
     emptyText:SetPoint("TOP", 0, -90)
     emptyText:SetWidth(520)
     emptyText:SetText("Nothing to farm yet. Use the Farm button on the Search tab, "
-        .. "or Farm materials on the Professions tab.")
+        .. "or Farm recipe on the Professions tab.")
 
     page:RegisterEvent("BAG_UPDATE_DELAYED")
     page:SetScript("OnEvent", function(self) if self:IsVisible() then FarmUI.Refresh() end end)
@@ -95,10 +140,17 @@ end
 function FarmUI.Refresh()
     if not (page and page:IsShown()) then return end
     local rows = {}
-    for _, id in ipairs(ns.Farm.Ids()) do rows[#rows + 1] = { id = id, goal = ns.Farm.Goal(id) } end
-    table.sort(rows, function(a, b)
-        return (ns.Data.ItemName(a.id) or "") < (ns.Data.ItemName(b.id) or "")
-    end)
+    for _, r in ipairs(ns.Farm.RecipeList()) do
+        rows[#rows + 1] = { kind = "recipe", key = r.key, name = r.name, id = r.itemId, target = r.target, crafts = r.crafts }
+        for _, m in ipairs(r.rows or {}) do
+            rows[#rows + 1] = { kind = "mat", id = m.itemId, need = m.need, vendorOnly = m.vendorOnly,
+                depth = m.depth, crafted = m.crafted, subName = m.subName, recipe = m.via }
+        end
+    end
+    local singles = {}
+    for _, id in ipairs(ns.Farm.Ids()) do singles[#singles + 1] = { kind = "item", id = id, goal = ns.Farm.Goal(id) } end
+    table.sort(singles, function(a, b) return itemName(a.id) < itemName(b.id) end)
+    for _, s in ipairs(singles) do rows[#rows + 1] = s end
     list:SetDataProvider(CreateDataProvider(rows))
     emptyText:SetShown(#rows == 0)
 end
