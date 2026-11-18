@@ -11,7 +11,9 @@ Read `ROADMAP.md` for the full plan. This file is the short version plus the fac
 - QuestieDB's `Item.npcDrops` is empty for many common items (e.g. Linen Cloth). `Data.lua` falls back to QuestieDB's quest-item drop tables (`QuestieClassicItemDrops`, ~2k items, `[itemId][npcId] = rate`), using Questie's decoded `DropDB.tableWowhead` / `tablePserver` when Questie is loaded. Verified with Linen Cloth (200 mobs). Known weakness: Wowhead rates for quest mobs are often 100% from tiny samples, so they sort to the top.
 - On Forever, `InputBoxTemplate` edit boxes didn't take keyboard input (keys went to game binds). Use `SearchBoxTemplate`.
 - **Phase 3 part 1 done** (verified in game): level colours by difficulty, colour-coded rates, current zone sorted first (matched by zone name), recent items (`ItemFinderDB.recent`), and a "Drops from" tooltip line via `TooltipDataProcessor` (`/if tooltip` toggles `ItemFinderDB.tooltip`).
-- Next: the rest of Phase 3 (favorites, farm list, faction/level filters) or Phase 4 (map pins).
+- **Phase 4 done** (verified in game): clicking a mob row puts skull pins on the world map (`Map.lua`), opening the mob's main zone. "Clear pins" button and `/if clear`. World map only; no minimap pins or clustering.
+- Map pins copy HereBeDragons-Pins (in Questie's `Libs`): a Lua pin pool in `WorldMapFrame.pinPools` + a `MapCanvasDataProviderMixin` provider. Pins must NOT set their own `OnEnter`/`OnLeave` scripts (the canvas asserts); define `OnMouseEnter`/`OnMouseLeave` methods instead.
+- Next: the rest of Phase 3 (favorites, farm list, faction/level filters), or Phase 5 (Questie/TomTom integration).
 
 ## Reading game output from here
 
@@ -80,7 +82,7 @@ Today everything is in `Core.lua`. Splitting it into `Data.lua`, `Search.lua` an
 
 ## Open questions
 
-- Exact layout of `Npc.spawns` (expected: zone ID mapped to a list of `{x, y}`). Check with `/if raw npc <id>`.
+- ~~`Npc.spawns` layout~~ Answered: `{ [areaId] = { {x, y, phase?}, ... } }`, x/y in percent (0-100), `(-1,-1)` = inside an instance.
+- ~~Area ID to uiMapID~~ Answered: `LibQuestieDB.Support.Get("ZoneDB").private.areaIdToUiMapId` and `.areaIdToUiMapIdOverride` (Lua source strings; `loadstring` them, override wins). Coordinates need no reprojection.
 - Whether `C_Map.GetAreaInfo` returns names for Forever's new zones.
-- How to convert QuestieDB area IDs and coordinates to the `uiMapID` that map pins need. `LibQuestieDB.Support` has `areaIdToUiMapId` data. Check `support/Forever/Zones/` in the QuestieDB addon folder.
 - Whether Questie's `Public/` API allows custom pins. If not, draw our own.

@@ -132,8 +132,10 @@ local function initMobRow(button, r)
             else
                 GameTooltip:AddLine("No drop rate in the database", 0.7, 0.7, 0.7)
             end
+            GameTooltip:AddLine("Click: show spawns on the world map", 0.2, 1, 0.6)
             GameTooltip:Show()
         end)
+        button:SetScript("OnClick", function(self) ns.Map.ShowMob(self.mob) end)
     end
     button.mob = r
     local rank = ns.RANKS[r.rank] or ""
@@ -337,6 +339,12 @@ local function build()
     if zoneBox.Instructions then zoneBox.Instructions:SetText("Filter by zone") end
     zoneBox:HookScript("OnTextChanged", function() if selectedId then refreshMobs() end end)
     zoneBox:HookScript("OnEnterPressed", zoneBox.ClearFocus)
+
+    local clearPins = CreateFrame("Button", nil, frame, "UIPanelButtonTemplate")
+    clearPins:SetSize(90, 22)
+    clearPins:SetPoint("LEFT", zoneBox, "RIGHT", 12, 0)
+    clearPins:SetText("Clear pins")
+    clearPins:SetScript("OnClick", function() ns.Map.Clear() end)
 
     -- Column headers (click to sort)
     headerButtons = {}

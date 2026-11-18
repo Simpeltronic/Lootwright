@@ -153,6 +153,57 @@ function Data.GetSources(itemId)
 end
 
 ----------------------------------------------------------------------
+-- Spawns (for map pins)
+----------------------------------------------------------------------
+-- QuestieDB's area ID -> uiMapID tables are Lua source strings in the ZoneDB support module.
+local areaToMap
+local function getAreaToMap()
+    if areaToMap then return areaToMap end
+    areaToMap = {}
+    local ok, zdb = pcall(function() return lib().Support.Get("ZoneDB") end)
+    local priv = ok and type(zdb) == "table" and zdb.private
+    if type(priv) == "table" then
+        -- Overrides are applied last so they win.
+        for _, field in ipairs({ "areaIdToUiMapId", "areaIdToUiMapIdOverride" }) do
+            local fn = type(priv[field]) == "string" and loadstring(priv[field])
+            local ok2, t = false, nil
+            if fn then ok2, t = pcall(fn) end
+            if ok2 and type(t) == "table" then
+                for area, map in pairs(t) do areaToMap[area] = map end
+            end
+        end
+    end
+    return areaToMap
+end
+
+-- Returns spawns as { { mapId = uiMapID, x = 0..1, y = 0..1 }, ... } and the uiMapID to open first.
+-- Spawn layout: { [areaId] = { {x, y, phase?}, ... } } with x/y in percent; (-1,-1) means inside an instance.
+function Data.GetSpawns(npcId)
+    local L = lib()
+    local spawns = L.Npc.spawns(npcId)
+    local map = getAreaToMap()
+    local list, mainMap = {}, nil
+    if type(spawns) ~= "table" then return list end
+    for areaId, points in pairs(spawns) do
+        local mapId = map[areaId]
+        if mapId and mapId > 0 and type(points) == "table" then
+            for _, p in ipairs(points) do
+                local x, y = p[1], p[2]
+                if type(x) == "number" and type(y) == "number" and x >= 0 and y >= 0 then
+                    list[#list + 1] = { mapId = mapId, x = x / 100, y = y / 100 }
+                end
+            end
+        end
+    end
+    local zoneMap = map[L.Npc.zoneID(npcId) or 0]
+    for _, s in ipairs(list) do
+        if s.mapId == zoneMap then mainMap = zoneMap; break end
+    end
+    mainMap = mainMap or (list[1] and list[1].mapId)
+    return list, mainMap
+end
+
+----------------------------------------------------------------------
 -- Debug access (used by /if status and /if raw)
 ----------------------------------------------------------------------
 function Data.Status()
