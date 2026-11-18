@@ -4,7 +4,7 @@
 --   needed), kept up to date as the list and bags change. /if farmpins turns them off.
 -- Same mechanism as HereBeDragons-Pins (used by Questie on this client): a Lua-built pin pool
 -- registered in WorldMapFrame.pinPools plus a MapCanvas data provider. No XML template needed.
--- shortcut: world map only, no minimap pins and no clustering; add them if pins get crowded.
+-- shortcut: world map only, no minimap pins; add them if players ask for pins while not looking at the map.
 
 local _, ns = ...
 local Map = {}
@@ -162,10 +162,6 @@ end
 function Map.Clear()
     pins, mob = {}, nil
     if provider then provider:RemoveAllData() end
-end
-
-function Map.HasPins()
-    return #pins > 0
 end
 
 ----------------------------------------------------------------------

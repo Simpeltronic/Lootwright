@@ -10,13 +10,13 @@ Read `ROADMAP.md` for the full plan. This file is the short version plus the fac
 
 - **Phase 1 done** (commit a6ea043): `/if status` and `/if Linen Cloth` verified in game.
 - **Phase 2 done** (v0.1.0, commit 4e273c3, verified in game): split into `Core.lua` (slash, log, shared formatting), `Data.lua` (all QuestieDB/Questie access), `Search.lua` (name index) and `UI.lua` (window). `/if` alone opens the window; the chat commands still work.
-- QuestieDB's `Item.npcDrops` is empty for many common items (e.g. Linen Cloth). `Data.lua` falls back to QuestieDB's quest-item drop tables (`QuestieClassicItemDrops`, ~2k items, `[itemId][npcId] = rate`), using Questie's decoded `DropDB.tableWowhead` / `tablePserver` when Questie is loaded. Verified with Linen Cloth (200 mobs). Known weakness: Wowhead rates for quest mobs are often 100% from tiny samples, so they sort to the top.
+- QuestieDB's `Item.npcDrops` is empty for many common items (e.g. Linen Cloth). `Data.lua` falls back to QuestieDB's quest-item drop tables (`QuestieClassicItemDrops`, ~2k items, `[itemId][npcId] = rate`), decoded by Lootwright itself since Phase 6 (Questie is no longer used). Verified with Linen Cloth (200 mobs). Known weakness: Wowhead rates for quest mobs are often 100% from tiny samples, so they sort to the top.
 - On Forever, `InputBoxTemplate` edit boxes didn't take keyboard input (keys went to game binds). Use `SearchBoxTemplate`.
 - **Phase 3 part 1 done** (verified in game): level colours by difficulty, colour-coded rates, current zone sorted first (matched by zone name), recent items (`LootwrightDB.recent`), and a "Drops from" tooltip line via `TooltipDataProcessor` (`/if tooltip` toggles `LootwrightDB.tooltip`).
 - **Phase 4 done** (verified in game): clicking a mob row puts skull pins on the world map (`Map.lua`), opening the mob's main zone. "Clear pins" button and `/if clear`. World map only; no minimap pins or clustering.
 - Map pins copy HereBeDragons-Pins (in Questie's `Libs`): a Lua pin pool in `WorldMapFrame.pinPools` + a `MapCanvasDataProviderMixin` provider. Pins must NOT set their own `OnEnter`/`OnLeave` scripts (the canvas asserts); define `OnMouseEnter`/`OnMouseLeave` methods instead.
 - Drop rates from <= 10 kills are detected (exact k/n fractions in Wowhead data), shown with `*` and sorted after real rates.
-- **Phase 3 done** (part 2 verified in game). Search results list matching favorites first, in gold. Favorite button (`LootwrightDB.favorites`, shown in gold above recent items), "Near lvl" filter (+/-5 levels, `LootwrightDB.nearLevel`) and "Friendly" checkbox (mobs friendly to your faction are hidden unless `LootwrightDB.showFriendly`; uses `Npc.friendlyToFaction`). Filters also apply to the tooltip line. No separate farm list (favorites cover it).
+- **Phase 3 done** (part 2 verified in game). Search results list matching favorites first, in gold. Favorite button (`LootwrightDB.favorites`, shown in gold above recent items), "Near lvl" filter (+/-5 levels, `LootwrightDB.nearLevel`) and "Friendly" checkbox (mobs friendly to your faction are hidden unless `LootwrightDB.showFriendly`; uses `Npc.friendlyToFaction`). Filters also apply to the tooltip line. (A separate farm list was added later, see below.)
 - **Phase 5 done** (arrow verified in game in the same zone; across zones on one continent it points via world-position conversion, grey "In <zone>" otherwise): clicking a map pin sets a waypoint. Forever does NOT show the game's own waypoint arrow (`C_Map.SetUserWaypoint` + `C_SuperTrack` only gives a map ping; verified), so `Arrow.lua` draws our own arrow + distance from `C_Map.GetPlayerMapPosition` and `GetPlayerFacing`, both wrapped in `pcall` and checked with `issecretvalue`. Right-click clears it; it clears itself within 10 yards. Questie's public API (`Questie.API`: RegisterOnReady, RegisterForQuestUpdates, GetQuestObjectiveIconForUnit) has no custom pins, so our own pins stay. TomTom and HandyNotes are not installed, so no integration for them.
 - **Farm list done** (verified in game; an item that is both farm and favorite shows as farm, green, which the user wants) (`Farm.lua`, `LootwrightDB.farm`): separate from favorites on purpose (favorites = bookmarks in the window; farm = short active list that changes the game world). "Farm" button next to Favorite; farm items green at the top of lists. Mobs that drop farm items get "Farm: <item> <rate> (have N)" on their in-game tooltip (unit `TooltipDataProcessor`, NPC ID from the GUID, out of combat only) and on mob rows in the window.
 - **Farm goals done** (verified in game): a "Goal" box next to Farm (applied on Enter). `LootwrightDB.farm[id] = { goal = n }`. On `BAG_UPDATE_DELAYED`, items whose bag count (`C_Item.GetItemCount`) reaches the goal are removed, with a chat + screen message. Tooltip shows "(have 12/40)".
@@ -54,7 +54,7 @@ Read `ROADMAP.md` for the full plan. This file is the short version plus the fac
 | What | Where | Notes |
 |---|---|---|
 | Item names, mobs that drop an item | `LibQuestieDB.Item` (`GetAllIds`, `name`, `npcDrops`, `objectDrops`, `vendors`) | Public API of the **QuestieDB** addon. Global `LibQuestieDB`. |
-| Mob name, level range, rank, zone, spawns | `LibQuestieDB.Npc` (`name`, `minLevel`, `maxLevel`, `rank`, `zoneID`, `spawns`) | Spawn table layout still to be confirmed with `/if raw npc <id>`. |
+| Mob name, level range, rank, zone, spawns | `LibQuestieDB.Npc` (`name`, `minLevel`, `maxLevel`, `rank`, `zoneID`, `spawns`) | Spawns: `{ [areaId] = { {x, y, phase?}, ... } }`, x/y in percent; `(-1,-1)` = inside an instance. |
 | Drop rate | QuestieDB support tables via `LibQuestieDB.Support.Get`: `QuestieClassicItemDrops` (`wowheadData`, `cmangosData`, Lua strings) and `QuestieItemDropCorrections` (`.Era`) | Lookup order copied from Questie's DropDB: correction, then cmangos, then wowhead. **Only quest items (~2k) have rates**, so most items show "rate ?". Questie itself is **not** used (Phase 6 decision). |
 
 Contract check available: `LibQuestieDB.RequireContract(n)`.
@@ -69,24 +69,36 @@ Contract check available: `LibQuestieDB.RequireContract(n)`.
 
 6 Dependency review, 7 Data improvements, 8 Modules and options (settings toggles + sub-addons `Lootwright_Data`, `Lootwright_Professions`; done), 9 Design (next), 10 Release. **Phase 6 done** (verified: `/if status` shows "contract: needs 4, OK"): QuestieDB is the only dependency; Questie removed. **Phase 7 done** (verified: `/if status` shows the ForeverDB data line; search filters tested): `tools/build_data.py` (run `python -I tools/build_data.py`) builds `GeneratedData.lua` (`ns.Gen`: `recipes`, `bossLoot`, `bosses`, `version`) from ForeverDB's `Recipes.lua`, `Loot.lua`, `Meta.lua`. Boss loot: a Forever-measured rate (source "foreverdb", with `kills`) beats QuestieDB's; bosses QuestieDB lacks are added. Professions tab shows every recipe, unlearned ones grey, "Known recipes only" checkbox. Credits in TOC, `/if status`, NOTICE.md. ForeverDB has no per-mob rates for normal mobs (that would need CMaNGOS loot tables, a download). Search filters: two rows of checkboxes under the search box, Reagents / Quest / Gear, then Other / Dungeon (`LootwrightDB.hideReagent`, `hideQuest`, `hideGear`, `hideOther`, `hideDungeon`). **Ticked = that kind is shown, all start ticked** (user's rule: ticking a box must add items, never remove them). Each item has exactly one kind, checked in order: reagent (used in any ForeverDB recipe, or classID 7 trade goods / 5 reagent), quest (12), gear (2, 4), other. Dungeon is separate (`ns.Gen.bossLoot`) and hides without GeneratedData.lua. Reagents are meant to be the addon's main selling point; item rows show "Used in N recipe(s)".
 
-### Later: better drop rates (Phase 7)
+### ForeverDB data (licence)
 
-The foreverdb.net addon's data files (`ForeverDB\Data\Items.lua`, `Loot.lua`) have measured drop rates. They are GPL-3.0 with an attribution term: keep the `-- Data: ForeverDB.net` header line in any copied file, and credit "Data from ForeverDB.net (https://foreverdb.net)" in the addon's credits. The plan is a build script that generates our own data file from them (plus CMaNGOS classic-db, GPL-3.0). It must not read ForeverDB at runtime.
+ForeverDB's data files are GPL-3.0 with an attribution term: keep the `-- Data: ForeverDB.net` header line in any copied file, and credit "Data from ForeverDB.net (https://foreverdb.net)" in the addon's credits. `tools/build_data.py` generates our own data file from them; Lootwright never reads ForeverDB at runtime.
 
-## Architecture (planned)
+## Architecture
 
 ```
-Lootwright/
+Lootwright/                    (the repo root; junctioned to AddOns\Lootwright)
   Lootwright.toc
-  Core.lua          init, slash commands, saved variables
-  Data.lua          the ONLY file that talks to LibQuestieDB / Questie
-  Search.lua        name index + search
-  UI.lua            search box, results list, detail panel
-  Map.lua           map pins
-  Integrations.lua  Questie / TomTom / HandyNotes (all optional)
+  Core.lua          init, /if commands, saved-variables log, shared formatting, ns.GetGen
+  Theme.lua         dark field guide look: colours, panels, buttons, pills, text tabs
+  Data.lua          the ONLY file that reads QuestieDB (and ns.Gen boss loot)
+  Search.lua        name index (built in chunks) + search
+  UI.lua            main window: header tabs, Search tab, item tooltip line
+  Map.lua           world map pins (selected mob + grouped farm skulls), waypoints
+  Arrow.lua         waypoint arrow
+  Farm.lua          farm list, goals, recipe groups, mob tooltip line, need cache
+  FarmUI.lua        Farm tab
+  FarmPopup.lua     "how many?" popup
+  Tracker.lua       on-screen farm tracker (experimental)
+  Options.lua       Options > AddOns panel
+  MinimapButton.lua minimap button
+  Media/            emblem.tga, emblem_hover.tga, emblem_32.tga (the only textures the game loads)
+  Lootwright_Data/          sub-addon, load on demand: GeneratedData.lua (ForeverDB recipes, boss loot)
+  Lootwright_Professions/   sub-addon: Prof.lua (scans), ProfUI.lua (Professions tab)
+  tools/            build_data.py, make_icons.py, make_textures.py, make_brand.py, preview_dark.py
+  docs/             phase summary, design previews, design brief, CurseForge kit, ledger textures (unused)
 ```
 
-Today everything is in `Core.lua`. Splitting it into `Data.lua`, `Search.lua` and `UI.lua` is part of Phase 2.
+Performance rules (from the pre-release review): nothing heavy runs per frame; tooltip hooks must be cached (item line: `tipCache`; mob line: `Farm.Need` via `needCache`); farm needs are cached until `BAG_UPDATE` or a farm change; search uses a lowercase index built once; per-tick code avoids creating tables.
 
 ## Rules for working on this
 

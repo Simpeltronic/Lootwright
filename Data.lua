@@ -139,7 +139,6 @@ local function fewKills(rate, source)
     end
     return false
 end
-Data.FewKills = fewKills -- exposed for the self-check below
 
 -- Self-check (runs once at load; cheap).
 assert(fewKills(100, "wowhead") and fewKills(33.3333, "wowhead") and fewKills(75, "wowhead"))

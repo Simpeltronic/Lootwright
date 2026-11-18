@@ -5,7 +5,7 @@
   banner.png         1200x300 header for the top of the description
   divider.png        1200x40 section divider (thin brass rule with the anvil)
 
-Reuses the textures from tools/make_textures.py, so run that first (it writes Media/).
+Reuses the textures from tools/make_textures.py, so run that first (it writes docs/ledger-textures/).
 The wordmark uses Georgia Bold as a stand-in face; see docs/curseforge/CURSEFORGE-PAGE.md.
 
 Usage: python -I tools/make_brand.py
@@ -21,7 +21,7 @@ import make_textures as mt  # noqa: E402  (same folder)
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 OUT = ROOT / "docs" / "curseforge"
-MEDIA = ROOT / "Media"
+MEDIA = ROOT / "docs" / "ledger-textures"  # written by make_textures.py
 
 
 def load(name):

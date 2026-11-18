@@ -55,8 +55,7 @@ def cut(sheet, box, size=512):
 
 def save(img, name):
     MEDIA.mkdir(exist_ok=True)
-    img.save(MEDIA / (name + ".tga"))
-    img.save(MEDIA / (name + ".png"))
+    img.save(MEDIA / (name + ".tga"))  # the game only loads .tga; docs/emblem-master.png is the preview
 
 
 def main():

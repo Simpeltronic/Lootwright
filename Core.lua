@@ -52,7 +52,6 @@ local function needLib()
     say("QuestieDB's API (LibQuestieDB) is not available. Is the QuestieDB addon enabled? Try /if status.")
     return false
 end
-ns.needLib = needLib
 
 ----------------------------------------------------------------------
 -- Shared formatting (chat and UI)

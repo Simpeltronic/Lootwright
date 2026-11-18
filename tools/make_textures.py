@@ -1,6 +1,6 @@
 """Draws Lootwright's "bound ledger" textures (Phase 9 design).
 
-Writes to Media/:
+Writes to docs/ledger-textures/ (not used in game since design B was chosen):
   parchment.tga  256x256, tiles seamlessly    page background
   leather.tga    256x256, tiles seamlessly    binding / header background
   stitch_h.tga   64x8, tiles horizontally     saddle stitch along top/bottom edges
@@ -22,7 +22,9 @@ import numpy as np
 from PIL import Image, ImageDraw, ImageFilter, ImageFont
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
-MEDIA = ROOT / "Media"
+# The bound-ledger design isn't used in game any more (design B was chosen), so these textures live
+# under docs/, out of the addon's Media folder. make_brand.py still reads them.
+MEDIA = ROOT / "docs" / "ledger-textures"
 rng = np.random.default_rng(7)
 
 GOLD = (201, 162, 74)

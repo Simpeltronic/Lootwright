@@ -5,6 +5,7 @@ local Search = {}
 ns.Search = Search
 
 local nameIndex          -- [itemId] = name
+local lowerIndex         -- [itemId] = lowercase name, made once so searches don't re-lowercase 24k names
 local building = false
 local waiting = {}
 
@@ -17,20 +18,23 @@ function Search.WithIndex(callback)
     local Data = ns.Data
     local ids = Data.AllItemIds()
     local total = #ids
-    local tmp, i = {}, 1
+    local tmp, low, i = {}, {}, 1
     ns.say("Building item name index (" .. total .. " items, one time)...")
     local function step()
         local stop = math.min(i + 1999, total)
         for j = i, stop do
             local id = ids[j]
             local nm = Data.ItemName(id)
-            if nm and nm ~= "" then tmp[id] = nm end
+            if nm and nm ~= "" then
+                tmp[id] = nm
+                low[id] = nm:lower()
+            end
         end
         i = stop + 1
         if i <= total then
             C_Timer.After(0, step)
         else
-            nameIndex, building = tmp, false
+            nameIndex, lowerIndex, building = tmp, low, false
             local cbs = waiting
             waiting = {}
             for _, cb in ipairs(cbs) do cb() end
@@ -53,8 +57,7 @@ function Search.Find(text, callback)
     Search.WithIndex(function()
         local needle = text:lower()
         local exact, partial = {}, {}
-        for id, nm in pairs(nameIndex) do
-            local l = nm:lower()
+        for id, l in pairs(lowerIndex) do
             if l == needle then
                 exact[#exact + 1] = id
             elseif l:find(needle, 1, true) then

@@ -1,7 +1,7 @@
 """Renders docs/design-preview-dark.png: the "dark field guide" Search tab (design B) with the
 Option E emblem in the header. A design preview only; the game draws the real window in Lua.
 
-Needs Media/emblem.png (tools/make_icons.py).
+Needs docs/emblem-master.png (tools/make_icons.py).
 Usage: python -I tools/preview_dark.py [underline|bottom|pills]   (tab style; default underline, the chosen one)
 """
 
@@ -53,7 +53,7 @@ def main():
     f11, f12, f13, f16 = font(11), font(12), font(13), font(17, True)
 
     # Header: emblem, name, tagline; Options and close on the right; tabs per style.
-    emblem = Image.open(ROOT / "Media" / "emblem.png").convert("RGBA").resize((34, 34), Image.LANCZOS)
+    emblem = Image.open(ROOT / "docs" / "emblem-master.png").convert("RGBA").resize((34, 34), Image.LANCZOS)
     img.alpha_composite(emblem, (12, 8))
     d.text((54, 9), "Lootwright", font=f16, fill=WHITE)
     d.text((55, 29), "Find any item. Farm what you need.", font=f11, fill=MUTED)

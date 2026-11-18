@@ -29,9 +29,8 @@ local TOGGLES = {
       onChange = function() ns.Tracker.Refresh() end },
 }
 
--- True unless the player switched the feature off.
-function ns.IsOn(key) return LootwrightDB[key] ~= false end
-
+-- Default-on toggles are on unless set to false; default-off toggles only when set to true.
+-- (Features read LootwrightDB[key] directly with the same rule.)
 local function isChecked(t)
     if t.defaultOff then return LootwrightDB[t.key] == true end
     return LootwrightDB[t.key] ~= false

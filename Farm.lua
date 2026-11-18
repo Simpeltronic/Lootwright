@@ -34,9 +34,30 @@ local function recipes()
     return LootwrightDB.farmRecipes
 end
 
+-- Live needs depend on bag counts and the list. Many places ask for them on each bag change (goals,
+-- ready notices, map skulls, tracker, Farm tab) and on every mob-tooltip refresh, so each recipe's
+-- rows and each item's need are worked out once and kept until the bags or the list change.
+local rowsCache = {} -- [recipe table] = Farm.Rows result
+local needCache = {} -- [itemId] = { need, names }
+
+-- Every change to the farm list goes through here, so the map's farm skulls are refreshed here too
+-- (they once missed goals set through the amount popup). Cheap: the map only rebuilds when the set of
+-- wanted items actually changed.
 local function changed()
     index, matIndex = nil, nil
+    wipe(rowsCache)
+    wipe(needCache)
+    if ns.Map and ns.Map.RefreshFarmPins then ns.Map.RefreshFarmPins() end
 end
+
+-- BAG_UPDATE fires before the BAG_UPDATE_DELAYED that every handler listens to, so clearing here
+-- means all of them see fresh numbers, computed once.
+local invalidator = CreateFrame("Frame")
+invalidator:RegisterEvent("BAG_UPDATE")
+invalidator:SetScript("OnEvent", function()
+    wipe(rowsCache)
+    wipe(needCache)
+end)
 
 local function have(itemId)
     local ok, n = pcall(C_Item.GetItemCount, itemId)
@@ -54,7 +75,9 @@ end
 -- Flattens one recipe group into rows with live needs:
 -- { depth (1 = material, 2 = its material...), itemId, need, vendorOnly, crafted, via (recipe name) }.
 -- A crafted material's own materials only appear while some of it is still missing.
+-- The result is cached and shared: callers must only read it.
 function Farm.Rows(r)
+    if rowsCache[r] then return rowsCache[r] end
     local rows = {}
     local function walk(reagents, crafts, depth, via)
         for _, rg in ipairs(reagents or {}) do
@@ -70,6 +93,7 @@ function Farm.Rows(r)
     -- Top level: materials for the crafts still to do (the full count if the recipe makes no item).
     local crafts = r.itemId and r.target and craftsLeft(r.target, r.itemId, r.makes) or r.crafts
     walk(r.reagents, crafts, 1, r.name)
+    rowsCache[r] = rows
     return rows
 end
 
@@ -98,7 +122,6 @@ function Farm.Toggle(itemId)
     local l = list()
     l[itemId] = (not l[itemId]) or nil
     changed()
-    if ns.Map and ns.Map.RefreshFarmPins then ns.Map.RefreshFarmPins() end
 end
 
 -- Goal count for a single farm item, or nil.
@@ -111,6 +134,8 @@ end
 -- and the names of the recipes it's for.
 -- (live; 0 means every recipe that uses it has enough).
 function Farm.Need(itemId)
+    local c = needCache[itemId]
+    if c then return c[1], c[2] end
     local names, need, used = {}, 0, false
     if materials()[itemId] then
         for _, r in pairs(recipes()) do
@@ -123,14 +148,14 @@ function Farm.Need(itemId)
             end
         end
     end
-    if not used then return Farm.Goal(itemId), names end
+    if not used then need = Farm.Goal(itemId) end
+    needCache[itemId] = { need, names } -- names is shared: callers only read it
     return need, names
 end
 
 local function notify()
-    changed()
+    changed() -- also refreshes the map's farm skulls
     if ns.UI.OnFarmChanged then ns.UI.OnFarmChanged() end
-    if ns.Map and ns.Map.RefreshFarmPins then ns.Map.RefreshFarmPins() end
 end
 
 local function announce(msg)

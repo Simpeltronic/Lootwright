@@ -111,11 +111,19 @@ local function mapName(m)
     return info and info.name or ("map " .. m)
 end
 
+-- Like try, for calls with one result, without packing results into a table: tick() runs 20 times
+-- a second, and try's table per call added up to ~60 throwaway tables a second.
+local function try1(fn, ...)
+    if not fn then return nil end
+    local ok, v = pcall(fn, ...)
+    if ok then return v end
+end
+
 local function tick()
     if not target then frame:Hide(); return end
-    local m = usable(try(C_Map.GetBestMapForUnit, "player"))
+    local m = usable(try1(C_Map.GetBestMapForUnit, "player"))
     local px, py
-    if m then px, py = xy(try(C_Map.GetPlayerMapPosition, m, "player")) end
+    if m then px, py = xy(try1(C_Map.GetPlayerMapPosition, m, "player")) end
     px, py = usable(px), usable(py)
     if px == 0 and py == 0 then px = nil end
     local tx, ty, w, h
@@ -130,7 +138,7 @@ local function tick()
     end
 
     local dist, bearing = Arrow.Bearing((tx - px) * w, (ty - py) * h)
-    local facing = usable(try(GetPlayerFacing))
+    local facing = usable(try1(GetPlayerFacing))
     if facing then
         local turn = wrap(bearing - facing)
         frame.arrow:SetRotation(turn)
