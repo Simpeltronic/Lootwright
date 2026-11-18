@@ -1,9 +1,9 @@
--- ItemFinder ProfUI.lua: the Professions tab. Left: profession switcher, recipe filter, recipe list.
+-- Lootwright ProfUI.lua: the Professions tab. Left: profession switcher, recipe filter, recipe list.
 -- Right: the selected recipe's materials (have / need for N crafts, where they come from) and a
 -- button that puts the missing materials on the farm list with goals.
 
--- Part of the ItemFinder_Professions sub-addon: joins ItemFinder's namespace.
-local ns = ItemFinderNS
+-- Part of the Lootwright_Professions sub-addon: joins Lootwright's namespace.
+local ns = LootwrightNS
 if not ns then return end
 local ProfUI = {}
 ns.ProfUI = ProfUI
@@ -97,7 +97,7 @@ local function refreshRecipes()
     profLabel:SetText(prof and (ns.Prof.IsMine(prof) and prof or ("|cff999999" .. prof .. "|r")) or "No professions")
     emptyText:SetShown(prof == nil)
     local filter = filterBox:GetText():lower()
-    local knownOnly = ItemFinderDB.profKnownOnly == true
+    local knownOnly = LootwrightDB.profKnownOnly == true
     local rows = {}
     for _, rec in ipairs(prof and ns.Prof.Recipes(prof) or {}) do
         if (filter == "" or rec.name:lower():find(filter, 1, true)) and (rec.known or not knownOnly) then
@@ -211,9 +211,9 @@ function ProfUI.Build(parent)
     local knownLabel = known:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
     knownLabel:SetPoint("LEFT", known, "RIGHT", 0, 1)
     knownLabel:SetText("Known recipes only")
-    known:SetChecked(ItemFinderDB.profKnownOnly == true)
+    known:SetChecked(LootwrightDB.profKnownOnly == true)
     known:SetScript("OnClick", function(self)
-        ItemFinderDB.profKnownOnly = self:GetChecked() and true or false
+        LootwrightDB.profKnownOnly = self:GetChecked() and true or false
         refreshRecipes()
     end)
 
@@ -226,7 +226,7 @@ function ProfUI.Build(parent)
     emptyText:SetPoint("TOPLEFT", 16, -110)
     emptyText:SetWidth(214)
     emptyText:SetJustifyH("LEFT")
-    emptyText:SetText("Open each of your profession windows once. ItemFinder saves the recipes you know.")
+    emptyText:SetText("Open each of your profession windows once. Lootwright saves the recipes you know.")
 
     -- Right: materials
     recipeName = frame:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")

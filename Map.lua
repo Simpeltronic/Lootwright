@@ -1,4 +1,4 @@
--- ItemFinder Map.lua: world map pins. Two sets on the same skull icon:
+-- Lootwright Map.lua: world map pins. Two sets on the same skull icon:
 --   the selected mob's spawns (click a mob row; "Clear pins" removes them), and
 --   farm pins: every mob that drops something on the farm list (single items and materials still
 --   needed), kept up to date as the list and bags change. /if farmpins turns them off.
@@ -10,7 +10,7 @@ local _, ns = ...
 local Map = {}
 ns.Map = Map
 
-local TEMPLATE = "ItemFinderWorldMapPin"
+local TEMPLATE = "LootwrightWorldMapPin"
 local ICON = "Interface\\TargetingFrame\\UI-RaidTargetingIcon_8" -- skull
 
 local pins = {}   -- { { mapId, x, y }, ... } for the current mob
@@ -147,7 +147,7 @@ end
 -- Our own arrow (Forever shows no arrow for the game's waypoint), plus the game's map marker when
 -- available (same calls RareScanner uses). p = { mapId, x, y } (0..1).
 function Map.SetWaypoint(p, m)
-    if ItemFinderDB.arrow ~= false then ns.Arrow.Set(p, m and m.name) end
+    if LootwrightDB.arrow ~= false then ns.Arrow.Set(p, m and m.name) end
     if C_Map.SetUserWaypoint and UiMapPoint and C_SuperTrack
         and (not C_Map.CanSetUserWaypointOnMap or C_Map.CanSetUserWaypointOnMap(p.mapId)) then
         pcall(function()
@@ -184,7 +184,7 @@ end
 -- Rebuilds the farm pins if the wanted items changed (cheap to call often). force = rebuild anyway.
 function Map.RefreshFarmPins(force)
     if not ns.Data.Available() then return end
-    local wanted = ItemFinderDB.farmPins ~= false and ns.Farm.WantedItems() or {}
+    local wanted = LootwrightDB.farmPins ~= false and ns.Farm.WantedItems() or {}
     local ids = {}
     for id in pairs(wanted) do ids[#ids + 1] = id end
     table.sort(ids)

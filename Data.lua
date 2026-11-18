@@ -1,4 +1,4 @@
--- ItemFinder Data.lua: the ONLY file that knows QuestieDB's data formats.
+-- Lootwright Data.lua: the ONLY file that knows QuestieDB's data formats.
 -- Everything else works with the plain tables returned here.
 --   LibQuestieDB.Item.GetAllIds / .name / .npcDrops / .objectDrops / .vendors
 --   LibQuestieDB.Npc.name / .minLevel / .maxLevel / .rank / .zoneID / .spawns / .friendlyToFaction

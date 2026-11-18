@@ -1,4 +1,4 @@
--- ItemFinder UI.lua: search window. Left: search box + item list. Right: sources of the selected item.
+-- Lootwright UI.lua: search window. Left: search box + item list. Right: sources of the selected item.
 -- Works only with the plain tables from Data.GetSources. Out of combat only.
 
 local _, ns = ...
@@ -90,7 +90,7 @@ local function compareMobs(a, b)
 end
 
 ----------------------------------------------------------------------
--- Filters (settings in ItemFinderDB: showFriendly, nearLevel; both off by default)
+-- Filters (settings in LootwrightDB: showFriendly, nearLevel; both off by default)
 ----------------------------------------------------------------------
 -- True when the mob is friendly to the player's faction (so it can't be attacked).
 local function isFriendly(r)
@@ -110,8 +110,8 @@ local function isNearLevel(r)
 end
 
 local function passesFilters(r)
-    if not ItemFinderDB.showFriendly and isFriendly(r) then return false end
-    if ItemFinderDB.nearLevel and not isNearLevel(r) then return false end
+    if not LootwrightDB.showFriendly and isFriendly(r) then return false end
+    if LootwrightDB.nearLevel and not isNearLevel(r) then return false end
     return true
 end
 
@@ -213,8 +213,8 @@ local MAX_RECENT = 10
 
 -- Recently selected item IDs, newest first, kept in SavedVariables.
 local function recentList()
-    ItemFinderDB.recent = ItemFinderDB.recent or {}
-    return ItemFinderDB.recent
+    LootwrightDB.recent = LootwrightDB.recent or {}
+    return LootwrightDB.recent
 end
 
 local function pushRecent(itemId)
@@ -226,10 +226,10 @@ local function pushRecent(itemId)
     for i = #list, MAX_RECENT + 1, -1 do list[i] = nil end
 end
 
--- Favourite item IDs: ItemFinderDB.favorites[itemId] = true.
+-- Favourite item IDs: LootwrightDB.favorites[itemId] = true.
 local function favorites()
-    ItemFinderDB.favorites = ItemFinderDB.favorites or {}
-    return ItemFinderDB.favorites
+    LootwrightDB.favorites = LootwrightDB.favorites or {}
+    return LootwrightDB.favorites
 end
 
 local favButton, farmButton, goalBox
@@ -312,7 +312,7 @@ local function initItemRow(button, data)
 end
 
 -- Search filters. Every item has exactly one kind (reagent, quest, gear, other); Dungeon is a separate
--- box about where it drops. Settings ItemFinderDB.hideReagent / hideQuest / hideGear / hideOther /
+-- box about where it drops. Settings LootwrightDB.hideReagent / hideQuest / hideGear / hideOther /
 -- hideDungeon are all off by default, so every box starts ticked: ticked = shown (user's rule).
 -- GetItemInfoInstant answers from the client's item table, so it works for items never seen.
 local IC = Enum.ItemClass or {}
@@ -356,7 +356,7 @@ end
 local HIDE_KEY = { reagent = "hideReagent", quest = "hideQuest", gear = "hideGear", other = "hideOther" }
 
 local function itemPassesFilters(id)
-    local db = ItemFinderDB
+    local db = LootwrightDB
     if db.hideReagent or db.hideQuest or db.hideGear or db.hideOther then
         if db[HIDE_KEY[itemKind(id)]] then return false end
     end
@@ -450,7 +450,7 @@ end
 -- Frame
 ----------------------------------------------------------------------
 local function build()
-    frame = CreateFrame("Frame", "ItemFinderFrame", UIParent, "BasicFrameTemplateWithInset")
+    frame = CreateFrame("Frame", "LootwrightFrame", UIParent, "BasicFrameTemplateWithInset")
     frame:Hide() -- new frames start shown; Toggle decides
     frame:SetSize(720, 440)
     frame:SetPoint("CENTER")
@@ -461,11 +461,11 @@ local function build()
     frame:RegisterForDrag("LeftButton")
     frame:SetScript("OnDragStart", frame.StartMoving)
     frame:SetScript("OnDragStop", frame.StopMovingOrSizing)
-    tinsert(UISpecialFrames, "ItemFinderFrame") -- Escape closes it
+    tinsert(UISpecialFrames, "LootwrightFrame") -- Escape closes it
 
     local title = frame:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
     title:SetPoint("TOP", 0, -5)
-    title:SetText("ItemFinder")
+    title:SetText("Lootwright")
 
     -- One page per tab, each covering the window; the Search content is built on the first.
     for _, t in ipairs(TABS) do
@@ -527,12 +527,12 @@ local function build()
         local fs = cb:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
         fs:SetPoint("LEFT", cb, "RIGHT", 0, 1)
         fs:SetText(label)
-        local function value() return ItemFinderDB[key] == true end
+        local function value() return LootwrightDB[key] == true end
         if invert then cb:SetChecked(not value()) else cb:SetChecked(value()) end
         cb:SetScript("OnClick", function(self)
             local on = self:GetChecked() and true or false
             if invert then on = not on end
-            ItemFinderDB[key] = on
+            LootwrightDB[key] = on
             runSearch(searchBox:GetText())
         end)
         cb:SetScript("OnEnter", function(self)
@@ -655,9 +655,9 @@ local function build()
         local fs = cb:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
         fs:SetPoint("LEFT", cb, "RIGHT", 0, 1)
         fs:SetText(label)
-        cb:SetChecked(ItemFinderDB[key] == true)
+        cb:SetChecked(LootwrightDB[key] == true)
         cb:SetScript("OnClick", function(self)
-            ItemFinderDB[key] = self:GetChecked() and true or false
+            LootwrightDB[key] = self:GetChecked() and true or false
             UI.ClearTooltipCache()
             refreshMobs()
         end)
@@ -711,7 +711,7 @@ local function build()
 
     refreshMobs()
 
-    -- The Professions tab comes from the optional ItemFinder_Professions sub-addon.
+    -- The Professions tab comes from the optional Lootwright_Professions sub-addon.
     if ns.ProfUI then
         ns.ProfUI.Build(pages.prof)
     else
@@ -758,7 +758,7 @@ function UI.ClearTooltipCache() wipe(tipCache) end
 
 if TooltipDataProcessor and Enum.TooltipDataType then
     TooltipDataProcessor.AddTooltipPostCall(Enum.TooltipDataType.Item, function(tooltip, data)
-        if ItemFinderDB.tooltip == false or InCombatLockdown() then return end
+        if LootwrightDB.tooltip == false or InCombatLockdown() then return end
         if tooltip ~= GameTooltip and tooltip ~= ItemRefTooltip then return end -- skip compare tooltips
         local id = type(data) == "table" and data.id
         if type(id) ~= "number" or not ns.Data.Available() then return end
@@ -776,7 +776,7 @@ function UI.ShowTab(key)
     for k, b in pairs(tabButtons) do
         if k == key then b:LockHighlight() else b:UnlockHighlight() end
     end
-    ItemFinderDB.tab = key
+    LootwrightDB.tab = key
     frame:Show()
     if key == "prof" then ns.ProfUI.Refresh()
     elseif key == "farm" then ns.FarmUI.Refresh()
@@ -805,5 +805,5 @@ end
 -- /if: open on the last used tab, or close.
 function UI.Toggle()
     if frame and frame:IsShown() then frame:Hide(); return end
-    UI.ShowTab(ItemFinderDB.tab or "search")
+    UI.ShowTab(LootwrightDB.tab or "search")
 end

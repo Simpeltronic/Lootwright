@@ -1,11 +1,11 @@
--- ItemFinder Farm.lua: the farm list (what you're gathering now) and the mob-tooltip line
+-- Lootwright Farm.lua: the farm list (what you're gathering now) and the mob-tooltip line
 -- "Farm: Linen Cloth 43.7% (have 4/15) for Linen Bag" on mobs that drop it.
 -- Unlike favorites, this affects the game world, so keep the list short.
 --
 -- Two kinds of entries:
---   single items   ItemFinderDB.farm = { [itemId] = true | { goal = n } }. With a goal, the item
+--   single items   LootwrightDB.farm = { [itemId] = true | { goal = n } }. With a goal, the item
 --                  leaves the list once the bags hold that many.
---   recipe groups  ItemFinderDB.farmRecipes = { [key] = { name, itemId, makes, crafts, target,
+--   recipe groups  LootwrightDB.farmRecipes = { [key] = { name, itemId, makes, crafts, target,
 --                  reagents = { { itemId, count, vendorOnly, sub }, ... } } }. The group (and its
 --                  materials) leaves the list once the bags hold `target` of the crafted item;
 --                  materials never leave on their own. target = crafts x makes (an absolute bag
@@ -25,13 +25,13 @@ local matIndex -- [itemId] = { farmable = bool } for every material at any depth
 -- Both are rebuilt when the farm list changes.
 
 local function list()
-    ItemFinderDB.farm = ItemFinderDB.farm or {}
-    return ItemFinderDB.farm
+    LootwrightDB.farm = LootwrightDB.farm or {}
+    return LootwrightDB.farm
 end
 
 local function recipes()
-    ItemFinderDB.farmRecipes = ItemFinderDB.farmRecipes or {}
-    return ItemFinderDB.farmRecipes
+    LootwrightDB.farmRecipes = LootwrightDB.farmRecipes or {}
+    return LootwrightDB.farmRecipes
 end
 
 local function changed()
@@ -135,7 +135,7 @@ end
 
 local function announce(msg)
     ns.say(msg)
-    if UIErrorsFrame and ItemFinderDB.farmAlerts ~= false then UIErrorsFrame:AddMessage(msg, 0.25, 1, 0.25) end
+    if UIErrorsFrame and LootwrightDB.farmAlerts ~= false then UIErrorsFrame:AddMessage(msg, 0.25, 1, 0.25) end
 end
 
 -- Sub-goals: announce a material the moment it becomes ready (have >= need), and a recipe the
@@ -327,7 +327,7 @@ end
 if TooltipDataProcessor and Enum.TooltipDataType and Enum.TooltipDataType.Unit then
     TooltipDataProcessor.AddTooltipPostCall(Enum.TooltipDataType.Unit, function(tooltip, data)
         -- Out of combat only: unit data can be restricted during fights.
-        if tooltip ~= GameTooltip or InCombatLockdown() or ItemFinderDB.farmTooltip == false then return end
+        if tooltip ~= GameTooltip or InCombatLockdown() or LootwrightDB.farmTooltip == false then return end
         if not (next(list()) or next(recipes())) then return end
         local guid = type(data) == "table" and data.guid
         if not guid then

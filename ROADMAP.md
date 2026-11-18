@@ -1,12 +1,12 @@
-# ItemFinder: roadmap (WoW Forever addon)
+# Lootwright: roadmap (WoW Forever addon)
 
 **Goal:** type an item name and see which mobs drop it, in which zones, the mobs' level range, and the drop rate. Then mark the selected mobs on the map, working alongside Questie where possible.
 
 ## 0. Key facts (checked Nov 2026)
 
 - Forever runs on the **modern (Midnight) client UI**, not the Classic Era one. The Forever 1.60.1 API notes say it shares Mainline's UI architecture and most APIs. Write the addon with modern APIs (`C_AddOns`, `C_Map`, `C_Timer`, `Settings`, `BackdropTemplate`, `C_Texture` style), not old Classic-only snippets.
-- TOC: `## Interface: 16001`. A `_Forever.toc` suffix is accepted as well as `ItemFinder.toc`.
-- Install path: `World of Warcraft\_forever_\Interface\AddOns\ItemFinder`
+- TOC: `## Interface: 16001`. A `_Forever.toc` suffix is accepted as well as `Lootwright.toc`.
+- Install path: `World of Warcraft\_forever_\Interface\AddOns\Lootwright`
 - Midnight addon restrictions apply in combat. Keep the UI out-of-combat only and don't read protected data during fights.
 - Debugging: `/console scriptErrors 1`, or install BugSack and BugGrabber.
 
@@ -26,9 +26,9 @@
 ## 2. Architecture
 
 ```
-ItemFinder/
-  ItemFinder.toc
-  Core.lua          -- init, slash commands (/if, /itemfinder), saved variables
+Lootwright/
+  Lootwright.toc
+  Core.lua          -- init, slash commands (/if, /lootwright), saved variables
   Data.lua          -- adapter over ForeverDB: FindItems(name), GetSources(itemID)
   Search.lua        -- fuzzy name search, index built lazily, shift-click item links
   UI.lua            -- search box + results list + detail panel
@@ -43,7 +43,7 @@ Keep **Data.lua as the only file that knows ForeverDB's format**. If the format 
 **Status (Nov 2026):** Phases 1-5 are done, plus extras: farm list with goals, professions (known recipes, "Farm materials"), waypoint arrow, and one window with Search / Professions / Farm tabs. CLAUDE.md has the details. Note that Phases 1-4 ended up built on QuestieDB, not ForeverDB (see CLAUDE.md, "Data sources").
 
 ### Phase 1: Spike (a day or two)
-- Create the folder and a TOC with `## Interface: 16001`, `## Dependencies: ForeverDB`, a `## SavedVariables: ItemFinderDB` line, and a "hello world" slash command.
+- Create the folder and a TOC with `## Interface: 16001`, `## Dependencies: ForeverDB`, a `## SavedVariables: LootwrightDB` line, and a "hello world" slash command.
 - In game, dump `ForeverDB` with `/dump` or `/tinspect ForeverDB` to learn the table layout (items, NPCs, drops, spawns).
 - Write down the layout in `docs/foreverdb-format.md`.
 - **Done when:** `/if Linen Cloth` prints item ID, the dropping NPC IDs and drop rates in chat.
@@ -76,7 +76,7 @@ Keep **Data.lua as the only file that knows ForeverDB's format**. If the format 
 - Every integration must be optional. The addon works without any of them.
 
 ### Phase 6: Dependency review
-Decide what ItemFinder needs installed, and what it could do without. The answer shapes Phase 7.
+Decide what Lootwright needs installed, and what it could do without. The answer shapes Phase 7.
 
 What it uses today:
 
@@ -88,13 +88,13 @@ What it uses today:
 Everything else is the game's own API (`C_Map`, `C_TradeSkillUI`, `TooltipDataProcessor`, `C_Item`, world map canvas). Code we learned from but don't load: HereBeDragons-Pins (map pin pool), RareScanner (pin clicks, waypoints), ForeverDB_Helper (arrow approach).
 
 Questions to answer:
-- **QuestieDB:** keep it as a required addon, or ship our own data file (built by the Phase 7 script) so ItemFinder works alone? Trade-offs: download size, who keeps the data current through Forever's beta patches, GPL-3.0 attribution.
+- **QuestieDB:** keep it as a required addon, or ship our own data file (built by the Phase 7 script) so Lootwright works alone? Trade-offs: download size, who keeps the data current through Forever's beta patches, GPL-3.0 attribution.
 - **Questie:** is the optional hook worth keeping? It only adds Questie's manual rate corrections. Check how often its rate differs from QuestieDB's own table.
 - **Private-API risk:** list every place we reach into another addon's internals (`QuestieLoader:ImportModule`, `Support.Get(...).private`, `WorldMapFrame.pinPools`). Each could break on their update; decide which to keep, wrap or replace.
 - **Done when:** every dependency is either kept with a reason, made optional, or removed, and the TOC matches.
 
 **Findings and decisions (Nov 2026):**
-- **QuestieDB: kept, required.** Every Questie user already has it (Questie reads its data from it); it's 36 MB of data we'd otherwise ship and keep current through Forever's beta patches; it's actively updated for Forever (1.1.2); and `LibQuestieDB` is a public, versioned API (`contractVersion` 4, `RequireContract`). ItemFinder now checks the contract at login and in `/if status`, and the TOC carries `## X-QuestieDB-Contract: 4`.
+- **QuestieDB: kept, required.** Every Questie user already has it (Questie reads its data from it); it's 36 MB of data we'd otherwise ship and keep current through Forever's beta patches; it's actively updated for Forever (1.1.2); and `LibQuestieDB` is a public, versioned API (`contractVersion` 4, `RequireContract`). Lootwright now checks the contract at login and in `/if status`, and the TOC carries `## X-QuestieDB-Contract: 4`.
 - **Questie: removed.** Everything we read through it is QuestieDB data: the Wowhead and CMaNGOS drop tables and the manual corrections (154 items, 178 entries, `Support.Get("QuestieItemDropCorrections").Era`). Questie only added the lookup order, now copied into `Data.lua` (correction, then CMaNGOS, then Wowhead). This also fixed our no-Questie fallback, which checked Wowhead before CMaNGOS. Cost: the drop tables are decoded once by us even when Questie has its own copy (a one-time hitch and some memory).
 - **Internals kept on purpose:** `Support.Get("ZoneDB").private.areaIdToUiMapId` (no game API maps area IDs to map IDs; pcall'd, only pins fail if it breaks), `Support.Get(...)` drop tables (QuestieDB's documented whole-table access), and `WorldMapFrame.pinPools` (Blizzard internal that Questie and HereBeDragons also rely on).
 - Phase 7 (own data file) is about *adding* measured rates, not replacing QuestieDB.
@@ -103,29 +103,29 @@ Questions to answer:
 - **Built:** `tools/build_data.py` turns ForeverDB's `Recipes.lua`, `Loot.lua` and `Meta.lua` into `GeneratedData.lua` (every recipe, and boss loot with rates measured in Forever and kill counts). Keeps the `-- Data: ForeverDB.net` line; credits in the TOC, `/if status` and NOTICE.md.
 - **Not available from ForeverDB:** per-mob rates for normal mobs (`Items.lua` only names one best source per item). That needs CMaNGOS classic-db's loot tables, a separate download; ask first.
 - Show the data version and date in the window (Phase 9).
-- Optional: our own recorder (the `LOOT_OPENED` event) saves observed drop counts to `ItemFinderDB`. Show "observed 3/40 (7.5%)" next to the database rate.
+- Optional: our own recorder (the `LOOT_OPENED` event) saves observed drop counts to `LootwrightDB`. Show "observed 3/40 (7.5%)" next to the database rate.
 
 ### Phase 8: Modules and options
-**Built (Nov 2026, testing):** `ItemFinder_Data` (load on demand) and `ItemFinder_Professions` sub-addons; an options panel with five feature toggles. `ItemFinder_Map` was not split out: pins and the arrow are small, and have their own toggles instead.
+**Built (Nov 2026, testing):** `Lootwright_Data` (load on demand) and `Lootwright_Professions` sub-addons; an options panel with five feature toggles. `Lootwright_Map` was not split out: pins and the arrow are small, and have their own toggles instead.
 
 Let players switch off what they don't use. Two levels:
 - **Options** (the game's `Settings` panel, plus `/if` commands): turn single features on or off. Candidates: the "Drops from" item tooltip line, the "Farm:" mob tooltip line, map pins, the waypoint arrow, farm-goal messages, the minimap button, default tab. Each feature checks its option before it does anything (hooks registered but idle when off).
 - **Search filters (built early, with Phase 7)** (checkboxes under the search box, saved; options, not sub-addons, since players flip them often): Reagents, Quest, Gear, Other (every item has exactly one kind; reagents = used in a recipe or trade goods), plus Dungeon (ForeverDB boss loot; normal dungeon mobs aren't covered). Ticked = shown; all start ticked. Reagents are the main selling point, so Phase 9 (design) should put them front and centre. Applied to all matches, with a "N hidden by filters" count.
-- **Sub-addons** (separate folders players can untick in the AddOns list, like `AtlasLootContinued_Crafting`), each with `## Dependencies: ItemFinder`:
-  - `ItemFinder_Data`: `GeneratedData.lua` (ForeverDB recipes and boss loot, ~284 KB), `## LoadOnDemand: 1`, loaded the first time it's needed. Without it ItemFinder carries no ForeverDB data and runs on QuestieDB alone.
-  - `ItemFinder_Professions`: `Prof.lua` and `ProfUI.lua` (recipe scanning and the Professions tab). Without it the tab is hidden and no profession events are registered.
-  - Maybe `ItemFinder_Map`: map pins and the arrow, if they turn out heavy.
-- The core (`ItemFinder`: search, mob table, farm list) has to work with every sub-addon off, and pick them up when they're on (check for their `ns` hooks or a small registration call, never assume).
+- **Sub-addons** (separate folders players can untick in the AddOns list, like `AtlasLootContinued_Crafting`), each with `## Dependencies: Lootwright`:
+  - `Lootwright_Data`: `GeneratedData.lua` (ForeverDB recipes and boss loot, ~284 KB), `## LoadOnDemand: 1`, loaded the first time it's needed. Without it Lootwright carries no ForeverDB data and runs on QuestieDB alone.
+  - `Lootwright_Professions`: `Prof.lua` and `ProfUI.lua` (recipe scanning and the Professions tab). Without it the tab is hidden and no profession events are registered.
+  - Maybe `Lootwright_Map`: map pins and the arrow, if they turn out heavy.
+- The core (`Lootwright`: search, mob table, farm list) has to work with every sub-addon off, and pick them up when they're on (check for their `ns` hooks or a small registration call, never assume).
 - Development: one git repo with all folders side by side; each gets its own junction into AddOns.
 - **Done when:** each option and each sub-addon can be turned off without errors, the features it owns disappear cleanly, and memory use drops when they're off.
 
 ### Phase 9: Design
-Make ItemFinder look and feel its own, not like a debug window.
+Make Lootwright look and feel its own, not like a debug window.
 - A visual identity: icon, colour accents, header, consistent fonts and spacing across all three tabs.
 - Real WoW-style tabs instead of plain buttons (check which tab template works on Forever).
 - Item icons in lists, quality colours, clearer empty states, and a tidier mob table (rank badges, rate bars).
 - Minimap or addon-compartment button.
-- Look at what other Forever addons (Questie, AtlasLoot, RareScanner, ForeverDB) do, and pick what makes ItemFinder stand out instead of copying them.
+- Look at what other Forever addons (Questie, AtlasLoot, RareScanner, ForeverDB) do, and pick what makes Lootwright stand out instead of copying them.
 - **Done when:** mockups are agreed on first, then built, and every tab follows them.
 
 ### Phase 10: Release
@@ -150,6 +150,6 @@ When we're ready, do this in the project folder `I:\VibeStuff\Wow addons\ItemFin
 1. Put this file there as `ROADMAP.md`.
 2. Add a short `CLAUDE.md` with the key facts from section 0, the file layout from section 2, the rule that Data.lua is the only place that touches ForeverDB's format, and the current phase.
 3. Save a dump of `ForeverDB`'s structure (from Phase 1) in `docs/foreverdb-format.md`, so Claude Code knows the data layout without having to run the game.
-4. Create a junction or symlink from the project folder into `_forever_\Interface\AddOns\ItemFinder`, so edits show up in game after `/reload`.
+4. Create a junction or symlink from the project folder into `_forever_\Interface\AddOns\Lootwright`, so edits show up in game after `/reload`.
 5. Start with `git init` and commit after each phase.
 6. Workflow loop: Claude Code edits, you `/reload`, you paste any Lua errors back.

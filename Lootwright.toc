@@ -1,12 +1,12 @@
 ## Interface: 16001
-## Title: ItemFinder
+## Title: Lootwright
 ## Notes: Search an item and see which mobs drop it, where, at what level and drop rate. Data from ForeverDB.net (https://foreverdb.net) and QuestieDB.
 ## X-Credits: Data from ForeverDB.net (https://foreverdb.net), GPL-3.0 with an attribution term. Item, NPC and spawn data from QuestieDB (GPL-3.0).
 ## Author: Simpeltronic
 ## Version: 0.1.0
 ## Dependencies: QuestieDB
 ## X-QuestieDB-Contract: 4
-## SavedVariables: ItemFinderDB
+## SavedVariables: LootwrightDB
 ## IconTexture: Interface\Icons\INV_Misc_Spyglass_02
 
 Core.lua

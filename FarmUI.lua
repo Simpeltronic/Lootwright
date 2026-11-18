@@ -1,4 +1,4 @@
--- ItemFinder FarmUI.lua: the Farm tab.
+-- Lootwright FarmUI.lua: the Farm tab.
 --   Recipe group: the crafted item (have / target, bar, Remove), then its materials indented below
 --   (have / need, bar; vendor-only ones greyed out). Then single farm items (have / goal, Remove).
 -- Clicking a row opens that item on the Search tab.

@@ -1,4 +1,4 @@
--- ItemFinder Arrow.lua: a small on-screen arrow + distance to a spawn.
+-- Lootwright Arrow.lua: a small on-screen arrow + distance to a spawn.
 -- Forever doesn't show the game's own waypoint arrow, so we draw one.
 -- Maths in the player's map: x grows east, y grows south (0..1); the map's size in yards turns them
 -- into yards. GetPlayerFacing is radians from north, counter-clockwise, and so is the bearing below,
@@ -151,7 +151,7 @@ local function tick()
 end
 
 local function build()
-    frame = CreateFrame("Button", "ItemFinderArrow", UIParent)
+    frame = CreateFrame("Button", "LootwrightArrow", UIParent)
     frame:Hide()
     frame:SetSize(110, 80)
     frame:SetFrameStrata("MEDIUM")
@@ -173,7 +173,7 @@ local function build()
     frame.dist:SetPoint("TOP", frame.title, "BOTTOM", 0, -2)
     frame.dist:SetWidth(220)
 
-    local pos = ItemFinderDB.arrowPos
+    local pos = LootwrightDB.arrowPos
     if pos then
         frame:SetPoint(pos[1], UIParent, pos[2], pos[3], pos[4])
     else
@@ -183,7 +183,7 @@ local function build()
     frame:SetScript("OnDragStop", function(self)
         self:StopMovingOrSizing()
         local p, _, rp, x, y = self:GetPoint()
-        ItemFinderDB.arrowPos = { p, rp, x, y }
+        LootwrightDB.arrowPos = { p, rp, x, y }
     end)
     frame:SetScript("OnClick", function() Arrow.Clear() end)
     frame:SetScript("OnEnter", function(self)

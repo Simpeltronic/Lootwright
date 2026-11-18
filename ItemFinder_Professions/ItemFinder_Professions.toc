@@ -1,9 +1,0 @@
-## Interface: 16001
-## Title: ItemFinder - Professions
-## Notes: The Professions tab for ItemFinder: your recipes, their materials, and "Farm recipe". Turn it off if you don't craft.
-## Author: Simpeltronic
-## Version: 0.1.0
-## Dependencies: ItemFinder
-
-Prof.lua
-ProfUI.lua

@@ -1,4 +1,4 @@
--- ItemFinder Search.lua: item name index (built once, in chunks so the game doesn't freeze) and search.
+-- Lootwright Search.lua: item name index (built once, in chunks so the game doesn't freeze) and search.
 
 local _, ns = ...
 local Search = {}

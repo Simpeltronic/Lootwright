@@ -1,12 +1,12 @@
--- ItemFinder Prof.lua: reads the open profession window and saves the known recipes and their
--- materials, per character, in ItemFinderDB.prof[<name-realm>][<profession>] = { recipes = {...} }.
+-- Lootwright Prof.lua: reads the open profession window and saves the known recipes and their
+-- materials, per character, in LootwrightDB.prof[<name-realm>][<profession>] = { recipes = {...} }.
 -- recipe = { name, itemId (crafted item, may be nil), reagents = { { itemId, count }, ... } }
 -- Forever's profession window may use the modern (C_TradeSkillUI) or the classic (GetTradeSkill*)
 -- functions; we try modern first, then classic, and log which one worked.
 -- shortcut: no classic "craft" window (old Enchanting UI); add GetCraft* if Enchanting shows nothing.
 
--- Part of the ItemFinder_Professions sub-addon: joins ItemFinder's namespace.
-local ns = ItemFinderNS
+-- Part of the Lootwright_Professions sub-addon: joins Lootwright's namespace.
+local ns = LootwrightNS
 if not ns then return end
 local Prof = {}
 ns.Prof = Prof
@@ -23,10 +23,10 @@ local function itemIdFromLink(link)
 end
 
 local function store()
-    ItemFinderDB.prof = ItemFinderDB.prof or {}
+    LootwrightDB.prof = LootwrightDB.prof or {}
     local key = (UnitName("player") or "?") .. "-" .. (GetRealmName() or "?")
-    ItemFinderDB.prof[key] = ItemFinderDB.prof[key] or {}
-    return ItemFinderDB.prof[key]
+    LootwrightDB.prof[key] = LootwrightDB.prof[key] or {}
+    return LootwrightDB.prof[key]
 end
 
 local function scanModern()

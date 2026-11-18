@@ -1,5 +1,5 @@
--- ItemFinder Options.lua: the panel in the game's Options > AddOns list (also /if options).
--- Each feature toggle is ItemFinderDB[key]; nil (default) means on, false means off.
+-- Lootwright Options.lua: the panel in the game's Options > AddOns list (also /if options).
+-- Each feature toggle is LootwrightDB[key]; nil (default) means on, false means off.
 -- Sub-addons are switched in the AddOns list; this panel only shows whether they're on.
 
 local _, ns = ...
@@ -22,11 +22,11 @@ local TOGGLES = {
 }
 
 -- True unless the player switched the feature off.
-function ns.IsOn(key) return ItemFinderDB[key] ~= false end
+function ns.IsOn(key) return LootwrightDB[key] ~= false end
 
 local SUBADDONS = {
-    { name = "ItemFinder_Data", label = "ItemFinder - Data", what = "recipes and dungeon boss loot (ForeverDB.net)" },
-    { name = "ItemFinder_Professions", label = "ItemFinder - Professions", what = "the Professions tab" },
+    { name = "Lootwright_Data", label = "Lootwright - Data", what = "recipes and dungeon boss loot (ForeverDB.net)" },
+    { name = "Lootwright_Professions", label = "Lootwright - Professions", what = "the Professions tab" },
 }
 
 local function subAddonState(name)
@@ -49,12 +49,12 @@ end
 
 local function build()
     panel = CreateFrame("Frame")
-    panel.name = "ItemFinder"
+    panel.name = "Lootwright"
     checks, subLines = {}, {}
 
     local title = panel:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
     title:SetPoint("TOPLEFT", 16, -16)
-    title:SetText("ItemFinder")
+    title:SetText("Lootwright")
     local sub = panel:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
     sub:SetPoint("TOPLEFT", title, "BOTTOMLEFT", 0, -6)
     sub:SetText("Switch off what you don't use.")
@@ -69,7 +69,7 @@ local function build()
         fs:SetPoint("LEFT", cb, "RIGHT", 4, 1)
         fs:SetText(t.label)
         cb:SetScript("OnClick", function(self)
-            ItemFinderDB[t.key] = self:GetChecked() and true or false
+            LootwrightDB[t.key] = self:GetChecked() and true or false
             if t.onChange then t.onChange() end
         end)
         cb:SetScript("OnEnter", function(self)
@@ -100,7 +100,7 @@ local function build()
     panel:SetScript("OnShow", refresh)
 
     if Settings and Settings.RegisterCanvasLayoutCategory and Settings.RegisterAddOnCategory then
-        category = Settings.RegisterCanvasLayoutCategory(panel, "ItemFinder")
+        category = Settings.RegisterCanvasLayoutCategory(panel, "Lootwright")
         Settings.RegisterAddOnCategory(category)
     elseif InterfaceOptions_AddCategory then
         InterfaceOptions_AddCategory(panel)

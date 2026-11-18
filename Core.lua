@@ -1,4 +1,4 @@
--- ItemFinder v0.1.0 (Phase 2): init, slash command, saved-variables log, shared formatting.
+-- Lootwright v0.1.0 (Phase 2): init, slash command, saved-variables log, shared formatting.
 -- Data access lives in Data.lua, the name index in Search.lua, the window in UI.lua.
 --
 -- Commands:
@@ -6,7 +6,7 @@
 --   /if <text>          search items by name (substring), output in chat; shift-click an item to look it up
 --   /if #<id>           show sources for an item ID in chat
 --   /if tooltip         toggle the "Drops from" line on item tooltips
---   /if options         open ItemFinder's options panel (feature toggles, sub-addon status)
+--   /if options         open Lootwright's options panel (feature toggles, sub-addon status)
 --   /if clear           remove the selected mob's world map pins
 --   /if farmpins        toggle map skulls on every mob that drops a farm item
 --   /if prof            open the window on the Professions tab
@@ -17,30 +17,30 @@
 
 local _, ns = ...
 local VERSION = "0.1.0"
-ItemFinderDB = ItemFinderDB or {}
+LootwrightDB = LootwrightDB or {}
 
--- The one global ItemFinder exposes: its namespace, so the sub-addons (ItemFinder_Data,
--- ItemFinder_Professions) can join it. Each sub-addon is optional; see ns.GetGen and UI.lua.
-ItemFinderNS = ns
+-- The one global Lootwright exposes: its namespace, so the sub-addons (Lootwright_Data,
+-- Lootwright_Professions) can join it. Each sub-addon is optional; see ns.GetGen and UI.lua.
+LootwrightNS = ns
 
--- ForeverDB data (recipes, boss loot) lives in the load-on-demand sub-addon ItemFinder_Data.
+-- ForeverDB data (recipes, boss loot) lives in the load-on-demand sub-addon Lootwright_Data.
 -- Loaded the first time something asks for it; nil when that sub-addon is off or missing.
 local triedData = false
 function ns.GetGen()
     if ns.Gen then return ns.Gen end
     if triedData then return nil end
     triedData = true
-    if C_AddOns and C_AddOns.LoadAddOn then pcall(C_AddOns.LoadAddOn, "ItemFinder_Data") end
+    if C_AddOns and C_AddOns.LoadAddOn then pcall(C_AddOns.LoadAddOn, "Lootwright_Data") end
     return ns.Gen
 end
 
 local function say(msg)
     msg = tostring(msg)
-    print("|cff33ff99ItemFinder|r " .. msg)
+    print("|cff33ff99Lootwright|r " .. msg)
     -- Mirror output into SavedVariables so it can be read from disk after /reload.
-    -- Read ItemFinderDB at call time: the saved table replaces the global after this file runs.
-    local log = ItemFinderDB.log or {}
-    ItemFinderDB.log = log
+    -- Read LootwrightDB at call time: the saved table replaces the global after this file runs.
+    local log = LootwrightDB.log or {}
+    LootwrightDB.log = log
     log[#log + 1] = date("%H:%M:%S ") .. msg
     if #log > 500 then table.remove(log, 1) end
 end
@@ -172,9 +172,9 @@ local function cmdStatus()
     say("  contract: needs " .. s.contractWanted .. ", " .. (s.contractOk and "OK" or ("FAILED: " .. tostring(s.contractMsg))))
     say("Item name index: " .. (ns.Search.IsBuilt() and "built" or "not built yet"))
     local gen = ns.GetGen()
-    say("Recipes and boss loot (ItemFinder_Data): " .. (gen and ("ForeverDB " .. tostring(gen.version)) or "off or not installed")
+    say("Recipes and boss loot (Lootwright_Data): " .. (gen and ("ForeverDB " .. tostring(gen.version)) or "off or not installed")
         .. ". Data from ForeverDB.net (https://foreverdb.net)")
-    say("Professions (ItemFinder_Professions): " .. (ns.ProfUI and "loaded" or "off or not installed"))
+    say("Professions (Lootwright_Professions): " .. (ns.ProfUI and "loaded" or "off or not installed"))
 end
 
 local function cmdRaw(kind, id)
@@ -201,9 +201,9 @@ end
 ----------------------------------------------------------------------
 -- Slash command
 ----------------------------------------------------------------------
-SLASH_ITEMFINDER1 = "/if"
-SLASH_ITEMFINDER2 = "/itemfinder"
-SlashCmdList["ITEMFINDER"] = function(input)
+SLASH_LOOTWRIGHT1 = "/if"
+SLASH_LOOTWRIGHT2 = "/lootwright"
+SlashCmdList["LOOTWRIGHT"] = function(input)
     input = (input or ""):match("^%s*(.-)%s*$")
     local lower = input:lower()
 
@@ -213,22 +213,22 @@ SlashCmdList["ITEMFINDER"] = function(input)
         return
     end
     if lower == "prof" then
-        if not ns.ProfUI then say("The Professions tab is off: enable \"ItemFinder - Professions\" in the AddOns list."); return end
+        if not ns.ProfUI then say("The Professions tab is off: enable \"Lootwright - Professions\" in the AddOns list."); return end
         ns.UI.ShowTab("prof")
         return
     end
     if lower == "farm" then ns.UI.ShowTab("farm"); return end
     if lower == "options" or lower == "config" then ns.Options.Open(); return end
     if lower == "farmpins" then
-        ItemFinderDB.farmPins = ItemFinderDB.farmPins == false -- nil (default) counts as on
+        LootwrightDB.farmPins = LootwrightDB.farmPins == false -- nil (default) counts as on
         ns.Map.RefreshFarmPins(true)
-        say("Map skulls for farm mobs: " .. (ItemFinderDB.farmPins ~= false and "on" or "off"))
+        say("Map skulls for farm mobs: " .. (LootwrightDB.farmPins ~= false and "on" or "off"))
         return
     end
     if lower == "clear" then ns.Map.Clear(); say("Map pins cleared."); return end
     if lower == "tooltip" then
-        ItemFinderDB.tooltip = ItemFinderDB.tooltip == false -- nil (default) counts as on
-        say("Tooltip \"Drops from\" line: " .. (ItemFinderDB.tooltip and "on" or "off"))
+        LootwrightDB.tooltip = LootwrightDB.tooltip == false -- nil (default) counts as on
+        say("Tooltip \"Drops from\" line: " .. (LootwrightDB.tooltip and "on" or "off"))
         return
     end
     if lower == "status" then cmdStatus(); return end
@@ -253,5 +253,5 @@ f:SetScript("OnEvent", function()
     say("v" .. VERSION .. " loaded. Type /if to open the window, /if help for commands.")
     -- A QuestieDB update that breaks the API we use should say so, not fail silently.
     local ok, msg = ns.Data.CheckContract()
-    if not ok then say("|cffff4040" .. tostring(msg) .. "|r ItemFinder can't read its data until this is fixed.") end
+    if not ok then say("|cffff4040" .. tostring(msg) .. "|r Lootwright can't read its data until this is fixed.") end
 end)
