@@ -172,6 +172,10 @@ local function initMobRow(button, r)
             else
                 GameTooltip:AddLine("No drop rate in the database", 0.7, 0.7, 0.7)
             end
+            -- Other farm items this mob drops.
+            for _, e in ipairs(ns.Farm.ForNpc(m.npcId) or {}) do
+                if e.itemId ~= selectedId then GameTooltip:AddLine("Farm: " .. ns.Farm.Line(e), 0.25, 1, 0.25) end
+            end
             GameTooltip:AddLine("Click: show spawns on the world map", 0.2, 1, 0.6)
             GameTooltip:Show()
         end)
@@ -216,10 +220,19 @@ local function favorites()
     return ItemFinderDB.favorites
 end
 
-local favButton
+local favButton, farmButton
 local function updateFavButton()
     favButton:SetShown(selectedId ~= nil)
     favButton:SetText(selectedId and favorites()[selectedId] and "Unfavorite" or "Favorite")
+    farmButton:SetShown(selectedId ~= nil)
+    farmButton:SetText(selectedId and ns.Farm.Has(selectedId) and "Stop farm" or "Farm")
+end
+
+-- Item-list order: farm items (green), then favourites (gold), then the rest.
+local function itemGroup(id)
+    if ns.Farm.Has(id) then return 0 end
+    if favorites()[id] then return 1 end
+    return 2
 end
 
 local function selectItem(itemId)
@@ -272,7 +285,9 @@ local function initItemRow(button, data)
         end)
     end
     button.itemId = data.id
-    local name = data.fav and ("|cffffd100" .. data.name .. "|r") or data.name
+    local g = itemGroup(data.id)
+    local name = (g == 0 and ("|cff40ff40" .. data.name .. "|r")) or (g == 1 and ("|cffffd100" .. data.name .. "|r"))
+        or data.name
     button.text:SetText(name .. " |cff777777#" .. data.id .. "|r")
     button.sel:SetShown(data.id == selectedId)
 end
@@ -286,29 +301,36 @@ local function runSearch(text)
         return
     end
     if #text < 2 then
-        -- Empty search: favourites (gold, by name), then recently viewed items.
-        local list, favs = {}, favorites()
-        for id in pairs(favs) do list[#list + 1] = { id = id, name = ns.Data.ItemName(id) or ("item " .. id), fav = true } end
-        table.sort(list, function(a, b) return a.name < b.name end)
-        for _, id in ipairs(recentList()) do
-            if not favs[id] then list[#list + 1] = { id = id, name = ns.Data.ItemName(id) or ("item " .. id) } end
+        -- Empty search: farm items (green), favourites (gold), each by name; then recent items.
+        local list, seen = {}, {}
+        local function add(id)
+            if seen[id] then return end
+            seen[id] = true
+            list[#list + 1] = { id = id, name = ns.Data.ItemName(id) or ("item " .. id) }
         end
+        for _, id in ipairs(ns.Farm.Ids()) do add(id) end
+        for id in pairs(favorites()) do add(id) end
+        table.sort(list, function(a, b)
+            local ga, gb = itemGroup(a.id), itemGroup(b.id)
+            if ga ~= gb then return ga < gb end
+            return a.name < b.name
+        end)
+        for _, id in ipairs(recentList()) do add(id) end
         itemBox:SetDataProvider(CreateDataProvider(list))
-        statusText:SetText(#list > 0 and "Favorites and recent items. Type 2+ letters to search."
+        statusText:SetText(#list > 0 and "Farm, favorites and recent items. Type 2+ letters to search."
             or "Type at least 2 letters, or shift-click an item.")
         return
     end
     if not ns.Search.IsBuilt() then statusText:SetText("Building item index...") end
     ns.Search.Find(text, function(ids, nExact)
         if token ~= searchToken then return end -- a newer search replaced this one
-        -- Matching favourites first (gold), from all matches, not only the first MAX_ITEMS.
-        local list, favs = {}, favorites()
-        for _, id in ipairs(ids) do
-            if favs[id] then list[#list + 1] = { id = id, name = ns.Search.Name(id), fav = true } end
-        end
-        for _, id in ipairs(ids) do
-            if #list >= MAX_ITEMS then break end
-            if not favs[id] then list[#list + 1] = { id = id, name = ns.Search.Name(id) } end
+        -- Matching farm items, then favourites first, from all matches, not only the first MAX_ITEMS.
+        local list = {}
+        for group = 0, 2 do
+            for _, id in ipairs(ids) do
+                if group == 2 and #list >= MAX_ITEMS then break end
+                if itemGroup(id) == group then list[#list + 1] = { id = id, name = ns.Search.Name(id) } end
+            end
         end
         itemBox:SetDataProvider(CreateDataProvider(list))
         if #ids == 0 then
@@ -388,7 +410,7 @@ local function build()
 
     headerName = frame:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
     headerName:SetPoint("TOPLEFT", headerIcon, "TOPRIGHT", 8, -1)
-    headerName:SetPoint("RIGHT", frame, "RIGHT", -112, 0)
+    headerName:SetPoint("RIGHT", frame, "RIGHT", -196, 0)
     headerName:SetJustifyH("LEFT")
     headerName:SetWordWrap(false)
     headerName:SetText("Search for an item")
@@ -403,11 +425,28 @@ local function build()
         updateFavButton()
         if #searchBox:GetText() < 2 then runSearch("") end -- refresh the favourites list
     end)
+
+    farmButton = CreateFrame("Button", nil, frame, "UIPanelButtonTemplate")
+    farmButton:SetSize(80, 22)
+    farmButton:SetPoint("RIGHT", favButton, "LEFT", -4, 0)
+    farmButton:SetScript("OnClick", function()
+        if not selectedId then return end
+        ns.Farm.Toggle(selectedId)
+        updateFavButton()
+        if #searchBox:GetText() < 2 then runSearch("") end
+    end)
+    farmButton:SetScript("OnEnter", function(self)
+        GameTooltip:SetOwner(self, "ANCHOR_TOP")
+        GameTooltip:AddLine("Farm list", 1, 1, 1)
+        GameTooltip:AddLine("Mobs that drop farm items get a \"Farm:\" line on their tooltip in the game.", 0.8, 0.8, 0.8, true)
+        GameTooltip:Show()
+    end)
+    farmButton:SetScript("OnLeave", function() GameTooltip:Hide() end)
     updateFavButton()
 
     summaryText = frame:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
     summaryText:SetPoint("TOPLEFT", headerIcon, "BOTTOMRIGHT", 8, 10)
-    summaryText:SetPoint("RIGHT", frame, "RIGHT", -112, 0) -- leave room for the Favorite button
+    summaryText:SetPoint("RIGHT", frame, "RIGHT", -196, 0) -- leave room for the Farm/Favorite buttons
     summaryText:SetJustifyH("LEFT")
 
     -- Same template as the item search box: InputBoxTemplate didn't take keyboard input on Forever.
