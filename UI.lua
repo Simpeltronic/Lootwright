@@ -278,6 +278,7 @@ end
 ----------------------------------------------------------------------
 local function build()
     frame = CreateFrame("Frame", "ItemFinderFrame", UIParent, "BasicFrameTemplateWithInset")
+    frame:Hide() -- new frames start shown; Toggle decides
     frame:SetSize(720, 440)
     frame:SetPoint("CENTER")
     frame:SetFrameStrata("HIGH")
