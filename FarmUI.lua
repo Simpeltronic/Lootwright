@@ -39,15 +39,14 @@ local function initRow(button, d)
         button.bar = CreateFrame("StatusBar", nil, button)
         button.bar:SetSize(220, 10)
         button.bar:SetPoint("LEFT", 344, 0)
-        button.bar:SetStatusBarTexture("Interface\\TargetingFrame\\UI-StatusBar")
+        button.bar:SetStatusBarTexture("Interface\\Buttons\\WHITE8x8") -- flat bar, dark field guide look
+        button.bar:SetHeight(6)
         local bg = button.bar:CreateTexture(nil, "BACKGROUND")
         bg:SetAllPoints()
-        bg:SetColorTexture(0, 0, 0, 0.4)
+        bg:SetColorTexture(0.15, 0.17, 0.20, 1)
 
-        button.remove = CreateFrame("Button", nil, button, "UIPanelButtonTemplate")
-        button.remove:SetSize(72, 20)
+        button.remove = ns.Theme.Button(button, "Remove", 64, 18)
         button.remove:SetPoint("RIGHT", -6, 0)
-        button.remove:SetText("Remove")
         button.remove:SetScript("OnClick", function(self)
             local row = self:GetParent().data
             if row.kind == "recipe" then ns.Farm.RemoveRecipe(row.key) else ns.Farm.Toggle(row.id) end
@@ -118,7 +117,7 @@ end
 function FarmUI.Build(parent)
     page = parent
 
-    local head = page:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
+    local head = page:CreateFontString(nil, "OVERLAY", "GameFontHighlightLarge")
     head:SetPoint("TOPLEFT", 18, -32)
     head:SetText("Farm list")
     local hint = page:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")

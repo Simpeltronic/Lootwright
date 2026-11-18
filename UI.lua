@@ -23,11 +23,12 @@ local RANK_COLORS = { [1] = "ffd100", [2] = "c0c0c0", [3] = "ff4040", [4] = "c0c
 
 -- Column x offsets / widths in the mob list.
 local COLS = {
-    { key = "name",  label = "Mob",   x = 4,   w = 170, justify = "LEFT" },
-    { key = "level", label = "Level", x = 176, w = 44,  justify = "CENTER" },
-    { key = "zone",  label = "Zone",  x = 222, w = 150, justify = "LEFT" },
-    { key = "rate",  label = "Drop",  x = 374, w = 60,  justify = "RIGHT" },
+    { key = "name",  label = "MOB",   x = 4,   w = 170, justify = "LEFT" },
+    { key = "level", label = "LVL",   x = 176, w = 40,  justify = "LEFT" },
+    { key = "zone",  label = "ZONE",  x = 218, w = 124, justify = "LEFT" },
+    { key = "rate",  label = "DROP",  x = 346, w = 88,  justify = "LEFT" },
 }
+local BAR_W = 40 -- drop-rate bar inside the DROP column, the percentage to its right
 
 ----------------------------------------------------------------------
 -- Helpers
@@ -45,11 +46,7 @@ local function makeList(parent, rowHeight, initializer)
 end
 
 local function rowBase(button)
-    button:SetHighlightTexture("Interface\\QuestFrame\\UI-QuestTitleHighlight", "ADD")
-    button.sel = button:CreateTexture(nil, "BACKGROUND")
-    button.sel:SetAllPoints()
-    button.sel:SetColorTexture(1, 1, 1, 0.12)
-    button.sel:Hide()
+    ns.Theme.StyleRow(button)
     button:SetScript("OnLeave", function() GameTooltip:Hide() end)
 end
 
@@ -168,6 +165,20 @@ local function initMobRow(button, r)
             fs:SetWordWrap(false)
             button.cells[i] = fs
         end
+        -- Drop-rate bar: a dark track and a coloured fill; the percentage moves right of it.
+        local x = COLS[4].x
+        button.track = button:CreateTexture(nil, "ARTWORK")
+        button.track:SetTexture("Interface\\Buttons\\WHITE8x8")
+        button.track:SetVertexColor(0.15, 0.17, 0.20)
+        button.track:SetSize(BAR_W, 5)
+        button.track:SetPoint("LEFT", x, 0)
+        button.fill = button:CreateTexture(nil, "OVERLAY")
+        button.fill:SetTexture("Interface\\Buttons\\WHITE8x8")
+        button.fill:SetHeight(5)
+        button.fill:SetPoint("LEFT", button.track, "LEFT")
+        button.cells[4]:ClearAllPoints()
+        button.cells[4]:SetPoint("LEFT", x + BAR_W + 6, 0)
+        button.cells[4]:SetWidth(COLS[4].w - BAR_W - 6)
         button:SetScript("OnEnter", function(self)
             local m = self.mob
             GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
@@ -203,7 +214,15 @@ local function initMobRow(button, r)
     local zone = r.zone == hereZone and ("|cff40ff40" .. r.zone .. "|r") or r.zone
     button.cells[3]:SetText(zone .. (r.zones > 1 and (" |cff999999+" .. (r.zones - 1) .. "|r") or ""))
     button.cells[4]:SetText(r.rate and ns.RateText(r.rate, r.fewKills) or "?")
-    button.cells[4]:SetTextColor(rateColor(not r.fewKills and r.rate or nil)) -- few kills: grey
+    local cr, cg, cb = rateColor(not r.fewKills and r.rate or nil) -- few kills: grey
+    button.cells[4]:SetTextColor(cr, cg, cb)
+    if r.rate and r.rate > 0 then
+        button.fill:SetWidth(math.max(1, BAR_W * math.min(r.rate, 100) / 100))
+        button.fill:SetVertexColor(cr, cg, cb)
+        button.fill:Show()
+    else
+        button.fill:Hide()
+    end
 end
 
 ----------------------------------------------------------------------
@@ -289,9 +308,15 @@ end
 local function initItemRow(button, data)
     if not button.text then
         rowBase(button)
-        button.text = button:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-        button.text:SetPoint("LEFT", 4, 0)
-        button.text:SetPoint("RIGHT", -4, 0)
+        button.icon = button:CreateTexture(nil, "ARTWORK")
+        button.icon:SetSize(18, 18)
+        button.icon:SetPoint("LEFT", 2, 0)
+        button.icon:SetTexCoord(0.08, 0.92, 0.08, 0.92) -- trim the icon's built-in border
+        button.tag = button:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
+        button.tag:SetPoint("RIGHT", -4, 0)
+        button.text = button:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
+        button.text:SetPoint("LEFT", button.icon, "RIGHT", 6, 0)
+        button.text:SetPoint("RIGHT", button.tag, "LEFT", -4, 0)
         button.text:SetJustifyH("LEFT")
         button.text:SetWordWrap(false)
         button:SetScript("OnClick", function(self) selectItem(self.itemId) end)
@@ -300,14 +325,19 @@ local function initItemRow(button, data)
             GameTooltip:SetItemByID(self.itemId)
             local uses = UI.UsedInRecipes(self.itemId)
             if uses > 0 then GameTooltip:AddLine("Used in " .. uses .. " recipe(s)", 0.4, 0.8, 1) end
+            GameTooltip:AddLine("Item ID " .. self.itemId, 0.5, 0.5, 0.5)
             GameTooltip:Show()
         end)
     end
     button.itemId, button.data = data.id, data
+    button.icon:SetTexture(C_Item.GetItemIconByID(data.id) or 134400)
     local g = itemGroup(data.id)
-    local name = (g == 0 and ("|cff40ff40" .. data.name .. "|r")) or (g == 1 and ("|cffffd100" .. data.name .. "|r"))
+    local name = (g == 0 and ("|cff4fd36a" .. data.name .. "|r")) or (g == 1 and ("|cffffd100" .. data.name .. "|r"))
         or data.name
-    button.text:SetText(name .. " |cff777777#" .. data.id .. "|r")
+    button.text:SetText(name)
+    -- Reagents show how many recipes use them: the addon's main selling point, so it's on every row.
+    local uses = UI.UsedInRecipes(data.id)
+    button.tag:SetText(uses > 0 and tostring(uses) or "")
     button.sel:SetShown(data.id == selectedId)
 end
 
@@ -400,8 +430,7 @@ function runSearch(text)
         end)
         for _, id in ipairs(recentList()) do add(id) end
         itemBox:SetDataProvider(CreateDataProvider(list))
-        statusText:SetText(#list > 0 and "Farm, favorites and recent items. Type 2+ letters to search."
-            or "Type at least 2 letters, or shift-click an item.")
+        statusText:SetText(#list > 0 and "Farm, favorites and recent items" or "Type 2+ letters, or shift-click an item")
         return
     end
     if not ns.Search.IsBuilt() then statusText:SetText("Building item index...") end
@@ -425,11 +454,12 @@ function runSearch(text)
             end
         end
         itemBox:SetDataProvider(CreateDataProvider(list))
-        local hiddenText = hidden > 0 and (", " .. hidden .. " hidden by filters") or ""
+        -- Kept short: the status line has one line of room above the filter pills.
+        local hiddenText = hidden > 0 and (", " .. hidden .. " hidden") or ""
         if #ids == 0 then
-            statusText:SetText("No items match" .. hiddenText .. ".")
+            statusText:SetText("No matches" .. hiddenText)
         else
-            statusText:SetText(#ids .. " match(es)" .. (#ids > MAX_ITEMS and (", showing " .. MAX_ITEMS) or "") .. hiddenText)
+            statusText:SetText(#ids .. " matches" .. (#ids > MAX_ITEMS and (", " .. MAX_ITEMS .. " shown") or "") .. hiddenText)
         end
         if nExact >= 1 or #ids == 1 then selectItem(ids[1]) end
     end)
@@ -450,10 +480,12 @@ end
 -- Frame
 ----------------------------------------------------------------------
 local function build()
-    frame = CreateFrame("Frame", "LootwrightFrame", UIParent, "BasicFrameTemplateWithInset")
+    local T, C = ns.Theme, ns.Theme.C
+    frame = CreateFrame("Frame", "LootwrightFrame", UIParent, "BackdropTemplate")
     frame:Hide() -- new frames start shown; Toggle decides
-    frame:SetSize(720, 440)
+    frame:SetSize(720, 466) -- 26 px taller than before: the header is taller than the old title bar
     frame:SetPoint("CENTER")
+    T.Backdrop(frame, C.bg, C.line, 0.97)
     frame:SetFrameStrata("HIGH")
     frame:SetClampedToScreen(true)
     frame:SetMovable(true)
@@ -463,39 +495,64 @@ local function build()
     frame:SetScript("OnDragStop", frame.StopMovingOrSizing)
     tinsert(UISpecialFrames, "LootwrightFrame") -- Escape closes it
 
-    local title = frame:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
-    title:SetPoint("TOP", 0, -5)
+    -- Header: emblem, name and tagline; tab pills, Options and close on the right; a brass line
+    -- under the emblem as the one warm accent.
+    local emblem = frame:CreateTexture(nil, "ARTWORK")
+    emblem:SetSize(34, 34)
+    emblem:SetPoint("TOPLEFT", 12, -8)
+    emblem:SetTexture(T.MEDIA .. "emblem")
+    local title = frame:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
+    title:SetPoint("TOPLEFT", emblem, "TOPRIGHT", 8, -2)
+    title:SetTextColor(T.RGB(C.white))
     title:SetText("Lootwright")
+    local tagline = frame:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
+    tagline:SetPoint("TOPLEFT", title, "BOTTOMLEFT", 1, -2)
+    tagline:SetText("Find any item. Farm what you need.")
+    local headLine = T.Line(frame, C.line)
+    headLine:SetPoint("TOPLEFT", 1, -50)
+    headLine:SetPoint("TOPRIGHT", -1, -50)
+    headLine:SetHeight(1)
 
-    -- One page per tab, each covering the window; the Search content is built on the first.
+    local close = CreateFrame("Button", nil, frame)
+    close:SetSize(22, 22)
+    close:SetPoint("TOPRIGHT", -8, -14)
+    local x = close:CreateFontString(nil, "OVERLAY", "GameFontHighlightLarge")
+    x:SetPoint("CENTER")
+    x:SetText("×")
+    x:SetTextColor(T.RGB(C.muted))
+    close:SetScript("OnEnter", function() x:SetTextColor(T.RGB(C.white)) end)
+    close:SetScript("OnLeave", function() x:SetTextColor(T.RGB(C.muted)) end)
+    close:SetScript("OnClick", function() frame:Hide() end)
+
+    local optB = T.Button(frame, "Options", 64, 20)
+    optB:SetPoint("RIGHT", close, "LEFT", -8, 0)
+    optB:SetScript("OnClick", function() ns.Options.Open() end)
+
+    -- One page per tab, below the header. Page content keeps its old offsets: the pages simply
+    -- start 26 px lower than before, which the taller frame makes up for.
     for _, t in ipairs(TABS) do
         local pg = CreateFrame("Frame", nil, frame)
-        pg:SetAllPoints()
+        pg:SetPoint("TOPLEFT", 0, -26)
+        pg:SetPoint("BOTTOMRIGHT", 0, 0)
         pg:Hide()
         pages[t.key] = pg
     end
     local page = pages.search
 
-    -- Bottom tabs, like the character sheet. Plain panel buttons: they are known to work on Forever.
+    -- Header text tabs (design choice B): bigger text, the active one white with a brass underline
+    -- sitting on the header line. Left to right from x = 300.
     local prevTab
     for _, t in ipairs(TABS) do
-        local b = CreateFrame("Button", nil, frame, "UIPanelButtonTemplate")
-        b:SetSize(100, 24)
+        local b = T.TextTab(frame, t.label)
         if prevTab then
-            b:SetPoint("LEFT", prevTab, "RIGHT", 4, 0)
+            b:SetPoint("BOTTOMLEFT", prevTab, "BOTTOMRIGHT", 20, 0)
         else
-            b:SetPoint("TOPLEFT", frame, "BOTTOMLEFT", 12, 2)
+            b:SetPoint("BOTTOMLEFT", frame, "TOPLEFT", 300, -50)
         end
-        b:SetText(t.label)
         b:SetScript("OnClick", function() UI.ShowTab(t.key) end)
         tabButtons[t.key] = b
         prevTab = b
     end
-    local optB = CreateFrame("Button", nil, frame, "UIPanelButtonTemplate")
-    optB:SetSize(80, 24)
-    optB:SetPoint("TOPRIGHT", frame, "BOTTOMRIGHT", -12, 2)
-    optB:SetText("Options")
-    optB:SetScript("OnClick", function() ns.Options.Open() end)
 
     -- Left: search
     searchBox = CreateFrame("EditBox", nil, page, "SearchBoxTemplate")
@@ -513,51 +570,48 @@ local function build()
         runSearch(self:GetText())
         self:ClearFocus()
     end)
+    T.StyleEditBox(searchBox)
 
     statusText = page:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
     statusText:SetPoint("TOPLEFT", searchBox, "BOTTOMLEFT", -4, -4)
     statusText:SetWidth(226)
     statusText:SetJustifyH("LEFT")
+    statusText:SetWordWrap(false) -- one line only; a second line would run into the filter pills
 
-    -- Search filter checkboxes: ticked = that kind of item is shown. All start ticked.
-    local function filterCheck(label, key, invert, tip, anchor, top)
-        local cb = CreateFrame("CheckButton", nil, page, "UICheckButtonTemplate")
-        cb:SetSize(20, 20)
-        if anchor then cb:SetPoint("LEFT", anchor, "RIGHT", 4, -1) else cb:SetPoint("TOPLEFT", 14, top) end
-        local fs = cb:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-        fs:SetPoint("LEFT", cb, "RIGHT", 0, 1)
-        fs:SetText(label)
-        local function value() return LootwrightDB[key] == true end
-        if invert then cb:SetChecked(not value()) else cb:SetChecked(value()) end
-        cb:SetScript("OnClick", function(self)
-            local on = self:GetChecked() and true or false
-            if invert then on = not on end
-            LootwrightDB[key] = on
+    -- Search filter pills: a pill that is on means that kind of item is shown (user's rule: turning
+    -- one on only ever adds items). All start on. Settings are the hide* keys, so on = not hidden.
+    local function filterPill(label, key, tip, anchor, top)
+        local p = T.Pill(page, label, "filter")
+        if anchor then p:SetPoint("LEFT", anchor, "RIGHT", 4, 0) else p:SetPoint("TOPLEFT", 12, top) end
+        p:SetOn(LootwrightDB[key] ~= true)
+        p:SetScript("OnClick", function(self)
+            LootwrightDB[key] = self.on -- was on (shown): now hidden, and the other way round
+            self:SetOn(not self.on)
             runSearch(searchBox:GetText())
         end)
-        cb:SetScript("OnEnter", function(self)
+        p:HookScript("OnEnter", function(self)
             GameTooltip:SetOwner(self, "ANCHOR_TOP")
             GameTooltip:AddLine(tip, 1, 1, 1, true)
             GameTooltip:Show()
         end)
-        cb:SetScript("OnLeave", function() GameTooltip:Hide() end)
-        return cb, fs
+        p:HookScript("OnLeave", function() GameTooltip:Hide() end)
+        return p
     end
     -- Row 1: what the item is. Row 2: the rest, and where it drops.
-    local _, reagentLabel = filterCheck("Reagents", "hideReagent", true,
+    local reagentPill = filterPill("Reagents", "hideReagent",
         "Show crafting materials: anything used in a recipe, plus trade goods (cloth, leather, herbs, ore, meat...).",
         nil, -70)
-    local _, questLabel = filterCheck("Quest", "hideQuest", true, "Show quest items.", reagentLabel)
-    filterCheck("Gear", "hideGear", true, "Show equipment (weapons and armor).", questLabel)
-    local _, otherLabel = filterCheck("Other", "hideOther", true,
-        "Show everything else: potions, food, containers, junk...", nil, -90)
-    local dungeonCb = filterCheck("Dungeon", "hideDungeon", true,
+    local questPill = filterPill("Quest", "hideQuest", "Show quest items.", reagentPill)
+    filterPill("Gear", "hideGear", "Show equipment (weapons and armor).", questPill)
+    local otherPill = filterPill("Other", "hideOther", "Show everything else: potions, food, containers, junk...",
+        nil, -92)
+    local dungeonPill = filterPill("Dungeon", "hideDungeon",
         "Show items that dungeon or raid bosses drop (ForeverDB boss loot; normal dungeon mobs aren't covered).",
-        otherLabel)
-    if not hasDungeonData() then dungeonCb:Hide() end -- needs GeneratedData.lua
+        otherPill)
+    if not hasDungeonData() then dungeonPill:Hide() end -- needs Lootwright_Data
 
-    itemBox = makeList(page, 18, initItemRow)
-    itemBox:SetPoint("TOPLEFT", 12, -114)
+    itemBox = makeList(page, 22, initItemRow)
+    itemBox:SetPoint("TOPLEFT", 12, -116)
     itemBox:SetPoint("BOTTOMLEFT", 12, 12)
     itemBox:SetWidth(222)
     runSearch("") -- recent items
@@ -568,15 +622,14 @@ local function build()
     headerIcon:SetPoint("TOPLEFT", 260, -30)
     headerIcon:SetTexture(134400) -- question mark
 
-    headerName = page:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
+    headerName = page:CreateFontString(nil, "OVERLAY", "GameFontHighlightLarge")
     headerName:SetPoint("TOPLEFT", headerIcon, "TOPRIGHT", 8, -1)
     headerName:SetPoint("RIGHT", frame, "RIGHT", -262, 0)
     headerName:SetJustifyH("LEFT")
     headerName:SetWordWrap(false)
     headerName:SetText("Search for an item")
 
-    favButton = CreateFrame("Button", nil, page, "UIPanelButtonTemplate")
-    favButton:SetSize(90, 22)
+    favButton = T.Button(page, "Favorite", 84, 22)
     favButton:SetPoint("TOPRIGHT", -14, -30)
     favButton:SetScript("OnClick", function()
         if not selectedId then return end
@@ -586,22 +639,21 @@ local function build()
         refreshItemRows()
     end)
 
-    farmButton = CreateFrame("Button", nil, page, "UIPanelButtonTemplate")
-    farmButton:SetSize(80, 22)
-    farmButton:SetPoint("RIGHT", favButton, "LEFT", -4, 0)
+    farmButton = T.Button(page, "Farm", 76, 22)
+    farmButton:SetPoint("RIGHT", favButton, "LEFT", -6, 0)
     farmButton:SetScript("OnClick", function()
         if not selectedId then return end
         ns.Farm.Toggle(selectedId)
         updateFavButton()
         refreshItemRows()
     end)
-    farmButton:SetScript("OnEnter", function(self)
+    farmButton:HookScript("OnEnter", function(self)
         GameTooltip:SetOwner(self, "ANCHOR_TOP")
         GameTooltip:AddLine("Farm list", 1, 1, 1)
         GameTooltip:AddLine("Mobs that drop farm items get a \"Farm:\" line on their tooltip in the game.", 0.8, 0.8, 0.8, true)
         GameTooltip:Show()
     end)
-    farmButton:SetScript("OnLeave", function() GameTooltip:Hide() end)
+    farmButton:HookScript("OnLeave", function() GameTooltip:Hide() end)
 
     -- Goal: applied on Enter only (focus changes while switching items must not touch goals).
     goalBox = CreateFrame("EditBox", nil, page, "SearchBoxTemplate")
@@ -625,9 +677,10 @@ local function build()
         GameTooltip:Show()
     end)
     goalBox:HookScript("OnLeave", function() GameTooltip:Hide() end)
+    T.StyleEditBox(goalBox)
     updateFavButton()
 
-    summaryText = page:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+    summaryText = page:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
     summaryText:SetPoint("TOPLEFT", headerIcon, "BOTTOMRIGHT", 8, 10)
     summaryText:SetPoint("RIGHT", frame, "RIGHT", -196, 0) -- leave room for the Farm/Favorite buttons
     summaryText:SetJustifyH("LEFT")
@@ -640,39 +693,33 @@ local function build()
     if zoneBox.Instructions then zoneBox.Instructions:SetText("Filter by zone") end
     zoneBox:HookScript("OnTextChanged", function() if selectedId then refreshMobs() end end)
     zoneBox:HookScript("OnEnterPressed", zoneBox.ClearFocus)
+    T.StyleEditBox(zoneBox)
 
-    local clearPins = CreateFrame("Button", nil, page, "UIPanelButtonTemplate")
-    clearPins:SetSize(90, 22)
-    clearPins:SetPoint("LEFT", zoneBox, "RIGHT", 12, 0)
-    clearPins:SetText("Clear pins")
+    local clearPins = T.Button(page, "Clear pins", 76, 20)
+    clearPins:SetPoint("LEFT", zoneBox, "RIGHT", 10, 0)
     clearPins:SetScript("OnClick", function() ns.Map.Clear() end)
 
-    -- Filter checkboxes; own label font strings since template label keys differ between clients.
-    local function makeCheck(label, key, tip, anchor)
-        local cb = CreateFrame("CheckButton", nil, page, "UICheckButtonTemplate")
-        cb:SetSize(22, 22)
-        cb:SetPoint("LEFT", anchor, "RIGHT", 6, 0)
-        local fs = cb:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-        fs:SetPoint("LEFT", cb, "RIGHT", 0, 1)
-        fs:SetText(label)
-        cb:SetChecked(LootwrightDB[key] == true)
-        cb:SetScript("OnClick", function(self)
-            LootwrightDB[key] = self:GetChecked() and true or false
+    -- Mob filter pills (on = the filter is active; these narrow the mob list, unlike the item pills).
+    local function mobPill(label, key, tip, anchor)
+        local p = T.Pill(page, label, "filter")
+        p:SetPoint("LEFT", anchor, "RIGHT", 6, 0)
+        p:SetOn(LootwrightDB[key] == true)
+        p:SetScript("OnClick", function(self)
+            self:SetOn(not self.on)
+            LootwrightDB[key] = self.on
             UI.ClearTooltipCache()
             refreshMobs()
         end)
-        cb:SetScript("OnEnter", function(self)
+        p:HookScript("OnEnter", function(self)
             GameTooltip:SetOwner(self, "ANCHOR_TOP")
             GameTooltip:AddLine(tip, 1, 1, 1, true)
             GameTooltip:Show()
         end)
-        cb:SetScript("OnLeave", function() GameTooltip:Hide() end)
-        return fs -- anchor the next control after the label
+        p:HookScript("OnLeave", function() GameTooltip:Hide() end)
+        return p
     end
-    local nearLabel = makeCheck("Near lvl", "nearLevel",
-        "Only mobs within " .. NEAR_LEVELS .. " levels of you.", clearPins)
-    makeCheck("Friendly", "showFriendly",
-        "Also show mobs friendly to your faction (you can't attack them).", nearLabel)
+    local nearPill = mobPill("Near lvl", "nearLevel", "Only mobs within " .. NEAR_LEVELS .. " levels of you.", clearPins)
+    mobPill("Friendly", "showFriendly", "Also show mobs friendly to your faction (you can't attack them).", nearPill)
 
     -- Column headers (click to sort)
     headerButtons = {}
@@ -681,10 +728,11 @@ local function build()
         b:SetSize(col.w, 16)
         b:SetPoint("TOPLEFT", 256 + col.x, -94)
         b.col = col
-        b.text = b:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+        b.text = b:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
         b.text:SetAllPoints()
         b.text:SetJustifyH(col.justify)
-        b:SetHighlightTexture("Interface\\QuestFrame\\UI-QuestTitleHighlight", "ADD")
+        b:SetHighlightTexture("Interface\\Buttons\\WHITE8x8", "ADD")
+        b:GetHighlightTexture():SetVertexColor(1, 1, 1, 0.05)
         b:SetScript("OnClick", function()
             if sortKey == col.key then
                 sortAsc = not sortAsc
@@ -696,14 +744,23 @@ local function build()
         headerButtons[#headerButtons + 1] = b
     end
 
-    mobBox = makeList(page, 18, initMobRow)
+    local tableLine = T.Line(page, C.line)
+    tableLine:SetPoint("TOPLEFT", 256, -110)
+    tableLine:SetPoint("TOPRIGHT", -14, -110)
+    tableLine:SetHeight(1)
+    local colLine = T.Line(page, C.line) -- between the item list and the item details
+    colLine:SetPoint("TOPLEFT", 250, 0)
+    colLine:SetPoint("BOTTOMLEFT", 250, 0)
+    colLine:SetWidth(1)
+
+    mobBox = makeList(page, 20, initMobRow)
     mobBox:SetPoint("TOPLEFT", 256, -112)
     mobBox:SetPoint("BOTTOMRIGHT", -30, 30)
 
     local foot = page:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
     foot:SetPoint("BOTTOMLEFT", 260, 12)
     foot:SetJustifyH("LEFT")
-    foot:SetText("Rates: QuestieDB data. * = very few kills.")
+    foot:SetText("Rates: QuestieDB and ForeverDB.net data. * = very few kills.")
 
     filterText = page:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     filterText:SetPoint("BOTTOMRIGHT", -16, 12)
@@ -717,7 +774,7 @@ local function build()
     else
         tabButtons.prof:Hide()
         tabButtons.farm:ClearAllPoints()
-        tabButtons.farm:SetPoint("LEFT", tabButtons.search, "RIGHT", 4, 0)
+        tabButtons.farm:SetPoint("BOTTOMLEFT", tabButtons.search, "BOTTOMRIGHT", 20, 0)
     end
     ns.FarmUI.Build(pages.farm)
 
@@ -773,9 +830,7 @@ function UI.ShowTab(key)
     if not frame then build() end
     if not pages[key] or (key == "prof" and not ns.ProfUI) then key = "search" end
     for k, pg in pairs(pages) do pg:SetShown(k == key) end
-    for k, b in pairs(tabButtons) do
-        if k == key then b:LockHighlight() else b:UnlockHighlight() end
-    end
+    for k, b in pairs(tabButtons) do b:SetOn(k == key) end
     LootwrightDB.tab = key
     frame:Show()
     if key == "prof" then ns.ProfUI.Refresh()

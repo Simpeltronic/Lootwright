@@ -7,9 +7,10 @@
 ## Dependencies: QuestieDB
 ## X-QuestieDB-Contract: 4
 ## SavedVariables: LootwrightDB
-## IconTexture: Interface\Icons\INV_Misc_Spyglass_02
+## IconTexture: Interface\AddOns\Lootwright\Media\emblem
 
 Core.lua
+Theme.lua
 Data.lua
 Search.lua
 UI.lua
@@ -18,3 +19,4 @@ Arrow.lua
 Farm.lua
 FarmUI.lua
 Options.lua
+MinimapButton.lua

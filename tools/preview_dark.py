@@ -1,10 +1,12 @@
 """Renders docs/design-preview-dark.png: the "dark field guide" Search tab (design B) with the
 Option E emblem in the header. A design preview only; the game draws the real window in Lua.
 
-Needs Media/emblem.png (tools/make_icons.py). Usage: python -I tools/preview_dark.py
+Needs Media/emblem.png (tools/make_icons.py).
+Usage: python -I tools/preview_dark.py [underline|bottom|pills]   (tab style; default underline, the chosen one)
 """
 
 import pathlib
+import sys
 
 from PIL import Image, ImageDraw, ImageFont
 
@@ -42,24 +44,56 @@ def pill(d, x, y, text, f, fill=None, outline=None, color=TEXT, pad=8, h=20):
 
 
 def main():
+    tabs = sys.argv[1] if len(sys.argv) > 1 else "underline"  # the chosen style
     W, H = 720, 440
-    img = Image.new("RGBA", (W, H), BG)
+    TABS_H = 34 if tabs == "bottom" else 0  # tabs hanging under the window
+    img = Image.new("RGBA", (W, H + TABS_H), (0, 0, 0, 0))
     d = ImageDraw.Draw(img)
-    d.rectangle([0, 0, W - 1, H - 1], outline=LINE)
+    d.rectangle([0, 0, W - 1, H - 1], fill=BG, outline=LINE)
     f11, f12, f13, f16 = font(11), font(12), font(13), font(17, True)
 
-    # Header: emblem, name, tagline, tabs as pills, close.
+    # Header: emblem, name, tagline; Options and close on the right; tabs per style.
     emblem = Image.open(ROOT / "Media" / "emblem.png").convert("RGBA").resize((34, 34), Image.LANCZOS)
     img.alpha_composite(emblem, (12, 8))
     d.text((54, 9), "Lootwright", font=f16, fill=WHITE)
     d.text((55, 29), "Find any item. Farm what you need.", font=f11, fill=MUTED)
-    x = 400
-    x = pill(d, x, 15, "Search", f12, fill=SEL, color=BLUE) + 6
-    x = pill(d, x, 15, "Professions", f12, outline=LINE, color=MUTED) + 6
-    x = pill(d, x, 15, "Farm", f12, outline=LINE, color=MUTED) + 6
     d.text((W - 24, 13), "×", font=font(18), fill=MUTED)
+    ow = d.textlength("Options", font=f12) + 18
+    d.rectangle([W - 40 - ow, 15, W - 40, 35], fill=PANEL, outline=LINE)
+    d.text((W - 40 - ow + 9, 17), "Options", font=f12, fill=TEXT)
+    if tabs == "pills":
+        x = 400
+        x = pill(d, x, 15, "Search", f12, fill=SEL, color=BLUE) + 6
+        x = pill(d, x, 15, "Professions", f12, outline=LINE, color=MUTED) + 6
+        pill(d, x, 15, "Farm", f12, outline=LINE, color=MUTED)
+    elif tabs == "underline":
+        # Text tabs, bigger and brighter, the active one underlined in brass down on the header line.
+        ft = font(15, True)
+        x = 300
+        for label, on in (("Search", True), ("Professions", False), ("Farm", False)):
+            w = d.textlength(label, font=ft)
+            d.text((x, 16), label, font=ft, fill=WHITE if on else MUTED)
+            if on:
+                d.rectangle([x - 4, 47, x + w + 4, 50], fill=BRASS)
+            x += w + 28
     d.line([0, 50, W, 50], fill=LINE)
-    d.line([12, 50, 120, 50], fill=BRASS, width=2)  # the one warm accent, under the emblem
+    if tabs != "underline":
+        d.line([12, 50, 120, 50], fill=BRASS, width=2)  # the one warm accent, under the emblem
+    if tabs == "bottom":
+        # Tabs hanging under the window, like the character sheet: the active one joins the window.
+        ft = font(14, True)
+        x = 14
+        for label, on in (("Search", True), ("Professions", False), ("Farm", False)):
+            w = d.textlength(label, font=ft) + 36
+            if on:
+                d.rectangle([x, H - 1, x + w, H + 28], fill=BG, outline=LINE)
+                d.line([x + 1, H - 1, x + w - 1, H - 1], fill=BG)  # open top: joined to the window
+                d.rectangle([x + 8, H + 25, x + w - 8, H + 27], fill=BRASS)
+                d.text((x + 18, H + 5), label, font=ft, fill=WHITE)
+            else:
+                d.rectangle([x, H + 3, x + w, H + 28], fill=(14, 16, 20), outline=LINE)
+                d.text((x + 18, H + 7), label, font=ft, fill=MUTED)
+            x += w + 4
 
     # Left column.
     x0, y0 = 12, 62
@@ -69,7 +103,7 @@ def main():
     for label, on in (("Reagents", True), ("Quest", False), ("Gear", False), ("Dungeon", False)):
         cx = pill(d, cx, y0 + 32, label, f11, fill=GREEN_DIM if on else None, outline=GREEN_EDGE if on else LINE,
                   color=GREEN if on else MUTED, pad=7, h=18) + 4
-    d.text((x0, y0 + 56), "4 matches, 12 hidden by filters", font=f11, fill=MUTED)
+    d.text((x0, y0 + 56), "4 matches, 12 hidden", font=f11, fill=MUTED)
     items = [("Linen Cloth", (154, 154, 138), 14, True), ("Wool Cloth", (138, 125, 99), 22, False),
              ("Silk Cloth", (127, 127, 168), 31, False), ("Bolt of Linen Cloth", (176, 170, 150), 9, False)]
     for i, (name, col, n, sel) in enumerate(items):
@@ -122,9 +156,11 @@ def main():
     # Footer.
     d.line([232, H - 30, W, H - 30], fill=LINE)
     d.text((rx, H - 24), "Rates: QuestieDB and ForeverDB.net data", font=f11, fill=MUTED)
-    d.text((W - 150, H - 24), "Options", font=f11, fill=BLUE)
-    out = ROOT / "docs" / "design-preview-dark.png"
-    img.convert("RGB").save(out)
+    name = "design-preview-dark.png" if tabs == "underline" else f"design-preview-dark-{tabs}.png"
+    out = ROOT / "docs" / name
+    flat = Image.new("RGB", img.size, (40, 44, 52))  # a neutral "game world" behind hanging tabs
+    flat.paste(img, (0, 0), img)
+    flat.save(out)
     print("wrote", out.relative_to(ROOT))
 
 

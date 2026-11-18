@@ -19,6 +19,9 @@ local TOGGLES = {
       tip = "Shows an arrow and distance to the spawn. The map marker is set either way." },
     { key = "farmAlerts", label = "Farm messages in the middle of the screen",
       tip = "Goal reached, material ready and \"craft it\" messages. They always go to chat." },
+    { key = "minimapButton", label = "Minimap button",
+      tip = "The Lootwright emblem on the minimap. Left-click opens the window, right-click opens these options.",
+      onChange = function() ns.MinimapButton.Refresh() end },
 }
 
 -- True unless the player switched the feature off.

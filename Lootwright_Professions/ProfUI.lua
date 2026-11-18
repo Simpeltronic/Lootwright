@@ -174,17 +174,14 @@ end
 -- Builds the Professions tab into `parent` (a page of the main window, see UI.lua).
 function ProfUI.Build(parent)
     frame = parent
+    local T, C = ns.Theme, ns.Theme.C
 
     -- Profession switcher: < Name >
-    local prev = CreateFrame("Button", nil, frame, "UIPanelButtonTemplate")
-    prev:SetSize(24, 22)
+    local prev = T.Button(frame, "<", 24, 22)
     prev:SetPoint("TOPLEFT", 12, -30)
-    prev:SetText("<")
-    local nextB = CreateFrame("Button", nil, frame, "UIPanelButtonTemplate")
-    nextB:SetSize(24, 22)
+    local nextB = T.Button(frame, ">", 24, 22)
     nextB:SetPoint("TOPLEFT", 214, -30)
-    nextB:SetText(">")
-    profLabel = frame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    profLabel = frame:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
     profLabel:SetPoint("LEFT", prev, "RIGHT", 4, 0)
     profLabel:SetPoint("RIGHT", nextB, "LEFT", -4, 0)
     local function step(d)
@@ -204,20 +201,23 @@ function ProfUI.Build(parent)
     if filterBox.Instructions then filterBox.Instructions:SetText("Filter recipes") end
     filterBox:HookScript("OnTextChanged", function() refreshRecipes() end)
     filterBox:HookScript("OnEnterPressed", filterBox.ClearFocus)
+    T.StyleEditBox(filterBox)
 
-    local known = CreateFrame("CheckButton", nil, frame, "UICheckButtonTemplate")
-    known:SetSize(22, 22)
-    known:SetPoint("TOPLEFT", 14, -80)
-    local knownLabel = known:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-    knownLabel:SetPoint("LEFT", known, "RIGHT", 0, 1)
-    knownLabel:SetText("Known recipes only")
-    known:SetChecked(LootwrightDB.profKnownOnly == true)
+    local known = T.Pill(frame, "Known recipes only", "filter")
+    known:SetPoint("TOPLEFT", 12, -82)
+    known:SetOn(LootwrightDB.profKnownOnly == true)
     known:SetScript("OnClick", function(self)
-        LootwrightDB.profKnownOnly = self:GetChecked() and true or false
+        self:SetOn(not self.on)
+        LootwrightDB.profKnownOnly = self.on
         refreshRecipes()
     end)
 
-    recipeBox = ns.UI.MakeList(frame, 18, initRecipeRow)
+    local colLine = T.Line(frame, C.line)
+    colLine:SetPoint("TOPLEFT", 250, 0)
+    colLine:SetPoint("BOTTOMLEFT", 250, 0)
+    colLine:SetWidth(1)
+
+    recipeBox = ns.UI.MakeList(frame, 20, initRecipeRow)
     recipeBox:SetPoint("TOPLEFT", 12, -104)
     recipeBox:SetPoint("BOTTOMLEFT", 12, 12)
     recipeBox:SetWidth(222)
@@ -229,13 +229,13 @@ function ProfUI.Build(parent)
     emptyText:SetText("Open each of your profession windows once. Lootwright saves the recipes you know.")
 
     -- Right: materials
-    recipeName = frame:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
+    recipeName = frame:CreateFontString(nil, "OVERLAY", "GameFontHighlightLarge")
     recipeName:SetPoint("TOPLEFT", 260, -32)
     recipeName:SetPoint("RIGHT", frame, "RIGHT", -16, 0)
     recipeName:SetJustifyH("LEFT")
     recipeName:SetWordWrap(false)
 
-    local craftsLabel = frame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+    local craftsLabel = frame:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
     craftsLabel:SetPoint("TOPLEFT", 262, -64)
     craftsLabel:SetText("Crafts:")
     craftsBox = CreateFrame("EditBox", nil, frame, "SearchBoxTemplate")
@@ -247,13 +247,12 @@ function ProfUI.Build(parent)
     craftsBox:SetText("1")
     craftsBox:HookScript("OnTextChanged", function() refreshMats() end)
     craftsBox:HookScript("OnEnterPressed", craftsBox.ClearFocus)
+    T.StyleEditBox(craftsBox)
 
-    local farmB = CreateFrame("Button", nil, frame, "UIPanelButtonTemplate")
-    farmB:SetSize(140, 22)
-    farmB:SetPoint("LEFT", craftsBox, "RIGHT", 10, 0)
-    farmB:SetText("Farm recipe")
+    local farmB = T.Button(frame, "Farm recipe", 110, 22)
+    farmB:SetPoint("LEFT", craftsBox, "RIGHT", 12, 0)
     farmB:SetScript("OnClick", farmMaterials)
-    farmB:SetScript("OnEnter", function(self)
+    farmB:HookScript("OnEnter", function(self)
         GameTooltip:SetOwner(self, "ANCHOR_TOP")
         GameTooltip:AddLine("Farm recipe", 1, 1, 1)
         GameTooltip:AddLine("Adds this recipe to the Farm tab with every material as a sub-goal for this many "
@@ -261,16 +260,21 @@ function ProfUI.Build(parent)
             .. "once your bags hold the crafted items.", 0.8, 0.8, 0.8, true)
         GameTooltip:Show()
     end)
-    farmB:SetScript("OnLeave", function() GameTooltip:Hide() end)
+    farmB:HookScript("OnLeave", function() GameTooltip:Hide() end)
 
-    local heads = { { "Material", 264 }, { "Have", 412 }, { "Source", 472 } }
+    local heads = { { "MATERIAL", 264 }, { "HAVE", 412 }, { "SOURCE", 472 } }
     for _, h in ipairs(heads) do
-        local fs = frame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+        local fs = frame:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
         fs:SetPoint("TOPLEFT", h[2], -90)
         fs:SetText(h[1])
     end
 
-    matBox = ns.UI.MakeList(frame, 18, initMatRow)
+    local tableLine = T.Line(frame, C.line)
+    tableLine:SetPoint("TOPLEFT", 260, -104)
+    tableLine:SetPoint("TOPRIGHT", -14, -104)
+    tableLine:SetHeight(1)
+
+    matBox = ns.UI.MakeList(frame, 20, initMatRow)
     matBox:SetPoint("TOPLEFT", 260, -106)
     matBox:SetPoint("BOTTOMRIGHT", -30, 12)
 
