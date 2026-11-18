@@ -15,7 +15,7 @@ Decided: **Ko-fi** for donations, a **public GitHub repo** for source and bug re
 | `banner.png` | 1200 × 300 | First image of the description. |
 | `divider.png` | 1200 × 24 | Optional section break. At most 2–3 times. |
 | `screens/search-window.png` | 672 × 435 | Real in-game shot of the Search tab (inline image and Gallery). |
-| `screens/map-skulls.png` | 658 × 448 | Real in-game shot of map skulls (inline image and Gallery). Retake with farm skulls for the Gallery, see section 7. |
+| `screens/map-skulls.png` | 648 × 434 | Real in-game shot of the grouped farm skulls in Hillsbrad Foothills (inline image and Gallery). |
 | `screens/tracker.png` | 230 × 76 | Real in-game shot of the farm tracker. |
 | `page-preview.html` | | A preview of how the finished page reads. |
 
@@ -184,12 +184,12 @@ Privacy note: the person tipping sees your Ko-fi page name. Depending on PayPal 
 
 ## 8. Screenshot shot list (Gallery)
 
-CurseForge wants real in-game screenshots. The three in `screens/` are real and can be used now; the rest are to take. Settings for every shot: 1920 × 1080 or larger, default UI scale, daytime outdoor zone, PNG, other addons' frames hidden where they'd clutter, crop with a little game world around the subject.
+CurseForge wants real in-game screenshots. The three in `screens/` are real and can be used now; the other five are to take. Settings for every shot: 1920 × 1080 or larger, default UI scale, daytime outdoor zone, PNG, other addons' frames hidden where they'd clutter, crop with a little game world around the subject.
 
 | # | Shot | Caption | Status |
 |---|---|---|---|
 | 1 | Search tab with an item selected, Reagents pill on | Find every mob that drops an item, best rates first | `screens/search-window.png` |
-| 2 | World map with small grouped farm skulls (press Clear pins first, so only farm skulls show), one hovered | Farm skulls on the map, grouped by area | Retake: current shot shows a clicked mob's big skulls |
+| 2 | World map with small grouped farm skulls (press Clear pins first, so only farm skulls show) | Farm skulls on the map, grouped by area | `screens/map-skulls.png` |
 | 3 | The amount popup open over the Farm button | Choose how many you want | To take |
 | 4 | A mob hovered with the green "Farm: … (have 12/40)" line | Mobs you need are marked on their tooltip | To take |
 | 5 | Professions tab with a recipe and its materials | Every recipe, and what it takes to make it | To take |
