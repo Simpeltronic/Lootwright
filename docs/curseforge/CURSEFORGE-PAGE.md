@@ -14,9 +14,16 @@ Decided: **Ko-fi** for donations, a **public GitHub repo** for source and bug re
 | `logo-crest.png` | 512 × 512 | The emblem alone, transparent. For GitHub and Ko-fi profile pictures. |
 | `banner.png` | 1200 × 300 | First image of the description. |
 | `divider.png` | 1200 × 24 | Optional section break. At most 2–3 times. |
-| `screens/search-window.png` | 672 × 435 | Real in-game shot of the Search tab (inline image and Gallery). |
-| `screens/map-skulls.png` | 648 × 434 | Real in-game shot of the grouped farm skulls in Hillsbrad Foothills (inline image and Gallery). |
-| `screens/tracker.png` | 230 × 76 | Real in-game shot of the farm tracker. |
+| `screens/search-window.png` | 672 × 435 | Search tab (Gallery 1, inline under "Find where anything drops"). |
+| `screens/map-skulls.png` | 648 × 434 | Grouped farm skulls in Hillsbrad Foothills (Gallery 2, inline). |
+| `screens/amount-popup.png` | 1118 × 564 | The amount popup over the Search tab (Gallery 3, inline under "Farm with goals"). |
+| `screens/mob-tooltip.png` | 410 × 160 | A mob tooltip with the green "Farm:" line (Gallery 4). |
+| `screens/professions.png` | 868 × 564 | Professions tab with the Tailoring recipe list (Gallery 5). |
+| `screens/farm-tab.png` | 868 × 564 | Farm tab with a recipe group and a crafted material opened up (Gallery 6, inline under "Farm a whole recipe"). |
+| `screens/arrow.png` | 800 × 780 | The waypoint arrow pointing to a spawn, 407 yd away (Gallery 7). |
+| `screens/tracker.png` | 294 × 164 | The farm tracker with a recipe group (Gallery 8, inline). |
+
+All screenshots are real, cropped from 2560 × 1440 in-game shots, with no character names, chat or other addons' trackers.
 | `page-preview.html` | | A preview of how the finished page reads. |
 
 Images are drawn by `tools/make_brand.py` from the emblem (`tools/make_icons.py`), so they match the addon.
@@ -66,7 +73,7 @@ The upload is one `.zip` containing the three folders `Lootwright`, `Lootwright_
 
 ## 5. Description (paste into the Markdown editor)
 
-Replace `BANNER_URL`, `SEARCH_IMG_URL`, `MAP_IMG_URL`, `TRACKER_IMG_URL` (upload the images to the project's Images tab first, then copy their links), `GITHUB_URL` and `KOFI_URL`.
+Replace `BANNER_URL`, `SEARCH_IMG_URL`, `POPUP_IMG_URL`, `MAP_IMG_URL`, `FARMTAB_IMG_URL`, `TRACKER_IMG_URL` (upload the images to the project's Images tab first, then copy their links), `GITHUB_URL` and `KOFI_URL`.
 
 ```markdown
 ![Lootwright](BANNER_URL)
@@ -89,10 +96,14 @@ Search by name, or shift-click any item. See every mob that drops it with level 
 ### Farm with goals
 Press **Farm…** on an item and choose how many you want, like splitting a stack: type a number, use the mouse wheel, or pick +10, +20 or a stack. Mobs that drop it get a "Farm:" line on their tooltip and a skull on the world map. When your bags hold enough, it leaves the list by itself.
 
+![Choosing how many to farm](POPUP_IMG_URL)
+
 ![Farm skulls on the world map](MAP_IMG_URL)
 
 ### Farm a whole recipe
 On the Professions tab, pick a recipe and press **Farm recipe**. Every material becomes a goal. Crafted materials open up into what they're made from (Bolt of Linen Cloth into Linen Cloth), vendor-only materials are greyed out, and you get a message as each material is ready, and when you can craft.
+
+![A recipe on the Farm tab](FARMTAB_IMG_URL)
 
 ### Map skulls and a waypoint arrow
 Click a mob to mark all its spawns. Mobs you're farming get small grouped skulls with a count. Click any skull for an arrow and the distance to it.
@@ -184,18 +195,18 @@ Privacy note: the person tipping sees your Ko-fi page name. Depending on PayPal 
 
 ## 8. Screenshot shot list (Gallery)
 
-CurseForge wants real in-game screenshots. The three in `screens/` are real and can be used now; the other five are to take. Settings for every shot: 1920 × 1080 or larger, default UI scale, daytime outdoor zone, PNG, other addons' frames hidden where they'd clutter, crop with a little game world around the subject.
+CurseForge wants real in-game screenshots. All eight are in `screens/`, real and ready to upload. Settings for every shot: 1920 × 1080 or larger, default UI scale, daytime outdoor zone, PNG, other addons' frames hidden where they'd clutter, crop with a little game world around the subject.
 
 | # | Shot | Caption | Status |
 |---|---|---|---|
 | 1 | Search tab with an item selected, Reagents pill on | Find every mob that drops an item, best rates first | `screens/search-window.png` |
 | 2 | World map with small grouped farm skulls (press Clear pins first, so only farm skulls show) | Farm skulls on the map, grouped by area | `screens/map-skulls.png` |
-| 3 | The amount popup open over the Farm button | Choose how many you want | To take |
-| 4 | A mob hovered with the green "Farm: … (have 12/40)" line | Mobs you need are marked on their tooltip | To take |
-| 5 | Professions tab with a recipe and its materials | Every recipe, and what it takes to make it | To take |
-| 6 | Farm tab with a recipe group, a crafted material opened up, a check mark | Farm a whole recipe, step by step | To take |
-| 7 | The waypoint arrow on screen while walking to a spawn | Click a skull for an arrow to the spawn | To take |
-| 8 | The farm tracker next to the quest tracker | Keep your farm list on screen | `screens/tracker.png` (retake larger for the Gallery) |
+| 3 | The amount popup open over the Farm button | Choose how many you want | `screens/amount-popup.png` |
+| 4 | A mob hovered with the green "Farm: … (have 12/40)" line | Mobs you need are marked on their tooltip | `screens/mob-tooltip.png` |
+| 5 | Professions tab with the recipe list | Every recipe, and what it takes to make it | `screens/professions.png` (no recipe selected; a retake with one selected would show its materials) |
+| 6 | Farm tab with a recipe group, a crafted material opened up, a check mark | Farm a whole recipe, step by step | `screens/farm-tab.png` |
+| 7 | The waypoint arrow on screen while walking to a spawn | Click a skull for an arrow to the spawn | `screens/arrow.png` |
+| 8 | The farm tracker next to the quest tracker | Keep your farm list on screen | `screens/tracker.png` |
 
 Use shot 1 as the first Gallery image: it's what shows in search results.
 

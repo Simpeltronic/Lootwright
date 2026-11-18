@@ -297,7 +297,7 @@ local function selectItem(itemId)
     if #src.mobs == 0 then
         note = "  |cff999999No mob drops recorded.|r"
     elseif src.fromDropTable then
-        note = "  |cff999999(mob list from QuestieDB's quest-item drop table)|r"
+        note = "  |cff999999(quest-item drop table)|r" -- short: the summary has one line
     end
     summaryText:SetText("ID " .. itemId .. "  -  " .. table.concat(parts, ", ") .. note)
     refreshMobs()
@@ -660,6 +660,7 @@ local function build()
     summaryText:SetPoint("TOPLEFT", headerIcon, "BOTTOMRIGHT", 8, 10)
     summaryText:SetPoint("RIGHT", frame, "RIGHT", -216, 0) -- leave room for the Farm/Favorite buttons
     summaryText:SetJustifyH("LEFT")
+    summaryText:SetWordWrap(false) -- one line: a wrapped summary ran into the zone filter below it
 
     -- Same template as the item search box: InputBoxTemplate didn't take keyboard input on Forever.
     zoneBox = CreateFrame("EditBox", nil, page, "SearchBoxTemplate")
