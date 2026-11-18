@@ -7,7 +7,7 @@ with the Option E emblem (loot bag, dotted route, red X).
   divider.png     1200x24 section divider (thin line with a brass accent)
 
 Needs docs/emblem-master.png (tools/make_icons.py).
-Text uses Segoe UI as a stand-in face; see docs/curseforge/CURSEFORGE-PAGE.md (release checklist).
+Text uses Inter (tools/fonts/Inter-Variable.ttf, SIL Open Font License 1.1, from github.com/google/fonts).
 
 Usage: python -I tools/make_brand.py
 """
@@ -28,13 +28,14 @@ WHITE = (255, 255, 255)
 BRASS = (201, 162, 74)
 
 
+FONT = pathlib.Path(__file__).resolve().parent / "fonts" / "Inter-Variable.ttf"  # SIL OFL 1.1, see fonts/OFL.txt
+
+
 def font(size, bold=False):
-    for name in (["segoeuib.ttf"] if bold else ["segoeui.ttf"]) + ["arial.ttf"]:
-        try:
-            return ImageFont.truetype(name, size)
-        except OSError:
-            continue
-    return ImageFont.load_default()
+    """Inter (openly licensed, fine for public images). Variable font: weight 700 or 400."""
+    f = ImageFont.truetype(str(FONT), size)
+    f.set_variation_by_axes([min(32, max(14, size)), 700 if bold else 400])  # optical size, weight
+    return f
 
 
 def emblem(size):

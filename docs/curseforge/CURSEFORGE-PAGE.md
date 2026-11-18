@@ -31,7 +31,7 @@ Images are drawn by `tools/make_brand.py` from the emblem (`tools/make_icons.py`
 - The logo is **the emblem only** (loot bag, dotted route, red X in a brass ring). No text: the name sits next to it everywhere.
 - Don't stretch, recolour, outline or add glow to the emblem. Keep a quarter of its width free around it.
 - Colours: background `#14171C`, panel `#1A1E25`, lines `#2F3540`, text `#D6DAE1`, muted `#8A93A3`, brass `#C9A24A`, green `#4FD36A`. Brass is the one warm accent; use it sparingly (one line, one highlight).
-- Banner text is set in **Segoe UI as a stand-in**. Before release, swap it for an openly licensed font (for example Inter or Source Sans 3 from Google Fonts, OFL licence) and re-run `tools/make_brand.py`. See the checklist.
+- Banner text is set in **Inter** (SIL Open Font License 1.1, from Google's font repository), kept in `tools/fonts/` with its licence. It's free to use in public images.
 
 ---
 
@@ -205,7 +205,7 @@ Use shot 1 as the first Gallery image: it's what shows in search results.
 
 - [ ] Ko-fi page made, `KOFI_URL` filled in.
 - [ ] GitHub repo made and pushed, `GITHUB_URL` filled in, Issues on.
-- [ ] Banner font swapped for an openly licensed one, banner re-rendered.
+- [x] Banner font swapped for Inter (OFL), banner re-rendered.
 - [x] Full GPL-3.0 text added as `LICENSE` (repo and every folder of the release zip).
 - [x] Version set to 0.9.0 in all three TOCs and in `Core.lua`.
 - [x] `tools/build_data.py` re-run right before packaging (ForeverDB data 2026-11-18).
