@@ -1,0 +1,153 @@
+<title>ItemFinder Phases</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;600&family=JetBrains+Mono:wght@400&display=swap">
+<style>
+/* Layout: one reading column; a status legend, then a vertical list of phase rows (status chip, name, what it holds, commits). */
+:root {
+  --bg: #f6f7f9; --surface: #ffffff; --fg: #1c2027; --muted: #5d6573; --line: #dfe3ea;
+  --done: #1f8a2e; --done-bg: #e5f4e7;      /* uncommon (green) */
+  --next: #1f5fd1; --next-bg: #e4edfc;      /* rare (blue) */
+  --plan: #6b7280; --plan-bg: #eef0f3;      /* common (grey) */
+  --gold: #a8780b;
+  --display: "Space Grotesk", "Segoe UI", system-ui, sans-serif;
+  --body: "Inter", "Segoe UI", system-ui, sans-serif;
+  --mono: "JetBrains Mono", Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #12151a; --surface: #1a1e25; --fg: #e6e9ee; --muted: #9aa3b2; --line: #2b313b;
+  --done: #4fc35e; --done-bg: #17301c; --next: #6ea2ff; --next-bg: #172744; --plan: #9aa3b2; --plan-bg: #232832;
+  --gold: #e3b341; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #12151a; --surface: #1a1e25; --fg: #e6e9ee; --muted: #9aa3b2; --line: #2b313b;
+  --done: #4fc35e; --done-bg: #17301c; --next: #6ea2ff; --next-bg: #172744; --plan: #9aa3b2; --plan-bg: #232832;
+  --gold: #e3b341; color-scheme: dark }
+body { background: var(--bg); color: var(--fg); font: 15px/1.6 var(--body);
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+.wrap { max-width: 760px; margin: 0 auto; padding-block: 40px 56px; display: grid; gap: 28px; }
+h1 { font: 600 30px/1.15 var(--display); margin: 0; text-wrap: balance; }
+h2 { font: 600 13px/1 var(--body); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin: 0 0 10px; }
+.lede { color: var(--muted); margin: 6px 0 0; max-width: 62ch; }
+.legend { display: flex; flex-wrap: wrap; gap: 8px 18px; font-size: 13px; color: var(--muted); }
+.chip { display: inline-flex; align-items: center; gap: 6px; font: 500 12px/1 var(--body); padding: 5px 9px; border-radius: 999px; white-space: nowrap; }
+.chip::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+.done { color: var(--done); background: var(--done-bg); }
+.next { color: var(--next); background: var(--next-bg); }
+.plan { color: var(--plan); background: var(--plan-bg); }
+ol.phases { list-style: none; margin: 0; padding: 0; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); }
+.phase { display: grid; grid-template-columns: 44px minmax(0, 1fr); gap: 4px 14px; padding: 16px 18px; border-top: 1px solid var(--line); }
+.phase:first-child { border-top: 0; }
+.phase.current { box-shadow: inset 3px 0 0 var(--next); border-radius: 0; }
+.num { font: 600 22px/1.2 var(--display); color: var(--muted); font-variant-numeric: tabular-nums; }
+.head { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
+.name { font: 600 17px/1.3 var(--display); margin: 0; }
+.what { grid-column: 2; margin: 4px 0 0; color: var(--fg); }
+.what li { margin: 2px 0; }
+.what ul { margin: 0; padding-left: 18px; }
+.commits { grid-column: 2; font: 12px/1.5 var(--mono); color: var(--muted); margin: 6px 0 0; }
+.extra { grid-column: 2; margin-top: 8px; font-size: 13px; color: var(--muted); }
+.extra b { color: var(--gold); font-weight: 600; }
+.notes { border: 1px solid var(--line); border-radius: 10px; background: var(--surface); padding: 16px 18px; }
+.notes ul { margin: 0; padding-left: 18px; }
+.notes li { margin: 4px 0; }
+.foot { font-size: 13px; color: var(--muted); }
+code { font: 13px var(--mono); }
+</style>
+
+<div class="wrap">
+  <header>
+    <h1>ItemFinder phases</h1>
+    <p class="lede">A WoW Forever addon: search an item, see which mobs drop it, where, at what level and drop rate, then farm it with map skulls, goals and recipes. Seven of ten phases are done.</p>
+  </header>
+
+  <div class="legend" aria-label="Status legend">
+    <span class="chip done">Done</span>
+    <span class="chip next">Next</span>
+    <span class="chip plan">Planned</span>
+    <span>Colours follow item quality: uncommon, rare, common.</span>
+  </div>
+
+  <ol class="phases">
+    <li class="phase">
+      <span class="num">1</span>
+      <div class="head"><h3 class="name">Prototype</h3><span class="chip done">Done</span></div>
+      <div class="what">Chat lookup with <code>/if &lt;item&gt;</code> on QuestieDB data, a status check, and a saved log so game output can be read from disk.</div>
+      <div class="commits">a6ea043</div>
+    </li>
+    <li class="phase">
+      <span class="num">2</span>
+      <div class="head"><h3 class="name">Search window</h3><span class="chip done">Done</span></div>
+      <div class="what">Code split into Data, Search and UI. A window with item search and a sortable mob table (level, zone, drop rate) with a zone filter.</div>
+      <div class="commits">4e273c3</div>
+    </li>
+    <li class="phase">
+      <span class="num">3</span>
+      <div class="head"><h3 class="name">Quality of life</h3><span class="chip done">Done</span></div>
+      <div class="what">Level and rate colours, your zone first, recent items, favourites, friendly and near-level filters, and a "Drops from" line on item tooltips.</div>
+      <div class="commits">b2357ac · 34cffa6</div>
+    </li>
+    <li class="phase">
+      <span class="num">4</span>
+      <div class="head"><h3 class="name">Map pins</h3><span class="chip done">Done</span></div>
+      <div class="what">Click a mob to put skulls on its spawns on the world map.</div>
+      <div class="commits">e870c72</div>
+    </li>
+    <li class="phase">
+      <span class="num">5</span>
+      <div class="head"><h3 class="name">Integrations</h3><span class="chip done">Done</span></div>
+      <div class="what">Our own waypoint arrow, since Forever shows no arrow for the game's waypoints. Questie offers no pin API; TomTom and HandyNotes aren't installed.</div>
+      <div class="commits">55583e7 · 56dd649</div>
+      <div class="extra"><b>Added along the way:</b> farm list with goals (1ed1180, 2ea0c80), professions (4cc5b34), one window with Search, Professions and Farm tabs (16b79a5).</div>
+    </li>
+    <li class="phase">
+      <span class="num">6</span>
+      <div class="head"><h3 class="name">Dependency review</h3><span class="chip done">Done</span></div>
+      <div class="what">QuestieDB is the only required addon, checked by contract version at login. Questie removed: its drop-rate rules now live in ItemFinder.</div>
+      <div class="commits">10b7cb1</div>
+    </li>
+    <li class="phase">
+      <span class="num">7</span>
+      <div class="head"><h3 class="name">Data improvements</h3><span class="chip done">Done</span></div>
+      <div class="what">
+        <ul>
+          <li>Build script turns ForeverDB's files into our own data: all 2,493 recipes, and boss loot with rates measured in Forever and kill counts.</li>
+          <li>Search filters: Reagents, Quest, Gear, Other, Dungeon. Ticked means shown.</li>
+          <li>Recipe farming: a recipe on the Farm tab with its materials as sub-goals, crafted materials expanded, vendor-only ones greyed.</li>
+          <li>Ready notices, and grouped map skulls on every mob that drops a farm item.</li>
+        </ul>
+      </div>
+      <div class="commits">9c34ba0 · f495e29 · bda56a4</div>
+    </li>
+    <li class="phase current">
+      <span class="num">8</span>
+      <div class="head"><h3 class="name">Modules and options</h3><span class="chip next">Next</span></div>
+      <div class="what">
+        <ul>
+          <li>Settings panel to switch single features on or off: tooltip lines, map pins, farm skulls, the arrow, messages.</li>
+          <li>Sub-addons players can untick: <code>ItemFinder_Data</code> (ForeverDB data) and <code>ItemFinder_Professions</code>.</li>
+          <li>The core has to work with every sub-addon off.</li>
+        </ul>
+      </div>
+    </li>
+    <li class="phase">
+      <span class="num">9</span>
+      <div class="head"><h3 class="name">Design</h3><span class="chip plan">Planned</span></div>
+      <div class="what">Its own look: icon, colours, real WoW-style tabs, item icons in lists. Reagents front and centre, since they're the main selling point. Mockups agreed first.</div>
+    </li>
+    <li class="phase">
+      <span class="num">10</span>
+      <div class="head"><h3 class="name">Release</h3><span class="chip plan">Planned</span></div>
+      <div class="what">GPL-3.0 licence (required by the QuestieDB and ForeverDB data), packaging, a CurseForge page, and a fresh data build right before release.</div>
+    </li>
+  </ol>
+
+  <section class="notes">
+    <h2>Known limits</h2>
+    <ul>
+      <li>Normal mobs mostly show "rate unknown": ForeverDB has no per-mob rates for them. CMaNGOS loot tables could fill this, but need a download.</li>
+      <li>Farm skull grouping uses a fixed grid and doesn't change with map zoom.</li>
+      <li>Professions read only the recipes you know from your own profession windows; the full list comes from ForeverDB data.</li>
+    </ul>
+  </section>
+
+  <p class="foot">Updated 18 November 2026. Data from ForeverDB.net (https://foreverdb.net) and QuestieDB.</p>
+</div>

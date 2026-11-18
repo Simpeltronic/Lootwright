@@ -85,6 +85,7 @@ Today everything is in `Core.lua`. Splitting it into `Data.lua`, `Search.lua` an
 - Be honest in the UI: say "rate unknown" instead of showing a made-up number.
 - Add new commands and options to `/if` instead of making new slash commands.
 - Commit after each working step.
+- **Keep the pinned phase summary current.** Source: `docs/phases.html`, published at https://claude.ai/artifact/1MD63Q5spBKdr7nWjWXvK6 (pinned in the user's claude.ai sidebar). Whenever something significant changes for a phase (a phase finishes or starts, a feature lands in a phase, phases are added, reordered or renumbered, a known limit is found or fixed), edit `docs/phases.html` (status chip, contents, commit hashes, "Updated" date) and republish it to that URL with the Artifact tool in the same session. From a new conversation, publish with `url` set to that link (read it first) so the link stays the same.
 
 ## Workflow
 
