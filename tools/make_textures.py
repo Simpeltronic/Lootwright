@@ -61,6 +61,11 @@ def parchment():
 
 
 def leather():
+    return save(leather_image(), "leather")
+
+
+def leather_image():
+    """The leather texture without saving it (the crest uses it for its inner disc)."""
     s = 256
     n = 0.5 * tileable_noise(s, 6) + 0.5 * tileable_noise(s, 48)
     pebble = tileable_noise(s, 96)
@@ -68,7 +73,7 @@ def leather():
     base = np.array(LEATHER, dtype=np.float32)
     shade = (n * 30 + pebble * 14)[..., None]
     rgb = (base + shade).clip(0, 255).astype(np.uint8)
-    return save(Image.fromarray(rgb, "RGB").convert("RGBA"), "leather")
+    return Image.fromarray(rgb, "RGB").convert("RGBA")
 
 
 def stitch():
@@ -114,7 +119,8 @@ def anvil_shape(d, ox, oy, sc, fill):
     d.polygon([(ox + x * sc, oy + y * sc) for x, y in pts], fill=fill)
 
 
-def crest():
+def crest(size=128, name="crest"):
+    """The crest, drawn at 512 px and scaled to `size`. name=None returns it without saving."""
     k = 4
     s = 128 * k
     img = Image.new("RGBA", (s, s), (0, 0, 0, 0))
@@ -127,7 +133,7 @@ def crest():
     ri = R - 9 * k
     d.ellipse([c - ri, c - ri, c + ri, c + ri], fill=GOLD_DARK + (255,))
     ri2 = ri - 2 * k
-    inner = Image.fromarray(np.asarray(leather().resize((s, s)))[..., :3]).convert("RGBA")
+    inner = Image.fromarray(np.asarray(leather_image().resize((s, s)))[..., :3]).convert("RGBA")
     mask = Image.new("L", (s, s), 0)
     ImageDraw.Draw(mask).ellipse([c - ri2, c - ri2, c + ri2, c + ri2], fill=255)
     img.paste(inner, (0, 0), mask)
@@ -145,7 +151,8 @@ def crest():
     anvil_shape(d, ox + 1.5 * k, oy + 2 * k, sc, (20, 12, 6, 170))
     anvil_shape(d, ox, oy, sc, GOLD + (255,))
     d.line([ox, oy + 3 * sc, ox + 17 * sc, oy + 3 * sc], fill=GOLD_LIGHT + (255,), width=k)
-    return save(img.resize((128, 128), Image.LANCZOS), "crest")
+    out = img.resize((size, size), Image.LANCZOS)
+    return save(out, name) if name else out
 
 
 def anvil_glyph():
