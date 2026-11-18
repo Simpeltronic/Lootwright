@@ -7,9 +7,10 @@ Read `ROADMAP.md` for the full plan. This file is the short version plus the fac
 ## Current state
 
 - **Phase 1 done** (commit a6ea043): `/if status` and `/if Linen Cloth` verified in game.
-- **Phase 2 written, not yet verified in game** (v0.1.0): split into `Core.lua` (slash, log, shared formatting), `Data.lua` (all QuestieDB/Questie access), `Search.lua` (name index) and `UI.lua` (window). `/if` alone opens the window; the chat commands still work.
-- QuestieDB's `Item.npcDrops` is empty for many common items (e.g. Linen Cloth). `Data.lua` falls back to QuestieDB's quest-item drop tables (`QuestieClassicItemDrops`, ~2k items, `[itemId][npcId] = rate`), using Questie's decoded `DropDB.tableWowhead` / `tablePserver` when Questie is loaded. This fallback is not yet verified in game.
-- Next: test the window and the fallback; then Phase 3.
+- **Phase 2 done** (v0.1.0, commit 4e273c3, verified in game): split into `Core.lua` (slash, log, shared formatting), `Data.lua` (all QuestieDB/Questie access), `Search.lua` (name index) and `UI.lua` (window). `/if` alone opens the window; the chat commands still work.
+- QuestieDB's `Item.npcDrops` is empty for many common items (e.g. Linen Cloth). `Data.lua` falls back to QuestieDB's quest-item drop tables (`QuestieClassicItemDrops`, ~2k items, `[itemId][npcId] = rate`), using Questie's decoded `DropDB.tableWowhead` / `tablePserver` when Questie is loaded. Verified with Linen Cloth (200 mobs). Known weakness: Wowhead rates for quest mobs are often 100% from tiny samples, so they sort to the top.
+- On Forever, `InputBoxTemplate` edit boxes didn't take keyboard input (keys went to game binds). Use `SearchBoxTemplate`.
+- Next: Phase 3 (quality of life).
 
 ## Reading game output from here
 
