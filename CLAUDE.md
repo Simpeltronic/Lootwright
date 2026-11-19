@@ -132,7 +132,7 @@ Claude decides when to bump and says so. Versions are `major.minor.patch`; under
 
 **Outreach drafts** for the 0.10.0 release (Reddit, Discord, ForeverDB, QuestieDB, CurseForge summary line): `docs/outreach.html`, published and pinned at https://claude.ai/artifact/W4fVpL8NTD67Udv2m6QDcH. The user sends them from their own accounts; upload 0.10.0 as a Release file, not Beta (Beta files are hidden in the CurseForge app by default).
 
-**0.10.0 released 19 Nov 2026** (Release file on CurseForge, uploaded by the user; held commits pushed; new description, summary line and Media gallery set up: old 0.9.0 farm-tab and tracker gallery images deleted, 5 new ones uploaded with titles, farm-tab and tracker featured). CurseForge gallery images must be under 850 px wide. 0.9.0 was approved the same day.
+**0.10.0 released 19 Nov 2026** (Release file on CurseForge; the first upload attempt never saved, the second (zip attached via the browser tools) went in as "Lootwright 0.10.0", R, processing on 19 Nov; held commits pushed; new description, summary line and Media gallery set up: old 0.9.0 farm-tab and tracker gallery images deleted, 5 new ones uploaded with titles, farm-tab and tracker featured). CurseForge gallery images must be under 850 px wide. 0.9.0 was approved the same day.
 
 Changelog page: `docs/changelog.html`, published at https://claude.ai/artifact/SZg9WLE5Pd7FdH7bSoAsjX (pinned in the user's sidebar). From a new conversation, read it first and publish with `url` set to that link so it stays the same. Released: **0.10.0**. The next change bumps to 0.10.1 or 0.11.0 by the rules above.
 
