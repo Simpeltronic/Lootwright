@@ -154,7 +154,7 @@ Single features (tooltip lines, map skulls, the arrow, messages, the minimap but
 
 ## Problems and ideas
 
-Report bugs and ideas on [GitHub Issues](https://github.com/Simpeltronic/Lootwright/issues). If something breaks, type `/console scriptErrors 1`, do it again, and include the error text.
+Report bugs and ideas on [GitHub Issues](https://github.com/Simpeltronic/Lootwright/issues), or email lootwright-dev@proton.me if you don't use GitHub (that works for `/if share` loot data too). If something breaks, type `/console scriptErrors 1`, do it again, and include the error text.
 
 ## Credits
 
