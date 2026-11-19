@@ -183,7 +183,25 @@ function Loot.Line(npcId, itemId, sourceRate)
     return line, inside
 end
 
+local function show(v)
+    if issecretvalue and issecretvalue(v) then return "hidden" end
+    return tostring(v)
+end
+
+-- /if loot target: what the game says about your target, to see why an empty kill isn't counted.
+local function inspectTarget()
+    local ok, guid = pcall(UnitGUID, "target")
+    local g = ok and plain(guid)
+    local okL, has, can = false, nil, nil
+    if g and CanLootUnit then okL, has, can = pcall(CanLootUnit, g) end
+    ns.say(string.format("Target: guid=%s npc=%s dead=%s tapDenied=%s inGroup=%s CanLootUnit=%s -> %s, %s; counted=%s",
+        ok and show(guid) or "error", tostring(npcFromGuid(g)), show(UnitIsDead("target")), show(UnitIsTapDenied("target")),
+        tostring(IsInGroup()), CanLootUnit and "exists" or "missing", okL and show(has) or "-", okL and show(can) or "-",
+        tostring(g and seen[g] or false)))
+end
+
 function Loot.Command(arg)
+    if arg == "target" then return inspectTarget() end
     if arg == "debug" then
         debug = not debug
         ns.say("Loot recording debug: " .. (debug and "on (each recorded corpse is printed)" or "off"))
