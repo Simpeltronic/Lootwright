@@ -36,13 +36,6 @@ local function initRow(button, d)
         button.count:SetWidth(80)
         button.count:SetJustifyH("RIGHT")
 
-        -- Bank count, between the bar and Remove: "(12 bank)".
-        button.bank = button:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
-        button.bank:SetPoint("LEFT", 570, 0)
-        button.bank:SetWidth(58)
-        button.bank:SetJustifyH("LEFT")
-        button.bank:SetWordWrap(false)
-
         button.bar = CreateFrame("StatusBar", nil, button)
         button.bar:SetSize(220, 10)
         button.bar:SetPoint("LEFT", 344, 0)
@@ -102,7 +95,8 @@ local function initRow(button, d)
     button.data = d
     local n = d.id and ns.Farm.Have(d.id) or 0
     local banked = d.id and ns.Farm.Bank(d.id) or 0
-    button.bank:SetText(banked > 0 and ("(" .. banked .. " bank)") or "")
+    -- "1(1) / 3": bags and equipped, then the bank in a dim slate blue (shown only, not counted).
+    local bank = banked > 0 and ("|cff7d8cad(" .. banked .. ")|r") or ""
 
     button.name:ClearAllPoints()
     local indent = d.kind == "mat" and (8 + 20 * (d.depth or 1)) or 8
@@ -113,26 +107,26 @@ local function initRow(button, d)
     if d.kind == "recipe" then
         button.name:SetText(d.name)
         button.name:SetTextColor(1, 0.82, 0)
-        button.count:SetText(d.target and (n .. " / " .. d.target) or (d.crafts .. " crafts"))
+        button.count:SetText(d.target and (n .. bank .. " / " .. d.target) or (d.crafts .. " crafts"))
         setBar(button.bar, n, d.target)
     elseif d.kind == "mat" then
         button.name:SetText(itemName(d.id) .. (d.crafted and " |cffc0a060(craft)|r" or ""))
         local mark = (d.need > 0 and n >= d.need) and READY or ""
         if d.vendorOnly then
             button.name:SetTextColor(0.5, 0.5, 0.5)
-            button.count:SetText("|cff808080" .. n .. " / " .. d.need .. "|r" .. mark)
+            button.count:SetText("|cff808080" .. n .. "|r" .. bank .. "|cff808080 / " .. d.need .. "|r" .. mark)
         elseif d.crafted or ns.Data.CraftedBy(d.id) then -- a recipe makes it: craft blue
             button.name:SetTextColor(ns.Theme.RGB(ns.Theme.C.craft))
-            button.count:SetText(n .. " / " .. d.need .. mark)
+            button.count:SetText(n .. bank .. " / " .. d.need .. mark)
         else
             button.name:SetTextColor(0.25, 1, 0.25)
-            button.count:SetText(n .. " / " .. d.need .. mark)
+            button.count:SetText(n .. bank .. " / " .. d.need .. mark)
         end
         setBar(button.bar, n, d.need)
     else
         button.name:SetText(itemName(d.id))
         button.name:SetTextColor(0.25, 1, 0.25)
-        button.count:SetText(d.goal and (n .. " / " .. d.goal) or (n .. "  (no goal)"))
+        button.count:SetText(d.goal and (n .. bank .. " / " .. d.goal) or (n .. bank .. "  (no goal)"))
         setBar(button.bar, n, d.goal)
     end
 end
