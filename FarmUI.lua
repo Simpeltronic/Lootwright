@@ -62,7 +62,9 @@ local function initRow(button, d)
             if row.id then GameTooltip:SetItemByID(row.id) else GameTooltip:AddLine(row.name) end
             if row.kind == "recipe" then
                 if row.target then
-                    GameTooltip:AddLine("Recipe goal: " .. row.target .. " in your bags (" .. row.crafts .. " crafts)", 1, 1, 1)
+                    GameTooltip:AddLine("Recipe goal: own " .. row.target .. " (" .. row.crafts .. " crafts"
+                        .. ((row.owned or 0) > 0 and (" on top of the " .. row.owned .. " you had") or "") .. ")", 1, 1, 1)
+                    GameTooltip:AddLine("Counts your bags and what you wear.", 0.7, 0.7, 0.7)
                 else
                     GameTooltip:AddLine("This recipe makes no item to count. Remove it when you're done.", 1, 0.5, 0.25)
                 end
@@ -151,7 +153,7 @@ function FarmUI.Refresh()
     if not (page and page:IsShown()) then return end
     local rows = {}
     for _, r in ipairs(ns.Farm.RecipeList()) do
-        rows[#rows + 1] = { kind = "recipe", key = r.key, name = r.name, id = r.itemId, target = r.target, crafts = r.crafts }
+        rows[#rows + 1] = { kind = "recipe", key = r.key, name = r.name, id = r.itemId, target = r.target, crafts = r.crafts, owned = r.owned }
         for _, m in ipairs(r.rows or {}) do
             rows[#rows + 1] = { kind = "mat", id = m.itemId, need = m.need, vendorOnly = m.vendorOnly,
                 depth = m.depth, crafted = m.crafted, subName = m.subName, recipe = m.via }

@@ -15,6 +15,9 @@ Versions follow the rules in `CLAUDE.md` ("Versions and changelog"). Newest firs
 ### Changed
 - Recipe farming only breaks a crafted material into its own materials if your character has that profession.
 
+### Fixed
+- Farming a recipe for something you already own (a bag you wear, armour you have on) no longer finishes at once: the goal now counts on top of what you own when you add it.
+
 ### For developers
 - `tools/build_data.py` reads the CMaNGOS dump (`tools/data/`, not in git) and prints how well a rate source agrees with rates measured in Forever.
 - `tools/merge_loot.py` reads shared loot data from GitHub issues.

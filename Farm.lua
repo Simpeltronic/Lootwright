@@ -8,8 +8,9 @@
 --   recipe groups  LootwrightDB.farmRecipes = { [key] = { name, itemId, makes, crafts, target,
 --                  reagents = { { itemId, count, vendorOnly, sub }, ... } } }. The group (and its
 --                  materials) leaves the list once the bags hold `target` of the crafted item;
---                  materials never leave on their own. target = crafts x makes (an absolute bag
---                  count). A recipe that makes no item stays until removed by hand.
+--                  materials never leave on their own. target = owned + crafts x makes, where owned
+--                  is what you had (bags and equipped) when you added it. A recipe that makes no item
+--                  stays until removed by hand.
 --                  A crafted material has sub = { name, makes, reagents = {...} } (same shape, up to
 --                  MAX_DEPTH levels), so Bolt of Linen Cloth lists the Linen Cloth it's made from.
 --                  Needs are live: each level asks only for what's still missing above it.
@@ -252,8 +253,11 @@ function Farm.AddRecipe(rec, crafts, isVendorOnly, recipeFor)
         return out
     end
     local key = rec.id and ("r" .. rec.id) or rec.name
-    recipes()[key] = { name = rec.name, itemId = rec.itemId, makes = makes, crafts = crafts,
-        target = rec.itemId and crafts * makes or nil,
+    -- The goal is on top of what you own now (bags and equipped, as GetItemCount counts), so a bag
+    -- or armour piece you already wear doesn't finish the goal the moment you add it.
+    local owned = rec.itemId and have(rec.itemId) or 0
+    recipes()[key] = { name = rec.name, itemId = rec.itemId, makes = makes, crafts = crafts, owned = owned,
+        target = rec.itemId and owned + crafts * makes or nil,
         reagents = copy(rec.reagents, 1, rec.itemId and { [rec.itemId] = true } or {}) }
     notify()
     checkGoals()
@@ -268,7 +272,7 @@ end
 function Farm.RecipeList()
     local t = {}
     for key, r in pairs(recipes()) do
-        t[#t + 1] = { key = key, name = r.name, itemId = r.itemId, target = r.target, crafts = r.crafts,
+        t[#t + 1] = { key = key, name = r.name, itemId = r.itemId, target = r.target, crafts = r.crafts, owned = r.owned,
             rows = Farm.Rows(r) }
     end
     table.sort(t, function(a, b) return a.name < b.name end)
