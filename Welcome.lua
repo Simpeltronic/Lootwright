@@ -72,7 +72,7 @@ local function choice(parent, anchor, label, sub)
 end
 
 local function buildWelcome()
-    welcome = dialog("LootwrightWelcome", 400, 330, "Welcome to Lootwright")
+    welcome = dialog("LootwrightWelcome", 400, 300, "Welcome to Lootwright")
     local intro = text(welcome, "GameFontHighlightSmall", 372)
     intro:SetPoint("TOPLEFT", 14, -42)
     intro:SetText("Search any item (|cffffffff/if|r or the minimap button) to see which mobs drop it, where, "

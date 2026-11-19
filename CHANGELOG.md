@@ -19,6 +19,7 @@ Versions follow the rules in `CLAUDE.md` ("Versions and changelog"). Newest firs
 - **Craft tag in the Search list:** a small blue "craft" next to items a recipe makes, and a "Crafted: Tailoring (...)" tooltip line.
 
 ### Changed
+- The Search tab's footer names all rate sources and explains "~".
 - The farm tracker is no longer experimental. It stays off until you turn it on (welcome window, `/if mini` or Options).
 - Recipe farming only breaks a crafted material into its own materials if your character has that profession.
 

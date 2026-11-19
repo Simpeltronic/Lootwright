@@ -760,7 +760,7 @@ local function build()
     local foot = page:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
     foot:SetPoint("BOTTOMLEFT", 260, 12)
     foot:SetJustifyH("LEFT")
-    foot:SetText("Rates: QuestieDB and ForeverDB.net data. * = very few kills.")
+    foot:SetText("Rates: QuestieDB, ForeverDB.net and CMaNGOS data. ~ = rough, * = very few kills.")
 
     filterText = page:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     filterText:SetPoint("BOTTOMRIGHT", -16, 12)
