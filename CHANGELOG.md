@@ -25,6 +25,7 @@ Versions follow the rules in `CLAUDE.md` ("Versions and changelog"). Newest firs
 ### For developers
 - `tools/build_data.py` reads the CMaNGOS dump (`tools/data/`, not in git) and prints how well a rate source agrees with rates measured in Forever.
 - `tools/merge_loot.py` reads shared loot data from GitHub issues.
+- `tools/release.py`: one command to bump the version, build the data and zip, and print the changelog for CurseForge.
 - `/if loot debug`, `/if loot target`, `/if loot reset` for testing.
 
 ## 0.9.0 (Beta), 18 November 2026
