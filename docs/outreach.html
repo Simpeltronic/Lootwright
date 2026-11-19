@@ -52,36 +52,44 @@ code { font: 13px var(--mono); }
 
   <ol class="steps">
     <li><s>Upload 0.10.0 as a Release file, push, new description, summary line and gallery.</s> Done 19 November 2026.</li>
-    <li>Post the Reddit and Discord texts the same day, with 2 or 3 screenshots: <code>docs/curseforge/screens/search-window.png</code>, <code>farm-tab.png</code>, <code>tracker.png</code> (in the project folder).</li>
+    <li>Write the Reddit post yourself from the points below (r/wowforever bans AI-written posts), and post it with the Discord text the same day, with 2 or 3 screenshots: <code>docs/curseforge/screens/search-window.png</code>, <code>farm-tab.png</code>, <code>tracker.png</code> (in the project folder).</li>
     <li>Send the ForeverDB and QuestieDB messages the same week.</li>
     <li>Answer every comment for the first few days.</li>
   </ol>
 
   <section class="card">
-    <div class="head"><h2>Reddit post</h2><span class="chip wait">On release day</span></div>
-    <p class="where">Where: the WoW Forever subreddit, if there is one (check its rules on self-promotion first). Attach the Search tab, Farm tab and tracker screenshots.</p>
-    <pre class="draft" id="reddit">Title: I made a free addon that shows every mob that drops an item, and marks them on your map (Lootwright)
+    <div class="head"><h2>Reddit post (r/wowforever)</h2><span class="chip wait">Write it yourself</span></div>
+    <p class="where"><b>Rule 12 (AI content policy):</b> AI-generated text and images aren't allowed there, so this is a list of points, not a post. Write the post in your own words. The same rule says AI use in addons must be disclosed, and the post must say how Lootwright differs from existing tools. Attach only real in-game screenshots (<code>docs/curseforge/screens/search-window.png</code>, <code>farm-tab.png</code>, <code>tracker.png</code>), not the banner or emblem art. Also open rule 10 (Spam &amp; Self-promotion) and check it before posting.</p>
+    <pre class="draft" id="reddit">Points to cover (in your words):
 
-I kept losing time hunting materials for my professions, so I made an addon for WoW Forever.
+1. What it is: free addon for WoW Forever. Search any item, see every mob that drops it
+   (level, zone, rank, drop rate, your zone first). Farm list with goals: map skulls and a
+   tooltip line on the mobs you need until your bags hold enough.
 
-Type an item's name (or shift-click it) and Lootwright shows every mob that drops it: level, zone, rank and drop rate, your current zone first. Put it on your farm list with a goal and the mobs you need get a skull on the world map and a line on their tooltip until your bags hold enough.
+2. Main features:
+   - farm a whole recipe: every material becomes a goal; crafted materials open up if you
+     have the profession; Farm on anything you can craft adds its recipe
+   - farm tracker on screen, bank counts like 1(2)/3
+   - every recipe for every profession, learned or not
+   - dungeon boss rates measured in Forever (ForeverDB.net data)
 
-What it does:
-- Search any item, filter by reagents, quest items, gear or dungeon drops
-- Farm a whole recipe: every material becomes a goal, crafted materials open up into what they're made from
-- Farm tracker on screen, with bank counts
-- Farm button on anything you can craft adds its recipe, so you farm the materials
-- Every recipe for every profession, including ones you haven't learned
-- Dungeon boss rates measured in Forever (ForeverDB.net data)
+3. How it differs from existing tools (required by rule 12), for example:
+   - goes from any item to every mob that drops it, on the map, with farm goals
+     (loot-table addons go from a boss or dungeon to its loot)
+   - farms a whole recipe with its materials, and tracks progress
+   - honest rates: rough Classic numbers marked ~, rates measured in Forever where known,
+     "rate unknown" instead of a guess
+   - opt-in loot counting to build real Forever drop rates, shared as open data
+   Only name another addon if you've checked what it does.
 
-Drop rates for normal mobs are honest about where they come from: most are rough Classic numbers, marked with ~. If you opt in, Lootwright counts what you loot (on your PC only) and you can share it, so we can work out real Forever rates together.
+4. AI disclosure (required by rule 12): say plainly that you built it with help from an AI
+   coding assistant (Claude), and that you tested it in game yourself.
 
-It needs QuestieDB, not Questie itself. Free, open source (GPL-3.0).
+5. Needs QuestieDB (not Questie). Free, open source (GPL-3.0). Early version (0.10).
 
-CurseForge: https://www.curseforge.com/wow/addons/lootwright
-GitHub: https://github.com/Simpeltronic/Lootwright
-
-It's an early version (0.10) and still growing, so feedback and bug reports are very welcome. GitHub issues, or lootwright-dev@proton.me if you don't use GitHub.</pre>
+6. Links: https://www.curseforge.com/wow/addons/lootwright
+          https://github.com/Simpeltronic/Lootwright
+   Feedback: GitHub issues, or lootwright-dev@proton.me</pre>
     <div class="row"><button type="button" data-copy="reddit">Copy</button><span class="done" hidden>Copied</span></div>
   </section>
 
