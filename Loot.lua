@@ -93,7 +93,9 @@ local function onTargetCheck()
     if LootwrightDB.recordLoot == false then return end
     local guid = plain(UnitGUID("target"))
     if not guid or pending[guid] or seen[guid] or not npcFromGuid(guid) then return end
-    if plain(UnitIsDead("target")) ~= true then return end
+    -- The game clears your target when it dies, so catch the death on the last health update
+    -- (health 0, the dead flag may come later); re-targeting the corpse runs this again too.
+    if plain(UnitIsDead("target")) ~= true and plain(UnitHealth("target")) ~= 0 then return end
     if IsInGroup() then return skip(guid, "in a group") end -- the loot may not be yours
     local denied = plain(UnitIsTapDenied("target"))
     if denied == nil then return skip(guid, "tap state hidden (in combat?)") end
