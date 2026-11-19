@@ -58,10 +58,13 @@ local function skip(guid, why)
     end
 end
 
+-- true/false whether the corpse has loot for you, nil when unknown. On Forever CanLootUnit's first
+-- value is true even on an empty corpse (checked on a Barrens giraffe); the second one, canLoot, is false then.
 local function hasLoot(guid)
     if not CanLootUnit then return nil end
-    local ok, has = pcall(CanLootUnit, guid)
-    return ok and plain(has) or nil
+    local ok, _, can = pcall(CanLootUnit, guid)
+    if not ok then return nil end
+    return plain(can)
 end
 
 local function countEmpty(guid)
