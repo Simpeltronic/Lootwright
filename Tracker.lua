@@ -1,4 +1,4 @@
--- Lootwright Tracker.lua: the farm tracker (EXPERIMENTAL, off by default; Options or /if mini).
+-- Lootwright Tracker.lua: the farm tracker (off by default; the welcome window, Options or /if mini).
 -- A small panel that stays on screen, like the quest tracker: recipe groups with their materials
 -- indented, then single farm items, each with have/goal and a thin bar. Drag an item from your bags
 -- onto it to farm it (the amount popup asks how many).
@@ -177,7 +177,7 @@ local function build()
     end)
     header:SetScript("OnEnter", function(self)
         GameTooltip:SetOwner(self, "ANCHOR_LEFT")
-        GameTooltip:AddLine("Farm tracker (experimental)")
+        GameTooltip:AddLine("Farm tracker")
         GameTooltip:AddLine("Drag an item from your bags onto it to farm it.", 0.8, 0.8, 0.8, true)
         GameTooltip:AddLine(LootwrightDB.trackerLocked and "Right-click: unlock" or "Drag: move   Right-click: lock",
             0.2, 1, 0.6)

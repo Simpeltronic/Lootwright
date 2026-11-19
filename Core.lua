@@ -7,7 +7,7 @@
 --   /if #<id>           show sources for an item ID in chat
 --   /if tooltip         toggle the "Drops from" line on item tooltips
 --   /if options         open Lootwright's options panel (feature toggles, sub-addon status)
---   /if mini            toggle the farm tracker (experimental)
+--   /if mini            toggle the farm tracker
 --   /if clear           remove the selected mob's world map pins
 --   /if farmpins        toggle map skulls on every mob that drops a farm item
 --   /if prof            open the window on the Professions tab
@@ -216,7 +216,7 @@ SlashCmdList["LOOTWRIGHT"] = function(input)
 
     if input == "" then ns.UI.Toggle(); return end
     if lower == "help" then
-        say("/if  (window)  |  /if <item name>  |  /if #<id>  |  /if tooltip (toggle)  |  /if options  |  /if mini (farm tracker)  |  /if clear (map pins)  |  /if farmpins (toggle)  |  /if loot (your loot; loot debug, loot reset)  |  /if share (share your loot data)  |  /if prof  |  /if farm  |  /if status  |  /if raw item|npc <id>")
+        say("/if  (window)  |  /if <item name>  |  /if #<id>  |  /if tooltip (toggle)  |  /if options  |  /if mini (farm tracker)  |  /if clear (map pins)  |  /if farmpins (toggle)  |  /if loot (your loot; loot debug, loot reset)  |  /if share (share your loot data)  |  /if welcome  |  /if prof  |  /if farm  |  /if status  |  /if raw item|npc <id>")
         return
     end
     if lower == "prof" then
@@ -229,7 +229,7 @@ SlashCmdList["LOOTWRIGHT"] = function(input)
     if lower == "mini" then
         LootwrightDB.tracker = LootwrightDB.tracker ~= true -- off by default; this flips it
         ns.Tracker.Refresh()
-        say("Farm tracker (experimental): " .. (LootwrightDB.tracker and "on" or "off"))
+        say("Farm tracker: " .. (LootwrightDB.tracker and "on" or "off"))
         return
     end
     if lower == "farmpins" then
@@ -240,6 +240,7 @@ SlashCmdList["LOOTWRIGHT"] = function(input)
     end
     if lower == "clear" then ns.Map.Clear(); say("Map pins cleared."); return end
     if lower == "export" or lower == "share" then ns.Loot.ShowExport(); return end
+    if lower == "welcome" then ns.Welcome.Show(); return end
     if lower == "loot" or lower:match("^loot %a+$") then ns.Loot.Command(lower:match("^loot%s+(%a+)$")); return end
     if lower == "tooltip" then
         LootwrightDB.tooltip = LootwrightDB.tooltip == false -- nil (default) counts as on
@@ -266,11 +267,7 @@ local f = CreateFrame("Frame")
 f:RegisterEvent("PLAYER_LOGIN")
 f:SetScript("OnEvent", function()
     say("v" .. VERSION .. " loaded. Type /if to open the window, /if help for commands.")
-    if not LootwrightDB.lootNotice and LootwrightDB.recordLoot ~= false then
-        LootwrightDB.lootNotice = true
-        say("New: Lootwright counts what you loot, on this PC only, to work out real Forever drop rates. "
-            .. "Share them with /if share to improve the rates for everyone. Turn it off in /if options.")
-    end
+    ns.Welcome.OnLogin() -- first start: welcome window; later: share reminder for players who opted in
     -- A QuestieDB update that breaks the API we use should say so, not fail silently.
     local ok, msg = ns.Data.CheckContract()
     if not ok then say("|cffff4040" .. tostring(msg) .. "|r Lootwright can't read its data until this is fixed.") end

@@ -22,4 +22,5 @@ FarmUI.lua
 FarmPopup.lua
 Tracker.lua
 Options.lua
+Welcome.lua
 MinimapButton.lua

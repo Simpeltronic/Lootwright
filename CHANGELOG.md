@@ -7,7 +7,9 @@ Versions follow the rules in `CLAUDE.md` ("Versions and changelog"). Newest firs
 ### New
 - **Drop rates for normal mobs** from CMaNGOS classic-db (Classic 1.12 data, drops of 1% and up, 4,545 items). Shown as rough rates with "~" and sorted after real rates, because they match only 38% of rates measured in Forever.
 - **Many more mobs in search results.** Mobs only CMaNGOS lists are added: 8,075 drops on 1,555 items were missing, and 1,173 items showed no mobs at all. Cloth now lists every mob instead of about 200.
-- **Your own loot is counted** (on your PC only): looted corpses, empty kills and what was on them, per mob. Mob tooltips in the window show "You: 9 of 40 corpses". Option "Record your own loot", `/if loot`.
+- **Welcome window** on first start: what Lootwright does, with two opt-ins, both off until you tick them: the farm tracker, and helping improve drop rates. `/if welcome` shows it again.
+- **Help improve drop rates (opt-in):** Lootwright counts what you loot, on your PC only: looted corpses, empty kills and what was on them, per mob. Mob tooltips in the window show "You: 9 of 40 corpses". `/if loot` shows a summary.
+- **Share reminder:** players who opted in get a small "Share your loot data?" window at login after every 100 new corpses, with Share now and Later.
 - **Your loot judges the list.** After 20 corpses of a mob, your measured rate replaces an unknown or rough one, and a mob that never dropped the item turns grey and moves to the bottom ("Not seen in your loot").
 - **Share your loot data** with `/if share`: copy the text into the "Share loot data" form on GitHub to help work out real Forever drop rates for everyone.
 - **Crafted materials in trade-skill blue** on the Farm tab and the tracker, with a "Usually crafted" tooltip.
@@ -17,6 +19,7 @@ Versions follow the rules in `CLAUDE.md` ("Versions and changelog"). Newest firs
 - **Craft tag in the Search list:** a small blue "craft" next to items a recipe makes, and a "Crafted: Tailoring (...)" tooltip line.
 
 ### Changed
+- The farm tracker is no longer experimental. It stays off until you turn it on (welcome window, `/if mini` or Options).
 - Recipe farming only breaks a crafted material into its own materials if your character has that profession.
 
 ### Fixed

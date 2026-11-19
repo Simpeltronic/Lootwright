@@ -219,7 +219,7 @@ Use shot 1 as the first Gallery image: it's what shows in search results.
 - [x] Banner font swapped for Inter (OFL), banner re-rendered.
 - [x] Full GPL-3.0 text added as `LICENSE` (repo and every folder of the release zip).
 - [x] Version set to 0.9.0 in all three TOCs and in `Core.lua`.
-- [x] `tools/build_data.py` re-run right before packaging (ForeverDB data 2026-11-18).
+- [x] `tools/release.py` (rebuilds the data) run right before packaging (ForeverDB data 2026-11-18).
 - [x] Release zip built with the three addon folders only: `python -I tools/package.py` writes `dist/Lootwright-0.9.0.zip` (25 files, 183 KB). Re-run both scripts if anything changes before upload.
 - [ ] Logo, banner and screenshots uploaded; image links pasted into the description.
 - [ ] File uploaded as **Beta**.

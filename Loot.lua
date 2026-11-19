@@ -3,7 +3,8 @@
 -- n counts looted corpses plus empty kills: when your target dies (your tap, not in a group) and
 -- CanLootUnit says it has no loot, it counts as an empty corpse. Kills with loot you never take don't
 -- count at all. Kills that weren't your target can't be seen as empty, so rates may still be a bit high.
--- Option recordLoot (nil = on). /if loot shows a summary, /if loot debug prints each recorded corpse.
+-- Option recordLoot: opt-in (only true records; asked in the welcome window). /if loot shows a summary,
+-- /if loot debug prints each recorded corpse.
 
 local _, ns = ...
 local Loot = {}
@@ -106,7 +107,7 @@ end
 -- Runs when the target's health changes, its flags change, you change target or combat ends: the
 -- dead flag can come after the last health event, and some values are hidden during combat.
 local function onTargetCheck()
-    if LootwrightDB.recordLoot == false then return end
+    if LootwrightDB.recordLoot ~= true then return end
     local guid = plain(UnitGUID("target"))
     if not guid or pending[guid] or seen[guid] or not npcFromGuid(guid) then return end
     -- The game clears your target when it dies, so catch the death on the last health update
@@ -122,7 +123,7 @@ local function onTargetCheck()
 end
 
 local function onLootReady()
-    if LootwrightDB.recordLoot == false then return end
+    if LootwrightDB.recordLoot ~= true then return end
     local ok, n = pcall(GetNumLootItems)
     n = ok and plain(n) or 0
     local corpses = {} -- [guid] = { [itemId] = true }
@@ -337,8 +338,17 @@ local function buildExport()
     f.info:SetPoint("TOPLEFT", f.url, "BOTTOMLEFT", -6, -12)
 end
 
+-- All corpses counted so far (looted and empty), for the share reminder.
+function Loot.Total()
+    local n = 0
+    local l = LootwrightDB.loot
+    for _, m in pairs(type(l) == "table" and l.mobs or {}) do n = n + (m.n or 0) end
+    return n
+end
+
 function Loot.ShowExport()
     if not exportFrame then buildExport() end
+    db().sharedN = Loot.Total() -- the share reminder counts from here
     local s, kinds = Loot.ExportString()
     exportFrame.data:SetFixed(s)
     exportFrame.url:SetFixed(SHARE_URL)
@@ -370,7 +380,7 @@ function Loot.Command(arg)
     local empty = 0
     for _, m in pairs(l.mobs) do empty = empty + (m.e or 0) end
     ns.say(string.format("Your loot: %d corpses (%d of them empty kills) from %d mob kinds since build %s; %d kinds with %d+ corpses. Recording is %s.",
-        corpses, empty, kinds, tostring(l.since), enough, MIN_CORPSES, LootwrightDB.recordLoot == false and "off" or "on"))
+        corpses, empty, kinds, tostring(l.since), enough, MIN_CORPSES, LootwrightDB.recordLoot == true and "on" or "off (opt in with /if welcome or in /if options)"))
 end
 
 local f = CreateFrame("Frame")
