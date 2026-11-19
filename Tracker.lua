@@ -56,6 +56,11 @@ local function makeRow(i)
     r.fill:SetTexture("Interface\\Buttons\\WHITE8x8")
     r.fill:SetHeight(2)
     r.fill:SetPoint("LEFT", r.track, "LEFT")
+    -- What the bank can still cover, in a lighter green right after the bag fill.
+    r.bankFill = r:CreateTexture(nil, "OVERLAY")
+    r.bankFill:SetColorTexture(0.62, 0.9, 0.62, 1)
+    r.bankFill:SetPoint("TOP", r.fill)
+    r.bankFill:SetPoint("BOTTOM", r.fill)
     r:SetScript("OnClick", function(self)
         if self.itemId and not InCombatLockdown() then ns.UI.ShowItem(self.itemId) end
     end)
@@ -63,6 +68,8 @@ local function makeRow(i)
         if not self.itemId then return end
         GameTooltip:SetOwner(self, "ANCHOR_LEFT")
         GameTooltip:SetItemByID(self.itemId)
+        local banked = ns.Farm.Bank(self.itemId)
+        if banked > 0 then GameTooltip:AddLine(banked .. " in your bank (not counted: take them out to use them)", 0.7, 0.7, 0.7) end
         GameTooltip:AddLine("Click: show where it drops", 0.2, 1, 0.6)
         GameTooltip:Show()
     end)
@@ -82,7 +89,11 @@ local function fillRow(r, line)
     r.name:SetText(line.label)
     r.name:SetTextColor(T.RGB(line.color))
     local goal = line.goal
-    r.count:SetText(line.have .. (goal and ("/" .. goal) or "") .. ((goal and line.have >= goal) and READY or ""))
+    -- "1(2)/3", as on the Farm tab: the bank part is only what it can still cover of the goal.
+    local banked = line.itemId and ns.Farm.Bank(line.itemId) or 0
+    local fromBank = goal and math.min(banked, math.max(0, goal - line.have)) or banked
+    r.count:SetText(line.have .. (fromBank > 0 and ("|cff7d8cad(" .. fromBank .. ")|r") or "")
+        .. (goal and ("/" .. goal) or "") .. ((goal and line.have >= goal) and READY or ""))
     r.count:SetTextColor(T.RGB(T.C.muted))
     if goal and goal > 0 then
         r.track:Show()
@@ -92,9 +103,20 @@ local function fillRow(r, line)
         local w = WIDTH - 8 - (8 + 14 * (line.depth or 0) + 14 + 5)
         r.fill:SetWidth(math.max(1, w * math.min(line.have, goal) / goal))
         r.fill:SetVertexColor(T.RGB(line.have >= goal and T.C.green or T.C.greenEdge))
+        if fromBank > 0 then
+            r.bankFill:ClearAllPoints()
+            r.bankFill:SetPoint("TOP", r.track)
+            r.bankFill:SetPoint("BOTTOM", r.track)
+            r.bankFill:SetPoint("LEFT", r.track, "LEFT", w * line.have / goal, 0)
+            r.bankFill:SetWidth(math.max(1, w * fromBank / goal))
+            r.bankFill:Show()
+        else
+            r.bankFill:Hide()
+        end
     else
         r.track:Hide()
         r.fill:Hide()
+        r.bankFill:Hide()
     end
     r:Show()
 end
@@ -241,6 +263,9 @@ end
 local f = CreateFrame("Frame")
 f:RegisterEvent("PLAYER_LOGIN")
 f:RegisterEvent("BAG_UPDATE_DELAYED")
+for _, ev in ipairs({ "BANKFRAME_OPENED", "PLAYERBANKSLOTS_CHANGED" }) do
+    pcall(f.RegisterEvent, f, ev) -- bank counts; an unknown event name would error
+end
 f:SetScript("OnEvent", function(_, event)
     if event == "PLAYER_LOGIN" then
         C_Timer.After(1, Tracker.Refresh) -- after QuestieDB is ready
