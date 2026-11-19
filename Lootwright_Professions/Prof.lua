@@ -171,8 +171,10 @@ function Prof.Recipes(name)
     return list
 end
 
--- The recipe that makes an item, or nil. Prefers (in order) a known recipe in preferProf, any recipe
--- in preferProf, any known recipe, any recipe. Index built on first use; reset after each scan.
+-- The recipe that makes an item, or nil. Only professions this character has (Prof.IsMine): a
+-- material you can't craft stays a plain material instead of listing its own materials.
+-- Prefers (in order) a known recipe in preferProf, any recipe in preferProf, any known recipe, any
+-- recipe. Index built on first use; reset after each scan.
 function Prof.RecipeFor(itemId, preferProf)
     if not makers then
         makers = {}
@@ -188,8 +190,10 @@ function Prof.RecipeFor(itemId, preferProf)
     end
     local best, bestScore
     for _, c in ipairs(makers[itemId] or {}) do
-        local score = (c.prof == preferProf and 2 or 0) + (c.recipe.known and 1 or 0)
-        if not bestScore or score > bestScore then best, bestScore = c, score end
+        if Prof.IsMine(c.prof) then -- WoW's Lua 5.1 has no goto
+            local score = (c.prof == preferProf and 2 or 0) + (c.recipe.known and 1 or 0)
+            if not bestScore or score > bestScore then best, bestScore = c, score end
+        end
     end
     return best and best.recipe, best and best.prof
 end
