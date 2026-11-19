@@ -190,6 +190,11 @@ local function initMobRow(button, r)
                     m.fewKills and 1 or 0.7, m.fewKills and 0.5 or 0.7, m.fewKills and 0.25 or 0.7)
             elseif m.fewKills then
                 GameTooltip:AddLine("* Rate from very few kills (10 or fewer), unreliable", 1, 0.5, 0.25)
+            elseif m.notSeen then
+                GameTooltip:AddLine(string.format("Not seen in your loot: none on %d corpses, so likely not %s here",
+                    m.ownN, ns.RateText(m.rate, false, m.rough)), 1, 0.5, 0.25)
+            elseif m.source == "you" then
+                GameTooltip:AddLine("Drop rate from your own loot", 0.4, 0.8, 1)
             elseif m.rough then
                 GameTooltip:AddLine("~ Rough rate: CMaNGOS Classic data, not measured in Forever", 1, 0.82, 0.5)
             elseif m.rate and m.source == "cmangos" then
@@ -199,6 +204,7 @@ local function initMobRow(button, r)
             else
                 GameTooltip:AddLine("No drop rate in the database", 0.7, 0.7, 0.7)
             end
+            if m.cmOnly then GameTooltip:AddLine("Only CMaNGOS lists this mob for this item", 0.7, 0.7, 0.7) end
             -- Your own loot of this item from this mob (Loot.lua).
             local own, inside = ns.Loot.Line(m.npcId, selectedId, m.rate)
             if own then
@@ -227,7 +233,7 @@ local function initMobRow(button, r)
     local zone = r.zone == hereZone and ("|cff40ff40" .. r.zone .. "|r") or r.zone
     button.cells[3]:SetText(zone .. (r.zones > 1 and (" |cff999999+" .. (r.zones - 1) .. "|r") or ""))
     button.cells[4]:SetText(r.rate and ns.RateText(r.rate, r.fewKills, r.rough) or "?")
-    local cr, cg, cb = rateColor(not r.fewKills and r.rate or nil) -- few kills: grey
+    local cr, cg, cb = rateColor(not r.fewKills and not r.notSeen and r.rate or nil) -- few kills, not seen: grey
     button.cells[4]:SetTextColor(cr, cg, cb)
     if r.rate and r.rate > 0 then
         button.fill:SetWidth(math.max(1, BAR_W * math.min(r.rate, 100) / 100))

@@ -197,7 +197,7 @@ function Map.RefreshFarmPins(force)
             srcCache[id] = src
         end
         for _, m in ipairs(src.mobs) do
-            if not isFriendly(m.friendly) then -- can't attack them anyway
+            if not isFriendly(m.friendly) and not m.notSeen then -- can't attack friendly ones; notSeen: your loot says no
                 local e = byNpc[m.npcId] or { mob = m, items = {} }
                 byNpc[m.npcId] = e
                 e.items[#e.items + 1] = ns.Data.ItemName(id) or ("item " .. id)

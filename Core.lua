@@ -71,14 +71,16 @@ function ns.RateText(rate, fewKills, rough)
     return (rough and "~" or "") .. string.format("%.1f%%", rate) .. (fewKills and "*" or "")
 end
 
--- 0 = real rate, 1 = rough (CMaNGOS), 2 = rate from very few kills, 3 = unknown.
+-- 0 = real rate, 1 = rough (CMaNGOS), 2 = rate from very few kills, 3 = unknown,
+-- 4 = your loot says it doesn't drop there (notSeen).
 function ns.RateTier(r)
+    if r.notSeen then return 4 end
     if not r.rate then return 3 end
     if r.fewKills then return 2 end
     return r.rough and 1 or 0
 end
 
--- Highest rate first within each tier (real, rough, few kills, unknown), then by name.
+-- Highest rate first within each tier (real, rough, few kills, unknown, not seen), then by name.
 function ns.SortByRate(a, b)
     local ta, tb = ns.RateTier(a), ns.RateTier(b)
     if ta ~= tb then return ta < tb end

@@ -205,6 +205,16 @@ function Loot.Get(npcId, itemId)
     return m[itemId] or 0, m.n
 end
 
+-- NPC IDs whose looted corpses had this item at least once: { [npcId] = true }.
+function Loot.MobsWith(itemId)
+    local out = {}
+    local l = LootwrightDB.loot
+    for npcId, m in pairs(type(l) == "table" and l.mobs or {}) do
+        if (m[itemId] or 0) > 0 then out[npcId] = true end
+    end
+    return out
+end
+
 -- Tooltip line for a mob row, e.g. "You: 9 of 40 corpses (22.5%, likely 12-38%)", or nil.
 -- inside: true/false when the source rate fits your range (enough corpses), else nil.
 function Loot.Line(npcId, itemId, sourceRate)

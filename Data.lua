@@ -183,6 +183,40 @@ local function mobRates(itemId)
     return t
 end
 
+-- A plain mob row from QuestieDB, with no rate yet.
+local function npcRow(L, npcId)
+    return {
+        npcId = npcId,
+        name = L.Npc.name(npcId) or ("npc " .. npcId),
+        minLevel = L.Npc.minLevel(npcId),
+        maxLevel = L.Npc.maxLevel(npcId),
+        rank = L.Npc.rank(npcId) or 0,
+        zone = zoneName(L.Npc.zoneID(npcId)),
+        zones = countKeys(L.Npc.spawns(npcId)),
+        friendly = L.Npc.friendlyToFaction(npcId),
+        fewKills = false,
+    }
+end
+
+-- Your own loot (Loot.lua) judges the row once you've looted enough corpses of this mob:
+--   item seen: your measured rate replaces an unknown or rough one (source "you");
+--   never seen and the shown rate is above what your corpses allow: notSeen (grey, sorted last).
+-- Same 95% range test as build_data.py's agreement check.
+local function applyOwnLoot(row, itemId)
+    if not ns.Loot then return end
+    local k, n = ns.Loot.Get(row.npcId, itemId)
+    if not k or n < ns.Loot.MIN_CORPSES then return end
+    row.ownK, row.ownN = k, n
+    if k > 0 then
+        if row.rate == nil or row.rough then
+            row.rate, row.source, row.rough, row.fewKills, row.kills = 100 * k / n, "you", false, false, nil
+        end
+    elseif row.rate then
+        local _, hi = ns.Loot.Range(0, n)
+        if row.rate > hi then row.notSeen = true end
+    end
+end
+
 -- Applies a boss-loot entry to a mob row. A rate measured in Forever wins over QuestieDB's;
 -- ForeverDB's Classic-data rate only fills an unknown one.
 local function applyBossLoot(row, b)
@@ -258,9 +292,31 @@ function Data.GetSources(itemId)
                 fewKills = false,
             }
             applyBossLoot(row, b)
+            seen[npcId] = true
             result.mobs[#result.mobs + 1] = row
         end
     end
+
+    -- Mobs only CMaNGOS lists (QuestieDB's lists miss many, e.g. cloth stops at ~200 mobs).
+    -- Only NPCs QuestieDB knows, so every row has a name, level, zone and spawns.
+    for npcId, pct in pairs(cm) do
+        if not seen[npcId] and L.Npc.name(npcId) then
+            local row = npcRow(L, npcId)
+            row.rate, row.source, row.rough, row.cmOnly = pct, "cmangos", true, true
+            seen[npcId] = true
+            result.mobs[#result.mobs + 1] = row
+        end
+    end
+
+    -- Mobs your own loot shows dropping it that no source lists.
+    for npcId in pairs(ns.Loot and ns.Loot.MobsWith(itemId) or {}) do
+        if not seen[npcId] and L.Npc.name(npcId) then
+            seen[npcId] = true
+            result.mobs[#result.mobs + 1] = npcRow(L, npcId)
+        end
+    end
+
+    for _, row in ipairs(result.mobs) do applyOwnLoot(row, itemId) end
 
     local objs = L.Item.objectDrops(itemId)
     if type(objs) == "table" then result.objects = #objs end
