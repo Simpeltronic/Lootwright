@@ -316,10 +316,8 @@ local function buildExport()
     hint:SetPoint("TOPLEFT", 10, -38)
     hint:SetPoint("RIGHT", -10, 0)
     hint:SetJustifyH("LEFT")
-    hint:SetText("1. Click the long text below and press Ctrl+C.
-"
-        .. "2. Open this address in your browser (click it, Ctrl+C) and paste the text into the form.
-"
+    hint:SetText("1. Click the long text below and press Ctrl+C.\n"
+        .. "2. Open this address in your browser (click it, Ctrl+C) and paste the text into the form.\n"
         .. "It holds only mob and item IDs with counts: no names or positions. Thank you!")
     f.data = copyBox(f, 410)
     f.data:SetPoint("TOPLEFT", 16, -96)
