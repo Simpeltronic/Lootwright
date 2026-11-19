@@ -18,6 +18,7 @@
 
 local _, ns = ...
 local VERSION = "0.9.0"
+ns.VERSION = VERSION
 LootwrightDB = LootwrightDB or {}
 
 -- The one global Lootwright exposes: its namespace, so the sub-addons (Lootwright_Data,
@@ -213,7 +214,7 @@ SlashCmdList["LOOTWRIGHT"] = function(input)
 
     if input == "" then ns.UI.Toggle(); return end
     if lower == "help" then
-        say("/if  (window)  |  /if <item name>  |  /if #<id>  |  /if tooltip (toggle)  |  /if options  |  /if mini (farm tracker)  |  /if clear (map pins)  |  /if farmpins (toggle)  |  /if loot (your loot; loot debug)  |  /if prof  |  /if farm  |  /if status  |  /if raw item|npc <id>")
+        say("/if  (window)  |  /if <item name>  |  /if #<id>  |  /if tooltip (toggle)  |  /if options  |  /if mini (farm tracker)  |  /if clear (map pins)  |  /if farmpins (toggle)  |  /if loot (your loot; loot debug, loot reset)  |  /if share (share your loot data)  |  /if prof  |  /if farm  |  /if status  |  /if raw item|npc <id>")
         return
     end
     if lower == "prof" then
@@ -236,6 +237,7 @@ SlashCmdList["LOOTWRIGHT"] = function(input)
         return
     end
     if lower == "clear" then ns.Map.Clear(); say("Map pins cleared."); return end
+    if lower == "export" or lower == "share" then ns.Loot.ShowExport(); return end
     if lower == "loot" or lower:match("^loot %a+$") then ns.Loot.Command(lower:match("^loot%s+(%a+)$")); return end
     if lower == "tooltip" then
         LootwrightDB.tooltip = LootwrightDB.tooltip == false -- nil (default) counts as on
@@ -262,6 +264,11 @@ local f = CreateFrame("Frame")
 f:RegisterEvent("PLAYER_LOGIN")
 f:SetScript("OnEvent", function()
     say("v" .. VERSION .. " loaded. Type /if to open the window, /if help for commands.")
+    if not LootwrightDB.lootNotice and LootwrightDB.recordLoot ~= false then
+        LootwrightDB.lootNotice = true
+        say("New: Lootwright counts what you loot, on this PC only, to work out real Forever drop rates. "
+            .. "Share them with /if share to improve the rates for everyone. Turn it off in /if options.")
+    end
     -- A QuestieDB update that breaks the API we use should say so, not fail silently.
     local ok, msg = ns.Data.CheckContract()
     if not ok then say("|cffff4040" .. tostring(msg) .. "|r Lootwright can't read its data until this is fixed.") end

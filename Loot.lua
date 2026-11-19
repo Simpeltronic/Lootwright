@@ -236,8 +236,112 @@ local function inspectTarget()
         tostring(g and seen[g] or false)))
 end
 
+-- Export -----------------------------------------------------------------------------------------
+-- "!LW:1!<addon version>;<game build>;<share id>;<npc>:<corpses>:<empty>:<item>=<count>,...;...!End:LW!"
+-- Counts only: no names, positions or GUIDs. The share id is random (made once per install) so
+-- tools/merge_loot.py keeps only the latest share from each player instead of adding them up.
+local EXPORT_VERSION = 1
+local SHARE_URL = "https://github.com/Simpeltronic/Lootwright/issues/new?template=loot-data.yml"
+
+function Loot.ExportString()
+    local l = db()
+    local npcs = {}
+    for npcId in pairs(l.mobs) do npcs[#npcs + 1] = npcId end
+    table.sort(npcs)
+    if type(l.id) ~= "string" then l.id = string.format("%08x", math.random(0, 0x7fffffff)) end
+    local parts = { "!LW:" .. EXPORT_VERSION .. "!" .. tostring(ns.VERSION) .. ";" .. tostring(l.since) .. ";" .. l.id }
+    for _, npcId in ipairs(npcs) do
+        local m = l.mobs[npcId]
+        local items = {}
+        for k, v in pairs(m) do
+            if type(k) == "number" then items[#items + 1] = k .. "=" .. v end
+        end
+        table.sort(items)
+        parts[#parts + 1] = npcId .. ":" .. (m.n or 0) .. ":" .. (m.e or 0) .. ":" .. table.concat(items, ",")
+    end
+    return table.concat(parts, ";") .. "!End:LW!", #npcs
+end
+
+local exportFrame
+-- A read-only, select-all text box (typing puts the text back).
+local function copyBox(parent, w)
+    local box = CreateFrame("EditBox", nil, parent, "SearchBoxTemplate")
+    box:SetSize(w, 20)
+    box:SetAutoFocus(false)
+    box:SetMaxLetters(0)
+    if box.searchIcon then box.searchIcon:Hide() end
+    if box.clearButton then box.clearButton:Hide() end
+    ns.Theme.StyleEditBox(box)
+    box:HookScript("OnTextChanged", function(self, userInput)
+        if userInput and self.fixed and self:GetText() ~= self.fixed then self:SetText(self.fixed); self:HighlightText() end
+    end)
+    box:HookScript("OnEditFocusGained", function(self) self:HighlightText() end)
+    box:HookScript("OnMouseUp", function(self) self:SetFocus(); self:HighlightText() end)
+    box:HookScript("OnEscapePressed", function() exportFrame:Hide() end)
+    function box:SetFixed(text) self.fixed = text; self:SetText(text); self:SetCursorPosition(0) end
+    return box
+end
+
+local function buildExport()
+    local T = ns.Theme
+    local C = T.C
+    local f = CreateFrame("Frame", "LootwrightExport", UIParent, "BackdropTemplate")
+    exportFrame = f
+    f:Hide()
+    f:SetSize(440, 196)
+    f:SetPoint("CENTER")
+    f:SetFrameStrata("DIALOG")
+    f:SetClampedToScreen(true)
+    f:EnableMouse(true)
+    T.Backdrop(f, C.bg, C.muted, 0.98)
+    tinsert(UISpecialFrames, "LootwrightExport") -- Escape closes it
+
+    local title = f:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
+    title:SetPoint("TOPLEFT", 10, -9)
+    title:SetText("Share your loot data")
+    local close = CreateFrame("Button", nil, f)
+    close:SetSize(20, 20)
+    close:SetPoint("TOPRIGHT", -4, -4)
+    local x = close:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
+    x:SetPoint("CENTER")
+    x:SetText("×")
+    x:SetTextColor(T.RGB(C.muted))
+    close:SetScript("OnClick", function() f:Hide() end)
+    local line = T.Line(f, C.line)
+    line:SetPoint("TOPLEFT", 1, -28)
+    line:SetPoint("TOPRIGHT", -1, -28)
+    line:SetHeight(1)
+
+    local hint = f:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+    hint:SetPoint("TOPLEFT", 10, -38)
+    hint:SetPoint("RIGHT", -10, 0)
+    hint:SetJustifyH("LEFT")
+    hint:SetText("1. Click the long text below and press Ctrl+C.
+"
+        .. "2. Open this address in your browser (click it, Ctrl+C) and paste the text into the form.
+"
+        .. "It holds only mob and item IDs with counts: no names or positions. Thank you!")
+    f.data = copyBox(f, 410)
+    f.data:SetPoint("TOPLEFT", 16, -96)
+    f.url = copyBox(f, 410)
+    f.url:SetPoint("TOPLEFT", f.data, "BOTTOMLEFT", 0, -14)
+    f.info = f:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
+    f.info:SetPoint("TOPLEFT", f.url, "BOTTOMLEFT", -6, -12)
+end
+
+function Loot.ShowExport()
+    if not exportFrame then buildExport() end
+    local s, kinds = Loot.ExportString()
+    exportFrame.data:SetFixed(s)
+    exportFrame.url:SetFixed(SHARE_URL)
+    exportFrame.info:SetText(string.format("%d mob kinds, %d characters. Share again later: it always holds all your counts.", kinds, #s))
+    exportFrame:Show()
+    exportFrame.data:SetFocus()
+end
+
 function Loot.Command(arg)
     if arg == "target" then return inspectTarget() end
+    if arg == "export" or arg == "share" then return Loot.ShowExport() end
     if arg == "reset" then
         LootwrightDB.loot = nil
         wipe(seen); wipe(emptied); wipe(pending)

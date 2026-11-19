@@ -1,0 +1,20 @@
+name: Share loot data
+description: Paste the text from /if share in game, to help work out real Forever drop rates.
+title: "Loot data"
+labels: ["loot-data"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for sharing! In game, type `/if share`, click the long text, press Ctrl+C and paste it below.
+        It holds only mob and item IDs with counts, the game build and a random share ID. No names or positions.
+        Sharing again later is fine: only your latest share is used.
+  - type: textarea
+    id: data
+    attributes:
+      label: Loot data
+      description: Starts with !LW:1! and ends with !End:LW!
+      placeholder: "!LW:1!0.9.1;1.60.1;1a2b3c4d;3240:20:3:5128=9,5470=2!End:LW!"
+      render: text
+    validations:
+      required: true
