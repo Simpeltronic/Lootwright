@@ -141,7 +141,7 @@ Type `/if` (or `/lootwright`), or click the minimap button. `/if options` opens 
 
 Untick what you don't need in the AddOns list:
 - **Lootwright:** search, farm list, map, tooltips.
-- **Lootwright - Data:** every recipe and dungeon boss loot. Loads only when needed.
+- **Lootwright - Data:** every recipe, dungeon boss loot and mob drop rates. Loads only when needed. Other addons can use it too, as the library LibLootwright.
 - **Lootwright - Professions:** the Professions tab.
 
 Single features (tooltip lines, map skulls, the arrow, messages, the minimap button, the tracker) can be switched in `/if options`.
