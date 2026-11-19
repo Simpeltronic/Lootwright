@@ -8,7 +8,7 @@ local Popup = {}
 ns.FarmPopup = Popup
 
 local T = ns.Theme
-local frame, title, haveText, box, moreText, hint, stopB, noGoalB, itemPill, recipePill
+local frame, title, haveText, box, moreText, hint, stopB, noGoalB, recipeNote
 local itemId
 local recipe, recipeProf -- a recipe of yours that makes the item, or nil
 local mode = "item"     -- "item" or "recipe"
@@ -40,8 +40,6 @@ end
 
 local function setMode(m)
     mode = recipe and m or "item"
-    itemPill:SetOn(mode == "item")
-    recipePill:SetOn(mode == "recipe")
     noGoalB:SetShown(mode == "item") -- a recipe group always has a goal
     update()
 end
@@ -148,13 +146,10 @@ local function build()
         prev = p
     end
 
-    -- Craftable by you: farm the item itself, or its recipe (materials as a group).
-    itemPill = T.Pill(frame, "Farm the item", "tab")
-    itemPill:SetPoint("TOPLEFT", 10, -110)
-    itemPill:SetScript("OnClick", function() setMode("item") end)
-    recipePill = T.Pill(frame, "Farm the recipe", "tab")
-    recipePill:SetPoint("LEFT", itemPill, "RIGHT", 4, 0)
-    recipePill:SetScript("OnClick", function() setMode("recipe") end)
+    -- Craftable by you: Farm adds the recipe (materials as a group), no choice (user's call).
+    recipeNote = frame:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+    recipeNote:SetPoint("TOPLEFT", 10, -110)
+    recipeNote:SetTextColor(T.RGB(T.C.craft))
 
     hint = frame:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
     hint:SetPoint("TOPLEFT", 10, -106)
@@ -197,18 +192,16 @@ function Popup.Open(id, anchor)
         local ok, r, p = pcall(ns.Prof.RecipeFor, id)
         if ok and r and r.reagents and #r.reagents > 0 then recipe, recipeProf = r, p end
     end
-    itemPill:SetShown(recipe ~= nil)
-    recipePill:SetShown(recipe ~= nil)
+    recipeNote:SetShown(recipe ~= nil)
     if recipe then
-        recipePill:SetText("Farm the recipe (" .. tostring(recipeProf) .. ")")
-        recipePill:SetWidth(recipePill:GetFontString():GetStringWidth() + 18)
-        hint:SetPoint("TOPLEFT", 10, -132)
-        frame:SetHeight(176)
+        recipeNote:SetText("Farms the recipe (" .. tostring(recipeProf) .. "): its materials go on the Farm tab")
+        hint:SetPoint("TOPLEFT", 10, -128)
+        frame:SetHeight(170)
     else
         hint:SetPoint("TOPLEFT", 10, -106)
         frame:SetHeight(150)
     end
-    setMode((recipe and not ns.Farm.IsSingle(id)) and "recipe" or "item")
+    setMode(recipe and "recipe" or "item")
     frame:ClearAllPoints()
     if anchor then
         frame:SetPoint("TOPLEFT", anchor, "BOTTOMLEFT", 0, -4)

@@ -14,7 +14,7 @@ Versions follow the rules in `CLAUDE.md` ("Versions and changelog"). Newest firs
 - **Share your loot data** with `/if share`: copy the text into the "Share loot data" form on GitHub to help work out real Forever drop rates for everyone.
 - **Crafted materials in trade-skill blue** on the Farm tab and the tracker, with a "Usually crafted" tooltip.
 - **Bank counts on the Farm tab:** "1(2) / 3" means 1 in your bags and the bank can cover the other 2; the bar fills the bank part in a lighter green. Same on the on-screen tracker. The tooltip gives the exact bank count. Goals still count bags and equipped only. Open your bank once per session so the game knows what's in it.
-- **Farm a recipe from the Search tab:** for an item your profession can craft, the farm popup lets you pick "Farm the item" or "Farm the recipe (Tailoring)". The recipe adds its materials as a group, the same as the Professions tab; the goal box still counts the item, and the popup shows how many crafts that is.
+- **Farm a recipe from the Search tab:** for an item your profession can craft, Farm adds its recipe, with the materials as a group, the same as the Professions tab. The goal box still counts the item, and the popup shows how many crafts that is.
 - **One colour rule for farm items:** green = farm it from mobs, blue = crafted, grey = vendor only, gold = recipe. Single farm items now use it too, on the Farm tab and the tracker.
 - **Craft tag in the Search list:** a small blue "craft" next to items a recipe makes, and a "Crafted: Tailoring (...)" tooltip line.
 
