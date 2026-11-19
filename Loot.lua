@@ -1,6 +1,8 @@
 -- Lootwright Loot.lua: records your own loot, so Lootwright can show drop rates measured by you.
--- LootwrightDB.loot = { since = game build, mobs = { [npcId] = { n = looted corpses, [itemId] = corpses it was on } } }
--- Counts per looted corpse: a corpse with nothing on it can't be opened, so rates come out a bit high.
+-- LootwrightDB.loot = { since = game build, mobs = { [npcId] = { n = corpses, e = empty ones, [itemId] = corpses it was on } } }
+-- n counts looted corpses plus empty kills: when your target dies (your tap, not in a group) and
+-- CanLootUnit says it has no loot, it counts as an empty corpse. Kills with loot you never take don't
+-- count at all. Kills that weren't your target can't be seen as empty, so rates may still be a bit high.
 -- Option recordLoot (nil = on). /if loot shows a summary, /if loot debug prints each recorded corpse.
 
 local _, ns = ...
@@ -41,6 +43,53 @@ local function isLivingTarget(guid)
     if not ok or plain(tguid) ~= guid then return false end
     local ok2, dead = pcall(UnitIsDead, "target")
     return ok2 and plain(dead) == false
+end
+
+-- Empty kills -----------------------------------------------------------------------------------
+local pending = {} -- [guid] = true while we wait to see whether a dead target has loot
+local EMPTY_CHECKS = { 1, 3 } -- seconds after death; loot can take a moment to appear
+
+local function hasLoot(guid)
+    if not CanLootUnit then return nil end
+    local ok, has = pcall(CanLootUnit, guid)
+    return ok and plain(has) or nil
+end
+
+local function countEmpty(guid)
+    local npcId = npcFromGuid(guid)
+    if not npcId or seen[guid] then return end
+    seen[guid] = true
+    local m = db().mobs[npcId] or { n = 0 }
+    db().mobs[npcId] = m
+    m.n, m.e = m.n + 1, (m.e or 0) + 1
+    if debug then ns.say(string.format("Loot: npc %d corpse #%d: empty kill", npcId, m.n)) end
+end
+
+local function checkEmpty(guid, step)
+    if seen[guid] then pending[guid] = nil return end -- looted meanwhile
+    local has = hasLoot(guid)
+    if has == true then pending[guid] = nil return end -- has loot: counted when you open it
+    if has == nil then pending[guid] = nil return end -- can't tell
+    if EMPTY_CHECKS[step + 1] then
+        C_Timer.After(EMPTY_CHECKS[step + 1] - EMPTY_CHECKS[step], function() checkEmpty(guid, step + 1) end)
+    else
+        pending[guid] = nil
+        countEmpty(guid)
+    end
+end
+
+local warnedNoApi = false
+local function onTargetHealth()
+    if LootwrightDB.recordLoot == false or IsInGroup() then return end -- in a group the loot may not be yours
+    local guid = plain(UnitGUID("target"))
+    if not guid or pending[guid] or seen[guid] or not npcFromGuid(guid) then return end
+    if plain(UnitIsDead("target")) ~= true or plain(UnitIsTapDenied("target")) ~= false then return end
+    if not CanLootUnit then
+        if debug and not warnedNoApi then warnedNoApi = true; ns.say("Loot: CanLootUnit is missing, empty kills aren't counted") end
+        return
+    end
+    pending[guid] = true
+    C_Timer.After(EMPTY_CHECKS[1], function() checkEmpty(guid, 1) end)
 end
 
 local function onLootReady()
@@ -109,12 +158,12 @@ function Loot.Get(npcId, itemId)
     return m[itemId] or 0, m.n
 end
 
--- Tooltip line for a mob row, e.g. "You: 9 of 40 looted corpses (22.5%, likely 12-38%)", or nil.
+-- Tooltip line for a mob row, e.g. "You: 9 of 40 corpses (22.5%, likely 12-38%)", or nil.
 -- inside: true/false when the source rate fits your range (enough corpses), else nil.
 function Loot.Line(npcId, itemId, sourceRate)
     local k, n = Loot.Get(npcId, itemId)
     if not k then return nil end
-    local line = string.format("You: %d of %d looted corpses", k, n)
+    local line = string.format("You: %d of %d corpses", k, n)
     if n < MIN_CORPSES then return line .. string.format(" (rate shows after %d)", MIN_CORPSES), nil end
     local lo, hi = Loot.Range(k, n)
     line = line .. string.format(" (%.1f%%, likely %.0f-%.0f%%)", 100 * k / n, lo, hi)
@@ -135,13 +184,16 @@ function Loot.Command(arg)
         kinds, corpses = kinds + 1, corpses + (m.n or 0)
         if (m.n or 0) >= MIN_CORPSES then enough = enough + 1 end
     end
-    ns.say(string.format("Your loot: %d looted corpses from %d mob kinds since build %s; %d kinds with %d+ corpses. Recording is %s.",
-        corpses, kinds, tostring(l.since), enough, MIN_CORPSES, LootwrightDB.recordLoot == false and "off" or "on"))
+    local empty = 0
+    for _, m in pairs(l.mobs) do empty = empty + (m.e or 0) end
+    ns.say(string.format("Your loot: %d corpses (%d of them empty kills) from %d mob kinds since build %s; %d kinds with %d+ corpses. Recording is %s.",
+        corpses, empty, kinds, tostring(l.since), enough, MIN_CORPSES, LootwrightDB.recordLoot == false and "off" or "on"))
 end
 
 local f = CreateFrame("Frame")
 f:RegisterEvent("LOOT_READY")
-f:SetScript("OnEvent", function()
-    local ok, err = pcall(onLootReady)
+f:RegisterUnitEvent("UNIT_HEALTH", "target")
+f:SetScript("OnEvent", function(_, event)
+    local ok, err = pcall(event == "LOOT_READY" and onLootReady or onTargetHealth)
     if not ok and debug then ns.say("Loot recording error: " .. tostring(err)) end
 end)
