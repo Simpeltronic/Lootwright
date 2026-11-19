@@ -2,7 +2,7 @@
 
 Versions follow the rules in `CLAUDE.md` ("Versions and changelog"). Newest first.
 
-## 0.10.0 (Beta), not released yet
+## 0.10.0, not released yet
 
 ### New
 - **Drop rates for normal mobs** from CMaNGOS classic-db (Classic 1.12 data, drops of 1% and up, 4,545 items). Shown as rough rates with "~" and sorted after real rates, because they match only 38% of rates measured in Forever.

@@ -80,7 +80,7 @@ Replace `BANNER_URL`, `SEARCH_IMG_URL`, `POPUP_IMG_URL`, `MAP_IMG_URL`, `FARMTAB
 
 # Lootwright
 
-[![Source on GitHub](https://img.shields.io/badge/source-GitHub-2F3540?logo=github)](https://github.com/Simpeltronic/Lootwright) [![Report a problem](https://img.shields.io/badge/issues-GitHub-2F3540)](https://github.com/Simpeltronic/Lootwright/issues) ![Beta](https://img.shields.io/badge/status-beta-C9A24A)
+[![Source on GitHub](https://img.shields.io/badge/source-GitHub-2F3540?logo=github)](https://github.com/Simpeltronic/Lootwright) [![Report a problem](https://img.shields.io/badge/issues-GitHub-2F3540)](https://github.com/Simpeltronic/Lootwright/issues) ![Early version](https://img.shields.io/badge/status-early%20version-C9A24A)
 
 **Find any item. Farm what you need.** Type an item's name and Lootwright shows every mob that drops it, where they are, what level they are and how often it drops. Put it on your farm list with a goal, and the mobs you need get marked on your map and tooltips until your bags hold enough.
 
@@ -148,7 +148,7 @@ Single features (tooltip lines, map skulls, the arrow, messages, the minimap but
 
 ## Good to know
 
-- This is a **beta**, like WoW Forever itself. Things may change between versions.
+- This is an **early version** (0.x), and WoW Forever itself is still in beta. Things may change between versions.
 - Most drop rates for normal mobs are rough Classic 1.12 numbers from CMaNGOS, marked with ~, not measured in Forever. Drops under 1% and some items still show "rate unknown" rather than a guess.
 - Open each of your profession windows once so Lootwright knows which recipes you have.
 
@@ -236,7 +236,8 @@ Use shot 1 as the first Gallery image: it's what shows in search results.
 - [x] `tools/release.py` (rebuilds the data) run right before packaging (ForeverDB data 2026-11-18).
 - [x] Release zip built with the three addon folders only: `python -I tools/package.py` writes `dist/Lootwright-0.9.0.zip` (25 files, 183 KB). Re-run both scripts if anything changes before upload.
 - [ ] Logo, banner and screenshots uploaded; image links pasted into the description.
-- [ ] File uploaded as **Beta**.
+- [x] 0.9.0 uploaded as **Beta**.
+- [ ] 0.10.0 uploaded as **Release** (Beta files are hidden in the CurseForge app unless players switch to the Beta channel; the version number and "early version" say it's early).
 
 ---
 

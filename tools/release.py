@@ -7,7 +7,7 @@
   python -I tools/release.py released        dates the top CHANGELOG.md section (after uploading)
 
 bump sets ## Version in the three TOCs and VERSION in Core.lua, and opens a
-"## <version> (Beta), not released yet" section at the top of CHANGELOG.md if there isn't one.
+"## <version>, not released yet" section at the top of CHANGELOG.md if there isn't one.
 The rules for which bump to use are in CLAUDE.md ("Versions and changelog").
 """
 
@@ -63,7 +63,7 @@ def bump(how):
             # The unreleased section moves to the new number (e.g. a patch turned into a minor).
             log = log[:top.start()] + f"## {new}{top.group(2)}" + log[top.end():]
         else:
-            entry = f"## {new} (Beta), not released yet\n\n### New\n\n### Changed\n\n### Fixed\n\n"
+            entry = f"## {new}, not released yet\n\n### New\n\n### Changed\n\n### Fixed\n\n"
             log = log[:top.start()] + entry + log[top.start():] if top else log + "\n" + entry
         write(CHANGELOG, log)
     print(f"Version {cur} -> {new} in the three TOCs, Core.lua and CHANGELOG.md.")
