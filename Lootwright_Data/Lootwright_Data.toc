@@ -1,10 +1,10 @@
 ## Interface: 16001
 ## Title: Lootwright - Data
-## Notes: Recipes and dungeon boss loot for Lootwright. Data from ForeverDB.net (https://foreverdb.net). Turn it off to run Lootwright on QuestieDB alone.
+## Notes: Recipes, dungeon boss loot and mob drop rates for Lootwright. Data from ForeverDB.net (https://foreverdb.net) and CMaNGOS. Turn it off to run Lootwright on QuestieDB alone.
 ## Author: Simpeltronic
 ## Version: 0.9.0
 ## Dependencies: Lootwright
 ## LoadOnDemand: 1
-## X-Credits: Data from ForeverDB.net (https://foreverdb.net), GPL-3.0 with an attribution term.
+## X-Credits: Data from ForeverDB.net (https://foreverdb.net), GPL-3.0 with an attribution term. Mob drop rates from CMaNGOS classic-db (https://github.com/cmangos/classic-db), GPL-3.0.
 
 GeneratedData.lua

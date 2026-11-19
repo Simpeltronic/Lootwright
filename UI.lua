@@ -190,6 +190,8 @@ local function initMobRow(button, r)
                     m.fewKills and 1 or 0.7, m.fewKills and 0.5 or 0.7, m.fewKills and 0.25 or 0.7)
             elseif m.fewKills then
                 GameTooltip:AddLine("* Rate from very few kills (10 or fewer), unreliable", 1, 0.5, 0.25)
+            elseif m.rate and m.source == "cmangos" then
+                GameTooltip:AddLine("Drop rate from CMaNGOS (Classic 1.12, not measured in Forever)", 0.7, 0.7, 0.7)
             elseif m.rate then
                 GameTooltip:AddLine("Drop rate from " .. (m.source or "?") .. " data", 0.7, 0.7, 0.7)
             else

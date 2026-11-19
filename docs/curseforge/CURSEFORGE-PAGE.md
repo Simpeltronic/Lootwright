@@ -48,7 +48,7 @@ Images are drawn by `tools/make_brand.py` from the emblem (`tools/make_icons.py`
 
 **Avoided:** hype claims (Details!), hit counters, long link lists at the top (DBM), stale version info (AtlasLootClassic still lists 2023 versions). Update the page with every release.
 
-**Style:** English first. H1 for the name only, H2 for sections, H3 for single features. Plain sentences in the player's words. Honest limits: most normal mobs have no known drop rate, and the page says so. ForeverDB's credit must stay visible (its licence requires it).
+**Style:** English first. H1 for the name only, H2 for sections, H3 for single features. Plain sentences in the player's words. Honest limits: normal-mob rates are Classic 1.12 numbers from CMaNGOS, and the page says so. ForeverDB's credit must stay visible (its licence requires it).
 
 ---
 
@@ -139,7 +139,7 @@ Single features (tooltip lines, map skulls, the arrow, messages, the minimap but
 ## Good to know
 
 - This is a **beta**, like WoW Forever itself. Things may change between versions.
-- Drop rates are known for quest items and dungeon bosses. Most other mobs show "rate unknown" rather than a guess.
+- Most drop rates for normal mobs are Classic 1.12 numbers from CMaNGOS, not measured in Forever. Drops under 1% and some items still show "rate unknown" rather than a guess.
 - Open each of your profession windows once so Lootwright knows which recipes you have.
 
 ## Problems and ideas
@@ -150,7 +150,7 @@ Report bugs and ideas on [GitHub Issues](https://github.com/Simpeltronic/Lootwri
 
 - **Data from ForeverDB.net (https://foreverdb.net)**: recipes and dungeon boss loot with drop rates measured in WoW Forever.
 - **QuestieDB** (https://github.com/Questie/QuestieDB): item, mob, spawn and map data.
-- Some boss-loot rates come from CMaNGOS classic-db, via ForeverDB.
+- **Mob drop rates from CMaNGOS classic-db** (https://github.com/cmangos/classic-db, GPL-3.0): Classic 1.12 rates for normal mobs, shown when no better rate is known.
 
 Lootwright is free software under the GPL-3.0 licence.
 

@@ -172,8 +172,8 @@ local function cmdStatus()
     say("  contract: needs " .. s.contractWanted .. ", " .. (s.contractOk and "OK" or ("FAILED: " .. tostring(s.contractMsg))))
     say("Item name index: " .. (ns.Search.IsBuilt() and "built" or "not built yet"))
     local gen = ns.GetGen()
-    say("Recipes and boss loot (Lootwright_Data): " .. (gen and ("ForeverDB " .. tostring(gen.version)) or "off or not installed")
-        .. ". Data from ForeverDB.net (https://foreverdb.net)")
+    say("Recipes, boss loot, mob rates (Lootwright_Data): " .. (gen and ("ForeverDB " .. tostring(gen.version) .. ", " .. tostring(gen.mobRatesFrom)) or "off or not installed")
+        .. ". Data from ForeverDB.net (https://foreverdb.net) and CMaNGOS classic-db")
     say("Professions (Lootwright_Professions): " .. (ns.ProfUI and "loaded" or "off or not installed"))
 end
 

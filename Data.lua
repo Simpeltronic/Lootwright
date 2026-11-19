@@ -172,6 +172,17 @@ local function bossLoot(itemId)
     return t
 end
 
+-- CMaNGOS per-mob rates (GeneratedData.lua mobRates, drops of 1% and up), for one item:
+-- { [npcId] = pct }, or nil.
+local function mobRates(itemId)
+    local gen = ns.GetGen()
+    local s = gen and gen.mobRates and gen.mobRates[itemId]
+    if type(s) ~= "string" then return nil end
+    local t = {}
+    for npc, pct in s:gmatch("(%d+):([%d.]+)") do t[tonumber(npc)] = tonumber(pct) end
+    return t
+end
+
 -- Applies a boss-loot entry to a mob row. A rate measured in Forever wins over QuestieDB's;
 -- ForeverDB's Classic-data rate only fills an unknown one.
 local function applyBossLoot(row, b)
@@ -202,6 +213,7 @@ function Data.GetSources(itemId)
         result.fromDropTable = #npcs > 0
     end
     local boss = bossLoot(itemId) or {}
+    local cm = mobRates(itemId) or {}
     local seen = {}
     for _, npcId in ipairs(npcs) do
         local rate, src = dropRate(itemId, npcId)
@@ -219,6 +231,9 @@ function Data.GetSources(itemId)
             friendly = L.Npc.friendlyToFaction(npcId), -- "A", "H", "AH" or nil
         }
         applyBossLoot(row, boss[npcId])
+        if row.rate == nil and cm[npcId] then -- fills unknown rates only
+            row.rate, row.source, row.fewKills = cm[npcId], "cmangos", false
+        end
         seen[npcId] = true
         result.mobs[#result.mobs + 1] = row
     end

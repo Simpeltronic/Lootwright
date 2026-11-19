@@ -154,6 +154,7 @@ code { font: 13px var(--mono); }
           <li>Done: public GitHub repo, github.com/Simpeltronic/Lootwright.</li>
           <li>Done: Ko-fi page, ko-fi.com/simpeltron.</li>
           <li>Done: CurseForge project created, 0.9.0 Beta uploaded with QuestieDB as a required dependency.</li>
+          <li>Added: drop rates for normal mobs from CMaNGOS classic-db, 4,545 items (drops of 1% and up), filling rates QuestieDB lacks. Needs an in-game check.</li>
           <li>To do: moderator approval, then check the public page.</li>
         </ul>
       </div>
@@ -163,11 +164,11 @@ code { font: 13px var(--mono); }
   <section class="notes">
     <h2>Known limits</h2>
     <ul>
-      <li>Normal mobs mostly show "rate unknown": ForeverDB has no per-mob rates for them. CMaNGOS loot tables could fill this, but need a download.</li>
+      <li>Normal-mob rates come from CMaNGOS classic-db (Classic 1.12, not measured in Forever) and only drops of 1% and up are kept; rarer drops still show "rate unknown".</li>
       <li>Farm skull grouping uses a fixed grid and doesn't change with map zoom.</li>
       <li>Professions read only the recipes you know from your own profession windows; the full list comes from ForeverDB data.</li>
     </ul>
   </section>
 
-  <p class="foot">Updated 18 November 2026. Data from ForeverDB.net (https://foreverdb.net) and QuestieDB.</p>
+  <p class="foot">Updated 19 November 2026. Data from ForeverDB.net (https://foreverdb.net), QuestieDB and CMaNGOS classic-db.</p>
 </div>
