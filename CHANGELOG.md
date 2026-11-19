@@ -11,7 +11,7 @@ Versions follow the rules in `CLAUDE.md` ("Versions and changelog"). Newest firs
 - **Your loot judges the list.** After 20 corpses of a mob, your measured rate replaces an unknown or rough one, and a mob that never dropped the item turns grey and moves to the bottom ("Not seen in your loot").
 - **Share your loot data** with `/if share`: copy the text into the "Share loot data" form on GitHub to help work out real Forever drop rates for everyone.
 - **Crafted materials in trade-skill blue** on the Farm tab and the tracker, with a "Usually crafted" tooltip.
-- **Bank counts on the Farm tab:** "1(1) / 3" means 1 in your bags, 1 in your bank, 3 needed; the tooltip gives the exact bank count. Goals still count bags and equipped only. Open your bank once per session so the game knows what's in it.
+- **Bank counts on the Farm tab:** "1(2) / 3" means 1 in your bags and the bank can cover the other 2; the bar fills the bank part in a lighter green. The tooltip gives the exact bank count. Goals still count bags and equipped only. Open your bank once per session so the game knows what's in it.
 
 ### Changed
 - Recipe farming only breaks a crafted material into its own materials if your character has that profession.

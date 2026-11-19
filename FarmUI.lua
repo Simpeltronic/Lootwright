@@ -15,11 +15,27 @@ end
 
 local READY = " |TInterface\\RaidFrame\\ReadyCheck-Ready:12:12|t" -- green check mark
 
-local function setBar(bar, n, goal)
+-- Bar: what's in your bags in green, then what the bank can cover in a lighter green.
+local BAR_W = 220
+local function setBar(bar, n, goal, fromBank)
     if not goal or goal <= 0 then bar:Hide(); return end
     bar:SetMinMaxValues(0, goal)
     bar:SetValue(math.min(n, goal))
     if n >= goal then bar:SetStatusBarColor(0.25, 1, 0.25) else bar:SetStatusBarColor(0.25, 0.7, 0.25) end
+    if not bar.bankFill then
+        bar.bankFill = bar:CreateTexture(nil, "ARTWORK", nil, 1)
+        bar.bankFill:SetColorTexture(0.62, 0.9, 0.62, 1)
+        bar.bankFill:SetPoint("TOP")
+        bar.bankFill:SetPoint("BOTTOM")
+    end
+    fromBank = fromBank or 0
+    if fromBank > 0 and n < goal then
+        bar.bankFill:SetPoint("LEFT", bar, "LEFT", BAR_W * n / goal, 0)
+        bar.bankFill:SetWidth(math.max(1, BAR_W * fromBank / goal))
+        bar.bankFill:Show()
+    else
+        bar.bankFill:Hide()
+    end
     bar:Show()
 end
 
@@ -37,7 +53,7 @@ local function initRow(button, d)
         button.count:SetJustifyH("RIGHT")
 
         button.bar = CreateFrame("StatusBar", nil, button)
-        button.bar:SetSize(220, 10)
+        button.bar:SetSize(BAR_W, 10)
         button.bar:SetPoint("LEFT", 344, 0)
         button.bar:SetStatusBarTexture("Interface\\Buttons\\WHITE8x8") -- flat bar, dark field guide look
         button.bar:SetHeight(6)
@@ -95,8 +111,11 @@ local function initRow(button, d)
     button.data = d
     local n = d.id and ns.Farm.Have(d.id) or 0
     local banked = d.id and ns.Farm.Bank(d.id) or 0
-    -- "1(1) / 3": bags and equipped, then the bank in a dim slate blue (shown only, not counted).
-    local bank = banked > 0 and ("|cff7d8cad(" .. banked .. ")|r") or ""
+    -- "1(2) / 3": bags and equipped, then (in slate blue) what the bank can still cover of the goal,
+    -- so 1 in bags + 10 in bank for 3 shows 1(2) / 3. The tooltip has the full bank count.
+    local goal = (d.kind == "recipe" and d.target) or (d.kind == "mat" and d.need) or d.goal
+    local fromBank = goal and math.min(banked, math.max(0, goal - n)) or banked
+    local bank = fromBank > 0 and ("|cff7d8cad(" .. fromBank .. ")|r") or ""
 
     button.name:ClearAllPoints()
     local indent = d.kind == "mat" and (8 + 20 * (d.depth or 1)) or 8
@@ -108,7 +127,7 @@ local function initRow(button, d)
         button.name:SetText(d.name)
         button.name:SetTextColor(1, 0.82, 0)
         button.count:SetText(d.target and (n .. bank .. " / " .. d.target) or (d.crafts .. " crafts"))
-        setBar(button.bar, n, d.target)
+        setBar(button.bar, n, d.target, fromBank)
     elseif d.kind == "mat" then
         button.name:SetText(itemName(d.id) .. (d.crafted and " |cffc0a060(craft)|r" or ""))
         local mark = (d.need > 0 and n >= d.need) and READY or ""
@@ -122,12 +141,12 @@ local function initRow(button, d)
             button.name:SetTextColor(0.25, 1, 0.25)
             button.count:SetText(n .. bank .. " / " .. d.need .. mark)
         end
-        setBar(button.bar, n, d.need)
+        setBar(button.bar, n, d.need, fromBank)
     else
         button.name:SetText(itemName(d.id))
         button.name:SetTextColor(0.25, 1, 0.25)
         button.count:SetText(d.goal and (n .. bank .. " / " .. d.goal) or (n .. bank .. "  (no goal)"))
-        setBar(button.bar, n, d.goal)
+        setBar(button.bar, n, d.goal, fromBank)
     end
 end
 
