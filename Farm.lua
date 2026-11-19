@@ -66,6 +66,14 @@ local function have(itemId)
 end
 Farm.Have = have
 
+-- How many are in your bank (shown only; goals count bags and equipped). The game knows the bank
+-- once you've opened it this session, so this can be 0 until then.
+function Farm.Bank(itemId)
+    local ok, all = pcall(C_Item.GetItemCount, itemId, true)
+    if not ok or type(all) ~= "number" then return 0 end
+    return math.max(0, all - have(itemId))
+end
+
 -- Crafts still to do for a level: (wanted - in bags) / per craft, rounded up, never below 0.
 local function craftsLeft(wanted, itemId, makes)
     local missing = wanted - (itemId and have(itemId) or 0)

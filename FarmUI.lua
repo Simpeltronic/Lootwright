@@ -36,6 +36,13 @@ local function initRow(button, d)
         button.count:SetWidth(80)
         button.count:SetJustifyH("RIGHT")
 
+        -- Bank count, between the bar and Remove: "(12 bank)".
+        button.bank = button:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
+        button.bank:SetPoint("LEFT", 570, 0)
+        button.bank:SetWidth(58)
+        button.bank:SetJustifyH("LEFT")
+        button.bank:SetWordWrap(false)
+
         button.bar = CreateFrame("StatusBar", nil, button)
         button.bar:SetSize(220, 10)
         button.bar:SetPoint("LEFT", 344, 0)
@@ -84,12 +91,18 @@ local function initRow(button, d)
                         .. ". Its materials are listed below while you still need more.", 0.75, 0.63, 0.38, true)
                 end
             end
+            local banked = row.id and ns.Farm.Bank(row.id) or 0
+            if banked > 0 then
+                GameTooltip:AddLine(banked .. " in your bank (not counted: take them out to use them)", 0.7, 0.7, 0.7)
+            end
             if row.id then GameTooltip:AddLine("Click: show where it drops (Search tab)", 0.2, 1, 0.6) end
             GameTooltip:Show()
         end)
     end
     button.data = d
     local n = d.id and ns.Farm.Have(d.id) or 0
+    local banked = d.id and ns.Farm.Bank(d.id) or 0
+    button.bank:SetText(banked > 0 and ("(" .. banked .. " bank)") or "")
 
     button.name:ClearAllPoints()
     local indent = d.kind == "mat" and (8 + 20 * (d.depth or 1)) or 8
@@ -145,6 +158,9 @@ function FarmUI.Build(parent)
         .. "or Farm recipe on the Professions tab.")
 
     page:RegisterEvent("BAG_UPDATE_DELAYED")
+    for _, ev in ipairs({ "BANKFRAME_OPENED", "PLAYERBANKSLOTS_CHANGED" }) do
+        pcall(page.RegisterEvent, page, ev) -- an unknown event name would error
+    end
     page:SetScript("OnEvent", function(self) if self:IsVisible() then FarmUI.Refresh() end end)
 end
 
