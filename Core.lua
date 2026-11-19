@@ -64,19 +64,20 @@ function ns.LevelText(lo, hi)
     return lo .. "-" .. hi
 end
 
--- rate text; "*" marks a rate from very few kills.
-function ns.RateText(rate, fewKills)
+-- rate text; "*" marks a rate from very few kills, "~" a rough one (CMaNGOS Classic data).
+function ns.RateText(rate, fewKills, rough)
     if not rate then return "rate unknown" end
-    return string.format("%.1f%%", rate) .. (fewKills and "*" or "")
+    return (rough and "~" or "") .. string.format("%.1f%%", rate) .. (fewKills and "*" or "")
 end
 
--- 0 = real rate, 1 = rate from very few kills, 2 = unknown.
+-- 0 = real rate, 1 = rough (CMaNGOS), 2 = rate from very few kills, 3 = unknown.
 function ns.RateTier(r)
-    if not r.rate then return 2 end
-    return r.fewKills and 1 or 0
+    if not r.rate then return 3 end
+    if r.fewKills then return 2 end
+    return r.rough and 1 or 0
 end
 
--- Highest rate first within each tier (real, few kills, unknown), then by name.
+-- Highest rate first within each tier (real, rough, few kills, unknown), then by name.
 function ns.SortByRate(a, b)
     local ta, tb = ns.RateTier(a), ns.RateTier(b)
     if ta ~= tb then return ta < tb end
@@ -111,11 +112,14 @@ local function showItem(itemId)
                 r.name, rank ~= "" and (" (" .. rank .. ")") or "",
                 ns.LevelText(r.minLevel, r.maxLevel), r.zone,
                 r.zones > 1 and (" +" .. (r.zones - 1) .. " more zone(s)") or "",
-                ns.RateText(r.rate, r.fewKills), r.source and (" [" .. r.source .. "]") or ""))
+                ns.RateText(r.rate, r.fewKills, r.rough), r.source and (" [" .. r.source .. "]") or ""))
         end
     end
     for _, r in ipairs(rows) do
         if r.fewKills then say("  * rate from very few kills, unreliable") break end
+    end
+    for _, r in ipairs(rows) do
+        if r.rough then say("  ~ rough rate from CMaNGOS Classic data, not measured in Forever") break end
     end
     if src.objects > 0 then say("  Also found in " .. src.objects .. " object(s) (chests, nodes).") end
     if src.vendors > 0 then say("  Sold by " .. src.vendors .. " vendor(s).") end

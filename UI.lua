@@ -190,6 +190,8 @@ local function initMobRow(button, r)
                     m.fewKills and 1 or 0.7, m.fewKills and 0.5 or 0.7, m.fewKills and 0.25 or 0.7)
             elseif m.fewKills then
                 GameTooltip:AddLine("* Rate from very few kills (10 or fewer), unreliable", 1, 0.5, 0.25)
+            elseif m.rough then
+                GameTooltip:AddLine("~ Rough rate: CMaNGOS Classic data, not measured in Forever", 1, 0.82, 0.5)
             elseif m.rate and m.source == "cmangos" then
                 GameTooltip:AddLine("Drop rate from CMaNGOS (Classic 1.12, not measured in Forever)", 0.7, 0.7, 0.7)
             elseif m.rate then
@@ -215,7 +217,7 @@ local function initMobRow(button, r)
     button.cells[2]:SetTextColor(levelColor(levelValue(r)))
     local zone = r.zone == hereZone and ("|cff40ff40" .. r.zone .. "|r") or r.zone
     button.cells[3]:SetText(zone .. (r.zones > 1 and (" |cff999999+" .. (r.zones - 1) .. "|r") or ""))
-    button.cells[4]:SetText(r.rate and ns.RateText(r.rate, r.fewKills) or "?")
+    button.cells[4]:SetText(r.rate and ns.RateText(r.rate, r.fewKills, r.rough) or "?")
     local cr, cg, cb = rateColor(not r.fewKills and r.rate or nil) -- few kills: grey
     button.cells[4]:SetTextColor(cr, cg, cb)
     if r.rate and r.rate > 0 then
@@ -783,7 +785,7 @@ local function tooltipText(itemId)
     local parts = {}
     for i = 1, math.min(3, #mobs) do
         local m = mobs[i]
-        parts[i] = m.name .. (m.rate and (" " .. ns.RateText(m.rate, m.fewKills)) or "")
+        parts[i] = m.name .. (m.rate and (" " .. ns.RateText(m.rate, m.fewKills, m.rough)) or "")
     end
     local text = #parts > 0 and (table.concat(parts, ", ") .. (#mobs > 3 and (" +" .. (#mobs - 3) .. " more") or ""))
     tipCache[itemId] = text or false

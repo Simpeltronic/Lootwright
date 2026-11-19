@@ -139,7 +139,7 @@ Single features (tooltip lines, map skulls, the arrow, messages, the minimap but
 ## Good to know
 
 - This is a **beta**, like WoW Forever itself. Things may change between versions.
-- Most drop rates for normal mobs are Classic 1.12 numbers from CMaNGOS, not measured in Forever. Drops under 1% and some items still show "rate unknown" rather than a guess.
+- Most drop rates for normal mobs are rough Classic 1.12 numbers from CMaNGOS, marked with ~, not measured in Forever. Drops under 1% and some items still show "rate unknown" rather than a guess.
 - Open each of your profession windows once so Lootwright knows which recipes you have.
 
 ## Problems and ideas

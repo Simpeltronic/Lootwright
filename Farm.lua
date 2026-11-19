@@ -308,7 +308,7 @@ local function build()
             for _, m in ipairs(src.mobs) do
                 local e = index[m.npcId] or {}
                 index[m.npcId] = e
-                e[#e + 1] = { itemId = itemId, rate = m.rate, fewKills = m.fewKills }
+                e[#e + 1] = { itemId = itemId, rate = m.rate, fewKills = m.fewKills, rough = m.rough }
             end
         end
     end
@@ -323,7 +323,7 @@ end
 -- "Linen Cloth 43.7% (have 4/15) for Linen Bag"
 function Farm.Line(e)
     local name = ns.Data.ItemName(e.itemId) or ("item " .. e.itemId)
-    local rate = e.rate and (" " .. ns.RateText(e.rate, e.fewKills)) or " rate ?"
+    local rate = e.rate and (" " .. ns.RateText(e.rate, e.fewKills, e.rough)) or " rate ?"
     local need, forNames = Farm.Need(e.itemId)
     local line = name .. rate .. " (have " .. have(e.itemId) .. (need and ("/" .. need) or "") .. ")"
     if #forNames > 0 then line = line .. " for " .. table.concat(forNames, ", ") end

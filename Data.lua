@@ -232,7 +232,8 @@ function Data.GetSources(itemId)
         }
         applyBossLoot(row, boss[npcId])
         if row.rate == nil and cm[npcId] then -- fills unknown rates only
-            row.rate, row.source, row.fewKills = cm[npcId], "cmangos", false
+            -- rough: CMaNGOS matched only 38% of rates measured in Forever (build_data.py agreement check)
+            row.rate, row.source, row.fewKills, row.rough = cm[npcId], "cmangos", false, true
         end
         seen[npcId] = true
         result.mobs[#result.mobs + 1] = row
