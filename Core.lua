@@ -236,7 +236,7 @@ SlashCmdList["LOOTWRIGHT"] = function(input)
         return
     end
     if lower == "clear" then ns.Map.Clear(); say("Map pins cleared."); return end
-    if lower == "loot" or lower == "loot debug" or lower == "loot target" then ns.Loot.Command(lower:match("^loot%s+(%a+)$")); return end
+    if lower == "loot" or lower:match("^loot %a+$") then ns.Loot.Command(lower:match("^loot%s+(%a+)$")); return end
     if lower == "tooltip" then
         LootwrightDB.tooltip = LootwrightDB.tooltip == false -- nil (default) counts as on
         say("Tooltip \"Drops from\" line: " .. (LootwrightDB.tooltip and "on" or "off"))

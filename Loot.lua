@@ -227,6 +227,12 @@ end
 
 function Loot.Command(arg)
     if arg == "target" then return inspectTarget() end
+    if arg == "reset" then
+        LootwrightDB.loot = nil
+        wipe(seen); wipe(emptied); wipe(pending)
+        ns.say("Your loot counts are cleared.")
+        return
+    end
     if arg == "debug" then
         debug = not debug
         ns.say("Loot recording debug: " .. (debug and "on (each recorded corpse is printed)" or "off"))
