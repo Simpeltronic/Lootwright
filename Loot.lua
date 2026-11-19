@@ -49,6 +49,15 @@ end
 local pending = {} -- [guid] = true while we wait to see whether a dead target has loot
 local EMPTY_CHECKS = { 1, 3 } -- seconds after death; loot can take a moment to appear
 
+local told = {} -- [guid] = true once debug has said why a dead target was skipped
+
+local function skip(guid, why)
+    if debug and guid and not told[guid] then
+        told[guid] = true
+        ns.say("Loot: dead target not counted as empty: " .. why)
+    end
+end
+
 local function hasLoot(guid)
     if not CanLootUnit then return nil end
     local ok, has = pcall(CanLootUnit, guid)
@@ -69,7 +78,7 @@ local function checkEmpty(guid, step)
     if seen[guid] then pending[guid] = nil return end -- looted meanwhile
     local has = hasLoot(guid)
     if has == true then pending[guid] = nil return end -- has loot: counted when you open it
-    if has == nil then pending[guid] = nil return end -- can't tell
+    if has == nil then pending[guid] = nil; skip(guid, "CanLootUnit gave no answer") return end
     if EMPTY_CHECKS[step + 1] then
         C_Timer.After(EMPTY_CHECKS[step + 1] - EMPTY_CHECKS[step], function() checkEmpty(guid, step + 1) end)
     else
@@ -78,16 +87,18 @@ local function checkEmpty(guid, step)
     end
 end
 
-local warnedNoApi = false
-local function onTargetHealth()
-    if LootwrightDB.recordLoot == false or IsInGroup() then return end -- in a group the loot may not be yours
+-- Runs when the target's health changes, its flags change, you change target or combat ends: the
+-- dead flag can come after the last health event, and some values are hidden during combat.
+local function onTargetCheck()
+    if LootwrightDB.recordLoot == false then return end
     local guid = plain(UnitGUID("target"))
     if not guid or pending[guid] or seen[guid] or not npcFromGuid(guid) then return end
-    if plain(UnitIsDead("target")) ~= true or plain(UnitIsTapDenied("target")) ~= false then return end
-    if not CanLootUnit then
-        if debug and not warnedNoApi then warnedNoApi = true; ns.say("Loot: CanLootUnit is missing, empty kills aren't counted") end
-        return
-    end
+    if plain(UnitIsDead("target")) ~= true then return end
+    if IsInGroup() then return skip(guid, "in a group") end -- the loot may not be yours
+    local denied = plain(UnitIsTapDenied("target"))
+    if denied == nil then return skip(guid, "tap state hidden (in combat?)") end
+    if denied then return skip(guid, "tapped by someone else") end
+    if not CanLootUnit then return skip(guid, "CanLootUnit is missing") end
     pending[guid] = true
     C_Timer.After(EMPTY_CHECKS[1], function() checkEmpty(guid, 1) end)
 end
@@ -193,7 +204,10 @@ end
 local f = CreateFrame("Frame")
 f:RegisterEvent("LOOT_READY")
 f:RegisterUnitEvent("UNIT_HEALTH", "target")
+f:RegisterUnitEvent("UNIT_FLAGS", "target")
+f:RegisterEvent("PLAYER_TARGET_CHANGED")
+f:RegisterEvent("PLAYER_REGEN_ENABLED")
 f:SetScript("OnEvent", function(_, event)
-    local ok, err = pcall(event == "LOOT_READY" and onLootReady or onTargetHealth)
+    local ok, err = pcall(event == "LOOT_READY" and onLootReady or onTargetCheck)
     if not ok and debug then ns.say("Loot recording error: " .. tostring(err)) end
 end)
