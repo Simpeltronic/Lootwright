@@ -47,12 +47,12 @@ code { font: 13px var(--mono); }
 <div class="wrap">
   <header>
     <h1>Lootwright outreach drafts</h1>
-    <p class="lede">Ready-to-send texts for the 0.10.0 release. Send them yourself, from your own accounts, once 0.10.0 is live on CurseForge as a Release file. Edit freely: they should sound like you.</p>
+    <p class="lede">Ready-to-send texts for the 0.10.0 release, which is live on CurseForge now. Send them yourself, from your own accounts. Edit freely: they should sound like you.</p>
   </header>
 
   <ol class="steps">
-    <li>Upload 0.10.0 as a <b>Release</b> file (not Beta), push the held gallery commit, paste the new description.</li>
-    <li>Post the Reddit and Discord texts the same day, with 2 or 3 screenshots (Search tab, Farm tab, tracker).</li>
+    <li><s>Upload 0.10.0 as a Release file, push, new description, summary line and gallery.</s> Done 19 November 2026.</li>
+    <li>Post the Reddit and Discord texts the same day, with 2 or 3 screenshots: <code>docs/curseforge/screens/search-window.png</code>, <code>farm-tab.png</code>, <code>tracker.png</code> (in the project folder).</li>
     <li>Send the ForeverDB and QuestieDB messages the same week.</li>
     <li>Answer every comment for the first few days.</li>
   </ol>
@@ -70,6 +70,7 @@ What it does:
 - Search any item, filter by reagents, quest items, gear or dungeon drops
 - Farm a whole recipe: every material becomes a goal, crafted materials open up into what they're made from
 - Farm tracker on screen, with bank counts
+- Farm button on anything you can craft adds its recipe, so you farm the materials
 - Every recipe for every profession, including ones you haven't learned
 - Dungeon boss rates measured in Forever (ForeverDB.net data)
 
@@ -93,8 +94,9 @@ Search an item → see every mob that drops it (level, zone, drop rate) → farm
 
 Needs QuestieDB. Free, open source.
 https://www.curseforge.com/wow/addons/lootwright
+https://github.com/Simpeltronic/Lootwright
 
-It's an early version (0.10): if something's off, tell me here or on GitHub. Opt in and share your loot counts to help build real Forever drop rates (`/if share`).</pre>
+It's an early version (0.10): if something's off, tell me here, on GitHub or at lootwright-dev@proton.me. Opt in and share your loot counts to help build real Forever drop rates (`/if share`).</pre>
     <div class="row"><button type="button" data-copy="discord">Copy</button><span class="done" hidden>Copied</span></div>
   </section>
 
@@ -108,7 +110,9 @@ I'm the author of Lootwright, a free WoW Forever addon for finding where items d
 Thank you for making that data available. If you have a place where you mention tools built on ForeverDB, I'd be glad to be listed there:
 https://www.curseforge.com/wow/addons/lootwright
 
-One more thing that might interest you: Lootwright lets players opt in to counting their own loot (no names or positions) and share it. If that ever grows into useful normal-mob rates for Forever, I'd be happy to share the merged counts back with you.
+One more thing that might interest you: Lootwright lets players opt in to counting their own loot (no names or positions) and share it. The merged counts are published as open data under CC BY 4.0, so if they grow into useful normal-mob rates for Forever, ForeverDB is welcome to use them. I'd be happy to send them to you directly too.
+
+For transparency: Lootwright doesn't read your addon at runtime. A build script turns your data files into Lootwright's own data file, which keeps your "-- Data: ForeverDB.net" header line.
 
 Thanks,
 Simpeltronic
