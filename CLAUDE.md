@@ -49,7 +49,7 @@ Read `ROADMAP.md` for the full plan. This file is the short version plus the fac
 
 ## Environment facts
 
-- **Game:** WoW Forever beta. TOC `## Interface: 16001`. A `_Forever.toc` suffix is also accepted.
+- **Game:** WoW Forever (not a beta: don't call it one in player-facing text). TOC `## Interface: 16001`. A `_Forever.toc` suffix is also accepted.
 - **Client:** Forever runs on the **modern (Midnight) client UI**, not Classic. Use modern APIs (`C_AddOns`, `C_Map`, `C_Timer`, `C_Item`, `Settings`, `BackdropTemplate`). Do not copy old Classic-only snippets.
 - **Combat restrictions** of the modern client apply. Keep the UI out-of-combat and don't read protected data during fights.
 - **Install path:** `Z:\Blizzard\World of Warcraft\_forever_\Interface\AddOns\Lootwright`
@@ -119,7 +119,7 @@ Performance rules (from the pre-release review): nothing heavy runs per frame; t
 
 ## Versions and changelog
 
-Claude decides when to bump and says so. Versions are `major.minor.patch`; under 1.0 the addon is an "early version". Since 0.10.0 files go up as CurseForge **Release** type (0.9.0 was a Beta file; Beta files are hidden in the CurseForge app by default), so don't call it "a beta" in player-facing text: say "early version" (WoW Forever itself is in beta).
+Claude decides when to bump and says so. Versions are `major.minor.patch`; under 1.0 the addon is an "early version". Since 0.10.0 files go up as CurseForge **Release** type (0.9.0 was a Beta file; Beta files are hidden in the CurseForge app by default), so don't call it "a beta" in player-facing text: say "early version". WoW Forever itself is not in beta either, so never say it is.
 
 - **Patch** (0.10.0 -> 0.10.1): bug fixes, a data rebuild, text or colour tweaks. Nothing new to learn for the player.
 - **Minor** (0.10.x -> 0.11.0): a new feature, command or option, a new data source, or a change to what's saved (`LootwrightDB` layout).

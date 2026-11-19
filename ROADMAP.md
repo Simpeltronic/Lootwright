@@ -137,7 +137,7 @@ Make Lootwright look and feel its own, not like a debug window.
 ## 4. Risks and open questions
 
 1. ForeverDB's table layout is undocumented, so we have to reverse-engineer it (Phase 1).
-2. Forever is in beta, so API and data can change with each build. Pin the interface number and re-test after patches.
+2. Forever gets regular builds, so API and data can change with each one. Pin the interface number and re-test after patches.
 3. Questie's API may not allow adding custom pins, so the Phase 4 pins are the safe default.
 4. Combat restrictions on the modern client may affect tooltips and map code.
 5. Drop rates are community or server estimates, so they may not match real Forever rates. The addon should say so.
