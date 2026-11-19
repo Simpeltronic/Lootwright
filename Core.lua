@@ -213,7 +213,7 @@ SlashCmdList["LOOTWRIGHT"] = function(input)
 
     if input == "" then ns.UI.Toggle(); return end
     if lower == "help" then
-        say("/if  (window)  |  /if <item name>  |  /if #<id>  |  /if tooltip (toggle)  |  /if options  |  /if mini (farm tracker)  |  /if clear (map pins)  |  /if farmpins (toggle)  |  /if prof  |  /if farm  |  /if status  |  /if raw item|npc <id>")
+        say("/if  (window)  |  /if <item name>  |  /if #<id>  |  /if tooltip (toggle)  |  /if options  |  /if mini (farm tracker)  |  /if clear (map pins)  |  /if farmpins (toggle)  |  /if loot (your loot; loot debug)  |  /if prof  |  /if farm  |  /if status  |  /if raw item|npc <id>")
         return
     end
     if lower == "prof" then
@@ -236,6 +236,7 @@ SlashCmdList["LOOTWRIGHT"] = function(input)
         return
     end
     if lower == "clear" then ns.Map.Clear(); say("Map pins cleared."); return end
+    if lower == "loot" or lower == "loot debug" then ns.Loot.Command(lower:match("^loot%s+(%a+)$")); return end
     if lower == "tooltip" then
         LootwrightDB.tooltip = LootwrightDB.tooltip == false -- nil (default) counts as on
         say("Tooltip \"Drops from\" line: " .. (LootwrightDB.tooltip and "on" or "off"))

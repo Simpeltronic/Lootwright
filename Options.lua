@@ -22,6 +22,9 @@ local TOGGLES = {
     { key = "minimapButton", label = "Minimap button",
       tip = "The Lootwright emblem on the minimap. Left-click opens the window, right-click opens these options.",
       onChange = function() ns.MinimapButton.Refresh() end },
+    { key = "recordLoot", label = "Record your own loot",
+      tip = "Counts the corpses you loot and what was on them, so mob tooltips in the window show your own drop rate. "
+          .. "Stays in your saved settings. /if loot shows a summary." },
     -- Off by default (defaultOff): only true turns it on.
     { key = "tracker", label = "Farm tracker on screen (experimental)", defaultOff = true,
       tip = "A small panel that shows your farm list all the time. Drag an item from your bags onto it to farm it. "

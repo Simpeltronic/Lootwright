@@ -1,0 +1,147 @@
+-- Lootwright Loot.lua: records your own loot, so Lootwright can show drop rates measured by you.
+-- LootwrightDB.loot = { since = game build, mobs = { [npcId] = { n = looted corpses, [itemId] = corpses it was on } } }
+-- Counts per looted corpse: a corpse with nothing on it can't be opened, so rates come out a bit high.
+-- Option recordLoot (nil = on). /if loot shows a summary, /if loot debug prints each recorded corpse.
+
+local _, ns = ...
+local Loot = {}
+ns.Loot = Loot
+
+local MIN_CORPSES = 20 -- fewer looted corpses say too little; same minimum as build_data.py's agreement check
+Loot.MIN_CORPSES = MIN_CORPSES
+
+local seen = {}  -- corpse GUIDs counted this session (re-opening, skinning and AoE loot count once)
+local debug = false
+
+local function plain(v)
+    if v == nil or (issecretvalue and issecretvalue(v)) then return nil end
+    return v
+end
+
+local function db()
+    local l = LootwrightDB.loot
+    if type(l) ~= "table" then
+        l = { since = (GetBuildInfo()), mobs = {} }
+        LootwrightDB.loot = l
+    end
+    return l
+end
+
+-- NPC ID from a creature GUID ("Creature-0-[server]-[instance]-[zone]-[npcId]-[spawn]"), else nil.
+local function npcFromGuid(guid)
+    if type(guid) ~= "string" then return nil end
+    local kind, _, _, _, _, id = strsplit("-", guid)
+    if kind ~= "Creature" then return nil end
+    return tonumber(id)
+end
+
+-- Pickpocketing opens loot on a living mob: that isn't a corpse.
+local function isLivingTarget(guid)
+    local ok, tguid = pcall(UnitGUID, "target")
+    if not ok or plain(tguid) ~= guid then return false end
+    local ok2, dead = pcall(UnitIsDead, "target")
+    return ok2 and plain(dead) == false
+end
+
+local function onLootReady()
+    if LootwrightDB.recordLoot == false then return end
+    local ok, n = pcall(GetNumLootItems)
+    n = ok and plain(n) or 0
+    local corpses = {} -- [guid] = { [itemId] = true }
+    for slot = 1, n do
+        local link = plain(GetLootSlotLink(slot))
+        local itemId = link and tonumber(link:match("|Hitem:(%d+)"))
+        if itemId then
+            local _, _, _, _, _, classId = C_Item.GetItemInfoInstant(itemId)
+            if classId == 12 then itemId = nil end -- quest items drop only while on the quest
+        end
+        local src = { pcall(GetLootSourceInfo, slot) }
+        if src[1] then
+            for i = 2, #src, 2 do -- guid, quantity, guid, quantity, ...
+                local guid = plain(src[i])
+                if guid and not seen[guid] and npcFromGuid(guid) then
+                    local c = corpses[guid] or {}
+                    corpses[guid] = c
+                    if itemId then c[itemId] = true end
+                end
+            end
+        end
+    end
+    local mobs = db().mobs
+    for guid, items in pairs(corpses) do
+        if not isLivingTarget(guid) then
+            seen[guid] = true
+            local npcId = npcFromGuid(guid)
+            local m = mobs[npcId] or { n = 0 }
+            mobs[npcId] = m
+            m.n = m.n + 1
+            local names = {}
+            for itemId in pairs(items) do
+                m[itemId] = (m[itemId] or 0) + 1
+                if debug then names[#names + 1] = ns.Data.ItemName(itemId) or tostring(itemId) end
+            end
+            if debug then
+                ns.say(string.format("Loot: npc %d corpse #%d: %s", npcId, m.n,
+                    #names > 0 and table.concat(names, ", ") or "no items counted"))
+            end
+        end
+    end
+end
+
+-- 95% range (percent) for something seen k times in n corpses (Wilson score interval).
+function Loot.Range(k, n)
+    local z = 1.96
+    local p, d = k / n, 1 + z * z / n
+    local mid = (p + z * z / (2 * n)) / d
+    local half = z * math.sqrt(p * (1 - p) / n + z * z / (4 * n * n)) / d
+    return math.max(0, mid - half) * 100, math.min(1, mid + half) * 100
+end
+do
+    local lo, hi = Loot.Range(5, 10)
+    assert(lo < 50 and hi > 50 and Loot.Range(0, 30) == 0)
+end
+
+-- Your count for one mob and item: corpses it was on, looted corpses. nil when you've looted none.
+function Loot.Get(npcId, itemId)
+    local l = LootwrightDB.loot
+    local m = type(l) == "table" and l.mobs and l.mobs[npcId]
+    if not m or not m.n or m.n == 0 then return nil end
+    return m[itemId] or 0, m.n
+end
+
+-- Tooltip line for a mob row, e.g. "You: 9 of 40 looted corpses (22.5%, likely 12-38%)", or nil.
+-- inside: true/false when the source rate fits your range (enough corpses), else nil.
+function Loot.Line(npcId, itemId, sourceRate)
+    local k, n = Loot.Get(npcId, itemId)
+    if not k then return nil end
+    local line = string.format("You: %d of %d looted corpses", k, n)
+    if n < MIN_CORPSES then return line .. string.format(" (rate shows after %d)", MIN_CORPSES), nil end
+    local lo, hi = Loot.Range(k, n)
+    line = line .. string.format(" (%.1f%%, likely %.0f-%.0f%%)", 100 * k / n, lo, hi)
+    local inside
+    if sourceRate then inside = sourceRate >= lo and sourceRate <= hi end
+    return line, inside
+end
+
+function Loot.Command(arg)
+    if arg == "debug" then
+        debug = not debug
+        ns.say("Loot recording debug: " .. (debug and "on (each recorded corpse is printed)" or "off"))
+        return
+    end
+    local l = db()
+    local kinds, corpses, enough = 0, 0, 0
+    for _, m in pairs(l.mobs) do
+        kinds, corpses = kinds + 1, corpses + (m.n or 0)
+        if (m.n or 0) >= MIN_CORPSES then enough = enough + 1 end
+    end
+    ns.say(string.format("Your loot: %d looted corpses from %d mob kinds since build %s; %d kinds with %d+ corpses. Recording is %s.",
+        corpses, kinds, tostring(l.since), enough, MIN_CORPSES, LootwrightDB.recordLoot == false and "off" or "on"))
+end
+
+local f = CreateFrame("Frame")
+f:RegisterEvent("LOOT_READY")
+f:SetScript("OnEvent", function()
+    local ok, err = pcall(onLootReady)
+    if not ok and debug then ns.say("Loot recording error: " .. tostring(err)) end
+end)

@@ -17,6 +17,7 @@ UI.lua
 Map.lua
 Arrow.lua
 Farm.lua
+Loot.lua
 FarmUI.lua
 FarmPopup.lua
 Tracker.lua

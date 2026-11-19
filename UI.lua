@@ -199,6 +199,15 @@ local function initMobRow(button, r)
             else
                 GameTooltip:AddLine("No drop rate in the database", 0.7, 0.7, 0.7)
             end
+            -- Your own loot of this item from this mob (Loot.lua).
+            local own, inside = ns.Loot.Line(m.npcId, selectedId, m.rate)
+            if own then
+                GameTooltip:AddLine(own, 0.4, 0.8, 1)
+                if inside ~= nil then
+                    GameTooltip:AddLine(inside and "The rate above fits your loot" or "The rate above doesn't fit your loot",
+                        inside and 0.25 or 1, inside and 1 or 0.5, 0.25)
+                end
+            end
             -- Other farm items this mob drops.
             for _, e in ipairs(ns.Farm.ForNpc(m.npcId) or {}) do
                 if e.itemId ~= selectedId then GameTooltip:AddLine("Farm: " .. ns.Farm.Line(e), 0.25, 1, 0.25) end
