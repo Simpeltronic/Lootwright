@@ -1,0 +1,84 @@
+<title>Lootwright Changelog</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;600&family=JetBrains+Mono:wght@400&display=swap">
+<style>
+/* Layout: one reading column, newest version first; each version a block with its status chip and New / Changed / For developers lists. Same tokens as the phase summary. */
+:root {
+  --bg: #f6f7f9; --surface: #ffffff; --fg: #1c2027; --muted: #5d6573; --line: #dfe3ea;
+  --done: #1f8a2e; --done-bg: #e5f4e7;      /* uncommon (green): released */
+  --next: #1f5fd1; --next-bg: #e4edfc;      /* rare (blue): not released yet */
+  --craft: #1b7fa8;                         /* trade-skill link blue, darker for light theme */
+  --display: "Space Grotesk", "Segoe UI", system-ui, sans-serif;
+  --body: "Inter", "Segoe UI", system-ui, sans-serif;
+  --mono: "JetBrains Mono", Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #12151a; --surface: #1a1e25; --fg: #e6e9ee; --muted: #9aa3b2; --line: #2b313b;
+  --done: #4fc35e; --done-bg: #17301c; --next: #6ea2ff; --next-bg: #172744; --craft: #71d5ff; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #12151a; --surface: #1a1e25; --fg: #e6e9ee; --muted: #9aa3b2; --line: #2b313b;
+  --done: #4fc35e; --done-bg: #17301c; --next: #6ea2ff; --next-bg: #172744; --craft: #71d5ff; color-scheme: dark }
+body { background: var(--bg); color: var(--fg); font: 15px/1.6 var(--body);
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+.wrap { max-width: 760px; margin: 0 auto; padding-block: 40px 56px; display: grid; gap: 24px; }
+h1 { font: 600 30px/1.15 var(--display); margin: 0; text-wrap: balance; }
+.lede { color: var(--muted); margin: 6px 0 0; max-width: 62ch; }
+.version { border: 1px solid var(--line); border-radius: 10px; background: var(--surface); padding: 18px 20px; display: grid; gap: 10px; min-width: 0; }
+.version.upcoming { box-shadow: inset 3px 0 0 var(--next); }
+.head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 12px; }
+.head h2 { font: 600 22px/1.2 var(--display); margin: 0; font-variant-numeric: tabular-nums; }
+.date { color: var(--muted); font-size: 13px; }
+.chip { display: inline-flex; align-items: center; gap: 6px; font: 500 12px/1 var(--body); padding: 5px 9px; border-radius: 999px; white-space: nowrap; }
+.chip::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+.released { color: var(--done); background: var(--done-bg); }
+.pending { color: var(--next); background: var(--next-bg); }
+h3 { font: 600 12px/1 var(--body); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin: 6px 0 0; }
+ul { margin: 0; padding-left: 18px; }
+li { margin: 4px 0; }
+code { font: 13px var(--mono); }
+.craft { color: var(--craft); font-weight: 600; }
+.rules { color: var(--muted); font-size: 13px; }
+</style>
+
+<div class="wrap">
+  <header>
+    <h1>Lootwright changelog</h1>
+    <p class="lede">What changed in each version of the WoW Forever addon, newest first. A version marked "not released yet" is what the next CurseForge upload will hold.</p>
+  </header>
+
+  <section class="version upcoming">
+    <div class="head"><h2>0.10.0</h2><span class="chip pending">Not released yet</span><span class="date">Beta</span></div>
+    <h3>New</h3>
+    <ul>
+      <li><b>Drop rates for normal mobs</b> from CMaNGOS classic-db (Classic 1.12 data, drops of 1% and up, 4,545 items). Shown as rough rates with "~" and sorted after real rates, because they match only 38% of rates measured in Forever.</li>
+      <li><b>Many more mobs in search results.</b> Mobs only CMaNGOS lists are added: 8,075 drops on 1,555 items were missing, and 1,173 items showed no mobs at all. Cloth now lists every mob instead of about 200.</li>
+      <li><b>Your own loot is counted</b>, on your PC only: looted corpses, empty kills and what was on them, per mob. Mob tooltips in the window show "You: 9 of 40 corpses". Option "Record your own loot", <code>/if loot</code>.</li>
+      <li><b>Your loot judges the list.</b> After 20 corpses of a mob, your measured rate replaces an unknown or rough one, and a mob that never dropped the item turns grey and moves to the bottom.</li>
+      <li><b>Share your loot data</b> with <code>/if share</code>: paste the text into the "Share loot data" form on GitHub to help work out real Forever drop rates for everyone.</li>
+      <li><b>Crafted materials in <span class="craft">trade-skill blue</span></b> on the Farm tab and the tracker, with a "Usually crafted" tooltip.</li>
+    </ul>
+    <h3>Changed</h3>
+    <ul>
+      <li>Recipe farming only breaks a crafted material into its own materials if your character has that profession.</li>
+    </ul>
+    <h3>For developers</h3>
+    <ul>
+      <li><code>tools/build_data.py</code> reads the CMaNGOS dump and prints how well a rate source agrees with rates measured in Forever.</li>
+      <li><code>tools/merge_loot.py</code> reads shared loot data from GitHub issues.</li>
+      <li><code>/if loot debug</code>, <code>/if loot target</code>, <code>/if loot reset</code> for testing.</li>
+    </ul>
+  </section>
+
+  <section class="version">
+    <div class="head"><h2>0.9.0</h2><span class="chip released">Uploaded</span><span class="date">Beta · 18 November 2026 · waiting for CurseForge approval</span></div>
+    <h3>First public release</h3>
+    <ul>
+      <li>Item search with every mob that drops it: level, rank, zone, drop rate, your zone first.</li>
+      <li>Map skulls on spawns, waypoint arrow, farm list with goals, recipe farming with sub-materials, ready notices.</li>
+      <li>Professions tab with every recipe (ForeverDB data), dungeon boss loot with rates measured in Forever.</li>
+      <li>Options panel, minimap button, the "dark field guide" look, experimental farm tracker.</li>
+    </ul>
+  </section>
+
+  <p class="rules">Versions: patch for fixes and data rebuilds, minor for new features, commands, options, data sources or saved-data changes, 1.0 when it leaves Beta. Updated 19 November 2026.</p>
+</div>
