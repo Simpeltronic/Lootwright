@@ -9,6 +9,8 @@ body:
         Thank you for sharing! In game, type `/if share`, click the long text, press Ctrl+C and paste it below.
         It holds only mob and item IDs with counts, the game build and a random share ID. No names or positions.
         Sharing again later is fine: only your latest share is used.
+
+        **Open data:** shared counts are published as open data under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/), so anyone (other addons, websites, ForeverDB) may use them if they credit Lootwright.
   - type: textarea
     id: data
     attributes:
@@ -18,3 +20,10 @@ body:
       render: text
     validations:
       required: true
+  - type: checkboxes
+    id: licence
+    attributes:
+      label: Open data
+      options:
+        - label: I agree that these counts are published as open data under CC BY 4.0.
+          required: true

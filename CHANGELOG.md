@@ -9,6 +9,7 @@ Versions follow the rules in `CLAUDE.md` ("Versions and changelog"). Newest firs
 - **Many more mobs in search results.** Mobs only CMaNGOS lists are added: 8,075 drops on 1,555 items were missing, and 1,173 items showed no mobs at all. Cloth now lists every mob instead of about 200.
 - **Welcome window** on first start: what Lootwright does, with two opt-ins, both off until you tick them: the farm tracker, and helping improve drop rates. `/if welcome` shows it again.
 - **Help improve drop rates (opt-in):** Lootwright counts what you loot, on your PC only: looted corpses, empty kills and what was on them, per mob. Mob tooltips in the window show "You: 9 of 40 corpses". `/if loot` shows a summary.
+- **Shared loot data is open data** (CC BY 4.0): the share form and window say so, so other addons and sites can use the merged counts with credit.
 - **Share reminder:** players who opted in get a small "Share your loot data?" window at login after every 100 new corpses, with Share now and Later.
 - **Your loot judges the list.** After 20 corpses of a mob, your measured rate replaces an unknown or rough one, and a mob that never dropped the item turns grey and moves to the bottom ("Not seen in your loot").
 - **Share your loot data** with `/if share`: copy the text into the "Share loot data" form on GitHub to help work out real Forever drop rates for everyone.

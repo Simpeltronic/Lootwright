@@ -9,6 +9,7 @@ Usage:
   python -I tools/merge_loot.py file.txt   reads share strings from a text file instead
 
 Shared text is untrusted: only the strict format below is accepted, anything else is skipped.
+The merged counts are open data under CC BY 4.0 (players agree to that on the share form; see NOTICE.md).
 """
 
 import json

@@ -329,7 +329,8 @@ local function buildExport()
     hint:SetJustifyH("LEFT")
     hint:SetText("1. Click the long text below and press Ctrl+C.\n"
         .. "2. Open this address in your browser (click it, Ctrl+C) and paste the text into the form.\n"
-        .. "It holds only mob and item IDs with counts: no names or positions. Thank you!")
+        .. "It holds only mob and item IDs with counts: no names or positions. Shared counts become open data "
+        .. "(CC BY 4.0): anyone may use them if they credit Lootwright. Thank you!")
     f.data = copyBox(f, 410)
     f.data:SetPoint("TOPLEFT", 16, -96)
     f.url = copyBox(f, 410)
