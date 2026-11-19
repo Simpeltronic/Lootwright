@@ -1,0 +1,162 @@
+<title>Lootwright Outreach Drafts</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;600&family=JetBrains+Mono:wght@400&display=swap">
+<style>
+/* Layout: one reading column; a short checklist, then one card per draft (where it goes, when, the text, a Copy button). Same tokens as the phase summary and changelog. */
+:root {
+  --bg: #f6f7f9; --surface: #ffffff; --fg: #1c2027; --muted: #5d6573; --line: #dfe3ea;
+  --draft-bg: #f1f3f7;
+  --go: #1f8a2e; --go-bg: #e5f4e7;        /* uncommon green: ready */
+  --wait: #1f5fd1; --wait-bg: #e4edfc;    /* rare blue: send later */
+  --display: "Space Grotesk", "Segoe UI", system-ui, sans-serif;
+  --body: "Inter", "Segoe UI", system-ui, sans-serif;
+  --mono: "JetBrains Mono", Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #12151a; --surface: #1a1e25; --fg: #e6e9ee; --muted: #9aa3b2; --line: #2b313b; --draft-bg: #14181e;
+  --go: #4fc35e; --go-bg: #17301c; --wait: #6ea2ff; --wait-bg: #172744; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #12151a; --surface: #1a1e25; --fg: #e6e9ee; --muted: #9aa3b2; --line: #2b313b; --draft-bg: #14181e;
+  --go: #4fc35e; --go-bg: #17301c; --wait: #6ea2ff; --wait-bg: #172744; color-scheme: dark }
+body { background: var(--bg); color: var(--fg); font: 15px/1.6 var(--body);
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+.wrap { max-width: 760px; margin: 0 auto; padding-block: 40px 56px; display: grid; gap: 22px; }
+h1 { font: 600 30px/1.15 var(--display); margin: 0; text-wrap: balance; }
+.lede { color: var(--muted); margin: 6px 0 0; max-width: 62ch; }
+.steps { border: 1px solid var(--line); border-radius: 10px; background: var(--surface); padding: 14px 18px 14px 36px; margin: 0; }
+.steps li { margin: 4px 0; }
+.card { border: 1px solid var(--line); border-radius: 10px; background: var(--surface); padding: 16px 18px; display: grid; gap: 10px; min-width: 0; }
+.head { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; }
+.head h2 { font: 600 19px/1.25 var(--display); margin: 0; }
+.chip { font: 500 12px/1 var(--body); padding: 5px 9px; border-radius: 999px; white-space: nowrap; }
+.go { color: var(--go); background: var(--go-bg); }
+.wait { color: var(--wait); background: var(--wait-bg); }
+.where { color: var(--muted); font-size: 13px; margin: 0; }
+pre.draft { margin: 0; padding: 12px 14px; background: var(--draft-bg); border: 1px solid var(--line); border-radius: 8px;
+  font: 13.5px/1.55 var(--body); white-space: pre-wrap; overflow-wrap: anywhere; min-width: 0; }
+.row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+button { font: 500 13px var(--body); color: var(--fg); background: var(--surface); border: 1px solid var(--line);
+  border-radius: 6px; padding: 6px 12px; cursor: pointer; }
+button:hover { border-color: var(--muted); }
+button:focus-visible { outline: 2px solid var(--wait); outline-offset: 2px; }
+.done { color: var(--go); font-size: 13px; }
+code { font: 13px var(--mono); }
+.foot { font-size: 13px; color: var(--muted); }
+</style>
+
+<div class="wrap">
+  <header>
+    <h1>Lootwright outreach drafts</h1>
+    <p class="lede">Ready-to-send texts for the 0.10.0 release. Send them yourself, from your own accounts, once 0.10.0 is live on CurseForge as a Release file. Edit freely: they should sound like you.</p>
+  </header>
+
+  <ol class="steps">
+    <li>Upload 0.10.0 as a <b>Release</b> file (not Beta), push the held gallery commit, paste the new description.</li>
+    <li>Post the Reddit and Discord texts the same day, with 2 or 3 screenshots (Search tab, Farm tab, tracker).</li>
+    <li>Send the ForeverDB and QuestieDB messages the same week.</li>
+    <li>Answer every comment for the first few days.</li>
+  </ol>
+
+  <section class="card">
+    <div class="head"><h2>Reddit post</h2><span class="chip wait">On release day</span></div>
+    <p class="where">Where: the WoW Forever subreddit, if there is one (check its rules on self-promotion first). Attach the Search tab, Farm tab and tracker screenshots.</p>
+    <pre class="draft" id="reddit">Title: I made a free addon that shows every mob that drops an item, and marks them on your map (Lootwright)
+
+I kept losing time hunting materials for my professions, so I made an addon for WoW Forever.
+
+Type an item's name (or shift-click it) and Lootwright shows every mob that drops it: level, zone, rank and drop rate, your current zone first. Put it on your farm list with a goal and the mobs you need get a skull on the world map and a line on their tooltip until your bags hold enough.
+
+What it does:
+- Search any item, filter by reagents, quest items, gear or dungeon drops
+- Farm a whole recipe: every material becomes a goal, crafted materials open up into what they're made from
+- Farm tracker on screen, with bank counts
+- Every recipe for every profession, including ones you haven't learned
+- Dungeon boss rates measured in Forever (ForeverDB.net data)
+
+Drop rates for normal mobs are honest about where they come from: most are rough Classic numbers, marked with ~. If you opt in, Lootwright counts what you loot (on your PC only) and you can share it, so we can work out real Forever rates together.
+
+It needs QuestieDB, not Questie itself. Free, open source (GPL-3.0).
+
+CurseForge: https://www.curseforge.com/wow/addons/lootwright
+GitHub: https://github.com/Simpeltronic/Lootwright
+
+It's a beta, so feedback and bug reports are very welcome.</pre>
+    <div class="row"><button type="button" data-copy="reddit">Copy</button><span class="done" hidden>Copied</span></div>
+  </section>
+
+  <section class="card">
+    <div class="head"><h2>Discord post</h2><span class="chip wait">On release day</span></div>
+    <p class="where">Where: the game's Discord, in an #addons, #ui or #showcase channel if it has one. Shorter, with one screenshot.</p>
+    <pre class="draft" id="discord">**Lootwright**: a free addon for finding and farming anything in Forever
+
+Search an item → see every mob that drops it (level, zone, drop rate) → farm it with map skulls, goals and an on-screen tracker. You can also farm a whole recipe: each material becomes a goal.
+
+Needs QuestieDB. Free, open source.
+https://www.curseforge.com/wow/addons/lootwright
+
+It's a beta: if something's off, tell me here or on GitHub. Opt in and share your loot counts to help build real Forever drop rates (`/if share`).</pre>
+    <div class="row"><button type="button" data-copy="discord">Copy</button><span class="done" hidden>Copied</span></div>
+  </section>
+
+  <section class="card">
+    <div class="head"><h2>Message to ForeverDB.net</h2><span class="chip go">Release week</span></div>
+    <p class="where">Where: their contact form, Discord or GitHub, whichever they list. Lootwright builds on their data and credits them, so this is a natural ask.</p>
+    <pre class="draft" id="foreverdb">Hi,
+
+I'm the author of Lootwright, a free WoW Forever addon for finding where items drop and farming them. Its recipe list and dungeon boss loot (with the rates you measured in Forever) come from ForeverDB's data, and the addon credits "Data from ForeverDB.net (https://foreverdb.net)" in game and on its page, as your licence asks.
+
+Thank you for making that data available. If you have a place where you mention tools built on ForeverDB, I'd be glad to be listed there:
+https://www.curseforge.com/wow/addons/lootwright
+
+One more thing that might interest you: Lootwright lets players opt in to counting their own loot (no names or positions) and share it. If that ever grows into useful normal-mob rates for Forever, I'd be happy to share the merged counts back with you.
+
+Thanks,
+Simpeltronic</pre>
+    <div class="row"><button type="button" data-copy="foreverdb">Copy</button><span class="done" hidden>Copied</span></div>
+  </section>
+
+  <section class="card">
+    <div class="head"><h2>Message to QuestieDB</h2><span class="chip go">Release week</span></div>
+    <p class="where">Where: a GitHub issue or discussion on github.com/Questie/QuestieDB, or their Discord if they point there.</p>
+    <pre class="draft" id="questiedb">Hi,
+
+Lootwright is a WoW Forever addon built on LibQuestieDB (contract 4). It reads item names, mob drops, levels, zones and spawns through your public API, and lists QuestieDB as its only required dependency.
+
+Thank you for the library, it made the whole addon possible. If you keep a list of addons that use LibQuestieDB, I'd be glad to be on it:
+https://www.curseforge.com/wow/addons/lootwright
+https://github.com/Simpeltronic/Lootwright
+
+If anything in how I use the API should change, I'm happy to adjust.
+
+Thanks,
+Simpeltronic</pre>
+    <div class="row"><button type="button" data-copy="questiedb">Copy</button><span class="done" hidden>Copied</span></div>
+  </section>
+
+  <section class="card">
+    <div class="head"><h2>CurseForge summary line</h2><span class="chip go">With the 0.10.0 upload</span></div>
+    <p class="where">Where: the project's summary field (the one line under the name in search results). It uses the words people search for.</p>
+    <pre class="draft" id="summary">Find where any item drops and farm it: drop rates, map skulls, goals, recipes and a farm tracker for WoW Forever.</pre>
+    <div class="row"><button type="button" data-copy="summary">Copy</button><span class="done" hidden>Copied</span></div>
+  </section>
+
+  <p class="foot">Links assume the CurseForge slug <code>lootwright</code> and the public GitHub repo. Prepared 19 November 2026.</p>
+</div>
+
+<script>
+document.querySelectorAll("button[data-copy]").forEach(function (b) {
+  b.addEventListener("click", function () {
+    var pre = document.getElementById(b.dataset.copy);
+    var done = b.parentNode.querySelector(".done");
+    var show = function () { done.hidden = false; setTimeout(function () { done.hidden = true; }, 1800); };
+    var select = function () {
+      var r = document.createRange(); r.selectNodeContents(pre);
+      var s = window.getSelection(); s.removeAllRanges(); s.addRange(r);
+      done.textContent = "Selected: press Ctrl+C"; show();
+    };
+    try {
+      navigator.clipboard.writeText(pre.textContent).then(function () { done.textContent = "Copied"; show(); }, select);
+    } catch (e) { select(); }
+  });
+});
+</script>

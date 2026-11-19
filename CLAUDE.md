@@ -130,6 +130,8 @@ Claude decides when to bump and says so. Versions are `major.minor.patch`; under
 - **Every user-visible change:** add a line to the top `CHANGELOG.md` section in the same commit, in the player's words (New / Changed / Fixed, plus "For developers"). Then republish the changelog page: source `docs/changelog.html`, published at the pinned changelog artifact (URL below). Keep both in step.
 - **On release:** replace "not released yet" with the date, upload the zip, paste that section into CurseForge's changelog field.
 
+**Outreach drafts** for the 0.10.0 release (Reddit, Discord, ForeverDB, QuestieDB, CurseForge summary line): `docs/outreach.html`, published and pinned at https://claude.ai/artifact/W4fVpL8NTD67Udv2m6QDcH. The user sends them from their own accounts; upload 0.10.0 as a Release file, not Beta (Beta files are hidden in the CurseForge app by default).
+
 **Held back on purpose (user's call, 19 Nov 2026):** commit b6d7b39 (0.10.0 gallery: retaken `farm-tab.png` and `tracker.png`, new screens, page text) stays local until 0.10.0 is uploaded, because the live CurseForge page loads `farm-tab.png` and `tracker.png` from GitHub `main`. Any push before then would publish it too, so don't push until the release (or ask).
 
 Changelog page: `docs/changelog.html`, published at https://claude.ai/artifact/SZg9WLE5Pd7FdH7bSoAsjX (pinned in the user's sidebar). From a new conversation, read it first and publish with `url` set to that link so it stays the same. Current next version: **0.10.0** (not released yet).
