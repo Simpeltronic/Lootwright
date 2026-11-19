@@ -8,8 +8,10 @@ local Popup = {}
 ns.FarmPopup = Popup
 
 local T = ns.Theme
-local frame, title, haveText, box, moreText, hint, stopB
+local frame, title, haveText, box, moreText, hint, stopB, noGoalB, itemPill, recipePill
 local itemId
+local recipe, recipeProf -- a recipe of yours that makes the item, or nil
+local mode = "item"     -- "item" or "recipe"
 
 local function have() return ns.Farm.Have(itemId) end
 
@@ -28,9 +30,20 @@ local function update()
         moreText:SetText("")
     elseif n <= h then
         moreText:SetText("|cffff8040You already have " .. h .. "|r")
+    elseif mode == "recipe" then
+        local makes = math.max(1, tonumber(recipe.makes) or 1)
+        moreText:SetText((n - h) .. " more = " .. math.ceil((n - h) / makes) .. " crafts")
     else
         moreText:SetText((n - h) .. " more")
     end
+end
+
+local function setMode(m)
+    mode = recipe and m or "item"
+    itemPill:SetOn(mode == "item")
+    recipePill:SetOn(mode == "recipe")
+    noGoalB:SetShown(mode == "item") -- a recipe group always has a goal
+    update()
 end
 
 local function maxStack()
@@ -46,7 +59,12 @@ local function confirm(withGoal)
             hint:SetText("|cffff8040Pick a number above what you already have, or use No goal.|r")
             return
         end
-        ns.Farm.SetGoal(itemId, n)
+        if mode == "recipe" then
+            local makes = math.max(1, tonumber(recipe.makes) or 1)
+            ns.ProfUI.FarmRecipe(recipe, math.ceil((n - have()) / makes), recipeProf)
+        else
+            ns.Farm.SetGoal(itemId, n)
+        end
     else
         ns.Farm.SetGoal(itemId, nil) -- farm without a goal
     end
@@ -130,6 +148,14 @@ local function build()
         prev = p
     end
 
+    -- Craftable by you: farm the item itself, or its recipe (materials as a group).
+    itemPill = T.Pill(frame, "Farm the item", "tab")
+    itemPill:SetPoint("TOPLEFT", 10, -110)
+    itemPill:SetScript("OnClick", function() setMode("item") end)
+    recipePill = T.Pill(frame, "Farm the recipe", "tab")
+    recipePill:SetPoint("LEFT", itemPill, "RIGHT", 4, 0)
+    recipePill:SetScript("OnClick", function() setMode("recipe") end)
+
     hint = frame:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
     hint:SetPoint("TOPLEFT", 10, -106)
     hint:SetPoint("RIGHT", -10, 0)
@@ -141,9 +167,9 @@ local function build()
     farmB:SetBackdropBorderColor(T.RGB(C.greenEdge))
     farmB:GetFontString():SetTextColor(T.RGB(C.green))
     farmB:SetScript("OnClick", function() confirm(true) end)
-    local noGoal = T.Button(frame, "No goal", 64, 22)
-    noGoal:SetPoint("LEFT", farmB, "RIGHT", 6, 0)
-    noGoal:SetScript("OnClick", function() confirm(false) end)
+    noGoalB = T.Button(frame, "No goal", 64, 22)
+    noGoalB:SetPoint("LEFT", farmB, "RIGHT", 6, 0)
+    noGoalB:SetScript("OnClick", function() confirm(false) end)
     stopB = T.Button(frame, "Stop farming", 90, 22)
     stopB:SetPoint("BOTTOMRIGHT", -10, 10)
     stopB:SetScript("OnClick", function()
@@ -165,6 +191,24 @@ function Popup.Open(id, anchor)
     local current = ns.Farm.IsSingle(id) and ns.Farm.Goal(id)
     setAmount(current or (have() + 20))
     stopB:SetShown(ns.Farm.IsSingle(id))
+    -- A recipe of a profession you have that makes it (Prof.RecipeFor only looks at yours).
+    recipe, recipeProf = nil, nil
+    if ns.Prof and ns.ProfUI then
+        local ok, r, p = pcall(ns.Prof.RecipeFor, id)
+        if ok and r and r.reagents and #r.reagents > 0 then recipe, recipeProf = r, p end
+    end
+    itemPill:SetShown(recipe ~= nil)
+    recipePill:SetShown(recipe ~= nil)
+    if recipe then
+        recipePill:SetText("Farm the recipe (" .. tostring(recipeProf) .. ")")
+        recipePill:SetWidth(recipePill:GetFontString():GetStringWidth() + 18)
+        hint:SetPoint("TOPLEFT", 10, -132)
+        frame:SetHeight(176)
+    else
+        hint:SetPoint("TOPLEFT", 10, -106)
+        frame:SetHeight(150)
+    end
+    setMode((recipe and not ns.Farm.IsSingle(id)) and "recipe" or "item")
     frame:ClearAllPoints()
     if anchor then
         frame:SetPoint("TOPLEFT", anchor, "BOTTOMLEFT", 0, -4)

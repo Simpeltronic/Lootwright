@@ -157,15 +157,18 @@ end
 ----------------------------------------------------------------------
 -- Farm the recipe: one group on the Farm tab, with every material as a sub-goal
 ----------------------------------------------------------------------
+-- Adds a recipe group to the Farm tab (also used by the Search tab's farm popup).
+function ProfUI.FarmRecipe(rec, n, prof)
+    ns.Farm.AddRecipe(rec, n,
+        function(itemId) return vendorOnly(sources(itemId)) end,
+        function(itemId) return (ns.Prof.RecipeFor(itemId, prof)) end)
+    ns.say(string.format("Farming %s x%d: %d material(s) on the Farm tab%s.", rec.name, n, #rec.reagents,
+        rec.itemId and ", done when you've crafted them" or ", remove it by hand when done"))
+end
+
 local function farmMaterials()
     if not selected then return end
-    local n = crafts()
-    ns.Farm.AddRecipe(selected, n,
-        function(itemId) return vendorOnly(sources(itemId)) end,
-        function(itemId) return (ns.Prof.RecipeFor(itemId, profs[profIndex])) end)
-    local makes = math.max(1, tonumber(selected.makes) or 1)
-    ns.say(string.format("Farming %s x%d: %d material(s) on the Farm tab%s.", selected.name, n, #selected.reagents,
-        selected.itemId and (", done when your bags hold " .. n * makes) or ", remove it by hand when done"))
+    ProfUI.FarmRecipe(selected, crafts(), profs[profIndex])
 end
 
 ----------------------------------------------------------------------

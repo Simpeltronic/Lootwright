@@ -135,7 +135,7 @@ local function collect()
     local singles = ns.Farm.Ids()
     table.sort(singles, function(a, b) return itemName(a) < itemName(b) end)
     for _, id in ipairs(singles) do
-        lines[#lines + 1] = { itemId = id, label = itemName(id), color = C.green, have = ns.Farm.Have(id),
+        lines[#lines + 1] = { itemId = id, label = itemName(id), color = ns.Data.CraftedBy(id) and C.craft or C.green, have = ns.Farm.Have(id),
             goal = ns.Farm.Goal(id), depth = 0 }
     end
     return lines

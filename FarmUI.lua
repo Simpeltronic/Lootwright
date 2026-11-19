@@ -144,7 +144,11 @@ local function initRow(button, d)
         setBar(button.bar, n, d.need, fromBank)
     else
         button.name:SetText(itemName(d.id))
-        button.name:SetTextColor(0.25, 1, 0.25)
+        if ns.Data.CraftedBy(d.id) then -- same colours as materials: crafted blue, else green
+            button.name:SetTextColor(ns.Theme.RGB(ns.Theme.C.craft))
+        else
+            button.name:SetTextColor(0.25, 1, 0.25)
+        end
         button.count:SetText(d.goal and (n .. bank .. " / " .. d.goal) or (n .. bank .. "  (no goal)"))
         setBar(button.bar, n, d.goal, fromBank)
     end

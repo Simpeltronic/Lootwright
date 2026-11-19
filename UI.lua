@@ -345,6 +345,8 @@ local function initItemRow(button, data)
             GameTooltip:SetItemByID(self.itemId)
             local uses = UI.UsedInRecipes(self.itemId)
             if uses > 0 then GameTooltip:AddLine("Used in " .. uses .. " recipe(s)", 0.4, 0.8, 1) end
+            local prof, recipeName = ns.Data.CraftedBy(self.itemId)
+            if prof then GameTooltip:AddLine("Crafted: " .. prof .. " (" .. tostring(recipeName) .. ")", 0.443, 0.835, 1) end
             GameTooltip:AddLine("Item ID " .. self.itemId, 0.5, 0.5, 0.5)
             GameTooltip:Show()
         end)
@@ -357,7 +359,9 @@ local function initItemRow(button, data)
     button.text:SetText(name)
     -- Reagents show how many recipes use them: the addon's main selling point, so it's on every row.
     local uses = UI.UsedInRecipes(data.id)
-    button.tag:SetText(uses > 0 and tostring(uses) or "")
+    -- A small blue "craft" tag for items a recipe makes (names keep their farm / favourite colours).
+    local craft = ns.Data.CraftedBy(data.id) and "|cff71d5ffcraft|r" or ""
+    button.tag:SetText(craft .. ((craft ~= "" and uses > 0) and "  " or "") .. (uses > 0 and tostring(uses) or ""))
     button.sel:SetShown(data.id == selectedId)
 end
 
