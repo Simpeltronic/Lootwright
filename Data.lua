@@ -202,6 +202,8 @@ end
 --   item seen: your measured rate replaces an unknown or rough one (source "you");
 --   never seen and the shown rate is above what your corpses allow: notSeen (grey, sorted last).
 -- Same 95% range test as build_data.py's agreement check.
+-- When community rates arrive: don't add these counts to them (shared kills are already in them);
+-- use your counts only where the community has too few corpses.
 local function applyOwnLoot(row, itemId)
     if not ns.Loot then return end
     local k, n = ns.Loot.Get(row.npcId, itemId)
