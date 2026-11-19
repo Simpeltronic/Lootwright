@@ -30,6 +30,7 @@ Versions follow the rules in `CLAUDE.md` ("Versions and changelog"). Newest firs
 ### For developers
 - `tools/build_data.py` reads the CMaNGOS dump (`tools/data/`, not in git) and prints how well a rate source agrees with rates measured in Forever.
 - `tools/merge_loot.py` reads shared loot data from GitHub issues.
+- **LibLootwright:** `Lootwright_Data` is now a library other addons can depend on without Lootwright: drop rates, boss loot and recipes through a small API with a contract number (see `Lootwright_Data/API.lua`).
 - `tools/release.py`: one command to bump the version, build the data and zip, and print the changelog for CurseForge.
 - `/if loot debug`, `/if loot target`, `/if loot reset` for testing.
 

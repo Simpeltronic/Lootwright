@@ -25,15 +25,21 @@ LootwrightDB = LootwrightDB or {}
 -- Lootwright_Professions) can join it. Each sub-addon is optional; see ns.GetGen and UI.lua.
 LootwrightNS = ns
 
--- ForeverDB data (recipes, boss loot) lives in the load-on-demand sub-addon Lootwright_Data.
--- Loaded the first time something asks for it; nil when that sub-addon is off or missing.
+-- Lootwright's own data (recipes, boss loot, mob rates) is the load-on-demand library Lootwright_Data
+-- (global LibLootwright, see Lootwright_Data/API.lua), which other addons can use too.
+-- Loaded the first time something asks for it; nil when it's off or missing.
 local triedData = false
-function ns.GetGen()
-    if ns.Gen then return ns.Gen end
+function ns.Lib()
+    if LibLootwright and LibLootwright.data then return LibLootwright end
     if triedData then return nil end
     triedData = true
     if C_AddOns and C_AddOns.LoadAddOn then pcall(C_AddOns.LoadAddOn, "Lootwright_Data") end
-    return ns.Gen
+    return LibLootwright and LibLootwright.data and LibLootwright or nil
+end
+-- The raw data table (recipe rows for Prof.lua and UI.lua); drop rates go through the API.
+function ns.GetGen()
+    local lib = ns.Lib()
+    return lib and lib.data
 end
 
 local function say(msg)

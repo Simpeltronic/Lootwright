@@ -44,22 +44,10 @@ function Data.AllItemIds()
     return lib().Item.GetAllIds()
 end
 
--- Which recipe makes an item (ForeverDB recipes, any profession): profession, recipe name; or nil.
--- Indexed once, on first use.
-local craftIndex
+-- Which recipe makes an item (any profession): profession, recipe name; or nil. From LibLootwright.
 function Data.CraftedBy(itemId)
-    if not craftIndex then
-        local gen = ns.GetGen()
-        if not (gen and gen.recipes) then return nil end
-        craftIndex = {}
-        for prof, list in pairs(gen.recipes) do
-            for _, r in ipairs(list) do
-                if type(r[4]) == "number" and not craftIndex[r[4]] then craftIndex[r[4]] = { prof, r[2] } end
-            end
-        end
-    end
-    local c = craftIndex[itemId]
-    if c then return c[1], c[2] end
+    local lib = ns.Lib()
+    if lib then return lib.CraftedBy(itemId) end
 end
 
 function Data.ItemName(itemId)
@@ -176,29 +164,16 @@ end
 -- Sources
 ----------------------------------------------------------------------
 
--- ForeverDB boss loot (GeneratedData.lua, built by tools/build_data.py), for one item:
--- { [npcId] = { rate = pct or nil, kills = n, src = "f" measured in Forever | "c" Classic data } }, or nil.
+-- Dungeon boss loot for one item (LibLootwright.BossLoot): { [npcId] = { rate, kills, measured } }, or nil.
 local function bossLoot(itemId)
-    local gen = ns.GetGen()
-    local s = gen and gen.bossLoot and gen.bossLoot[itemId]
-    if type(s) ~= "string" then return nil end
-    local t = {}
-    for npc, pct, kills, src in s:gmatch("(%d+):([%d.]+):(%d+):(%a)") do
-        pct = tonumber(pct)
-        t[tonumber(npc)] = { rate = (pct and pct > 0) and pct or nil, kills = tonumber(kills) or 0, src = src }
-    end
-    return t
+    local lib = ns.Lib()
+    return lib and lib.BossLoot(itemId)
 end
 
--- CMaNGOS per-mob rates (GeneratedData.lua mobRates, drops of 1% and up), for one item:
--- { [npcId] = pct }, or nil.
+-- CMaNGOS per-mob rates for one item (LibLootwright.MobRates): { [npcId] = pct }, or nil.
 local function mobRates(itemId)
-    local gen = ns.GetGen()
-    local s = gen and gen.mobRates and gen.mobRates[itemId]
-    if type(s) ~= "string" then return nil end
-    local t = {}
-    for npc, pct in s:gmatch("(%d+):([%d.]+)") do t[tonumber(npc)] = tonumber(pct) end
-    return t
+    local lib = ns.Lib()
+    return lib and lib.MobRates(itemId)
 end
 
 -- A plain mob row from QuestieDB, with no rate yet.
@@ -241,7 +216,7 @@ end
 -- ForeverDB's Classic-data rate only fills an unknown one.
 local function applyBossLoot(row, b)
     if not b or not b.rate then return end
-    if b.src == "f" then
+    if b.measured then
         row.rate, row.source, row.kills = b.rate, "foreverdb", b.kills
         row.fewKills = b.kills > 0 and b.kills <= 10
     elseif row.rate == nil then
@@ -296,8 +271,8 @@ function Data.GetSources(itemId)
     -- Bosses ForeverDB has for this item that QuestieDB's list lacks.
     for npcId, b in pairs(boss) do
         if not seen[npcId] then
-            local gen = ns.GetGen()
-            local info = gen and gen.bosses and gen.bosses[npcId] or {}
+            local lib = ns.Lib()
+            local info = lib and { lib.Boss(npcId) } or {} -- name, instance, levels
             local lo, hi = tostring(info[3] or ""):match("(%d+)%-?(%d*)")
             local qzone = L.Npc.zoneID(npcId)
             local row = {
