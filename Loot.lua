@@ -67,10 +67,22 @@ local function hasLoot(guid)
     return plain(can)
 end
 
+local emptied = {} -- [guid] = npcId for corpses counted as empty this session (undone if you loot them after all)
+
+-- canLoot is also false when you're too far away to loot, so only trust it close up:
+-- CheckInteractDistance index 3 is about 10 yards. Loot range is shorter, so a corpse 5-10 yards
+-- away can still read empty; looting it later undoes the empty count (see onLootReady).
+local function closeTo(guid)
+    if plain(UnitGUID("target")) ~= guid then return false end
+    local ok, near = pcall(CheckInteractDistance, "target", 3)
+    return ok and plain(near) == true
+end
+
 local function countEmpty(guid)
     local npcId = npcFromGuid(guid)
     if not npcId or seen[guid] then return end
     seen[guid] = true
+    emptied[guid] = npcId
     local m = db().mobs[npcId] or { n = 0 }
     db().mobs[npcId] = m
     m.n, m.e = m.n + 1, (m.e or 0) + 1
@@ -82,6 +94,7 @@ local function checkEmpty(guid, step)
     local has = hasLoot(guid)
     if has == true then pending[guid] = nil return end -- has loot: counted when you open it
     if has == nil then pending[guid] = nil; skip(guid, "CanLootUnit gave no answer") return end
+    if not closeTo(guid) then pending[guid] = nil; skip(guid, "too far away to tell (target it within 10 yards)") return end
     if EMPTY_CHECKS[step + 1] then
         C_Timer.After(EMPTY_CHECKS[step + 1] - EMPTY_CHECKS[step], function() checkEmpty(guid, step + 1) end)
     else
@@ -124,6 +137,13 @@ local function onLootReady()
         if src[1] then
             for i = 2, #src, 2 do -- guid, quantity, guid, quantity, ...
                 local guid = plain(src[i])
+                local undo = guid and emptied[guid]
+                if undo then -- counted as empty, but it had loot after all
+                    local m = db().mobs[undo]
+                    m.n, m.e = m.n - 1, m.e - 1
+                    emptied[guid], seen[guid] = nil, nil
+                    if debug then ns.say("Loot: npc " .. undo .. " wasn't empty after all, empty count undone") end
+                end
                 if guid and not seen[guid] and npcFromGuid(guid) then
                     local c = corpses[guid] or {}
                     corpses[guid] = c
