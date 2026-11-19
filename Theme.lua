@@ -24,6 +24,7 @@ T.C = {
     yellow    = { 1, 0.820, 0 },
     sel       = { 0.114, 0.165, 0.247 },
     blue      = { 0.431, 0.635, 1 },
+    craft     = { 0.443, 0.835, 1 }, -- WoW's link blue for spells and trade skills (71d5ff): crafted materials
 }
 
 local function rgb(c, a) return c[1], c[2], c[3], a or 1 end

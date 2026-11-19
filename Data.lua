@@ -44,6 +44,24 @@ function Data.AllItemIds()
     return lib().Item.GetAllIds()
 end
 
+-- Which recipe makes an item (ForeverDB recipes, any profession): profession, recipe name; or nil.
+-- Indexed once, on first use.
+local craftIndex
+function Data.CraftedBy(itemId)
+    if not craftIndex then
+        local gen = ns.GetGen()
+        if not (gen and gen.recipes) then return nil end
+        craftIndex = {}
+        for prof, list in pairs(gen.recipes) do
+            for _, r in ipairs(list) do
+                if type(r[4]) == "number" and not craftIndex[r[4]] then craftIndex[r[4]] = { prof, r[2] } end
+            end
+        end
+    end
+    local c = craftIndex[itemId]
+    if c then return c[1], c[2] end
+end
+
 function Data.ItemName(itemId)
     return lib().Item.name(itemId)
 end

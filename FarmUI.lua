@@ -72,6 +72,11 @@ local function initRow(button, d)
                     GameTooltip:AddLine("Sold by vendors only: buy it, it can't be farmed.", 1, 0.82, 0)
                 end
                 GameTooltip:AddLine("Needed for " .. row.recipe .. ": " .. row.need, 1, 1, 1)
+                local prof, recipeName = ns.Data.CraftedBy(row.id)
+                if prof and not row.vendorOnly then
+                    GameTooltip:AddLine("Usually crafted: " .. prof .. " (" .. tostring(recipeName) .. ")."
+                        .. " Mob drops are rare or few.", 0.443, 0.835, 1, true)
+                end
                 if row.crafted then
                     GameTooltip:AddLine("Crafted with " .. (row.subName or "a recipe")
                         .. ". Its materials are listed below while you still need more.", 0.75, 0.63, 0.38, true)
@@ -101,6 +106,9 @@ local function initRow(button, d)
         if d.vendorOnly then
             button.name:SetTextColor(0.5, 0.5, 0.5)
             button.count:SetText("|cff808080" .. n .. " / " .. d.need .. "|r" .. mark)
+        elseif d.crafted or ns.Data.CraftedBy(d.id) then -- a recipe makes it: craft blue
+            button.name:SetTextColor(ns.Theme.RGB(ns.Theme.C.craft))
+            button.count:SetText(n .. " / " .. d.need .. mark)
         else
             button.name:SetTextColor(0.25, 1, 0.25)
             button.count:SetText(n .. " / " .. d.need .. mark)

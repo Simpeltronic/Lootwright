@@ -107,7 +107,7 @@ local function collect()
             have = rec.itemId and ns.Farm.Have(rec.itemId) or 0, goal = rec.target, depth = 0 }
         for _, m in ipairs(rec.rows or {}) do
             lines[#lines + 1] = { itemId = m.itemId, label = itemName(m.itemId),
-                color = m.vendorOnly and C.muted or C.green, have = ns.Farm.Have(m.itemId), goal = m.need, depth = m.depth }
+                color = m.vendorOnly and C.muted or ((m.crafted or ns.Data.CraftedBy(m.itemId)) and C.craft) or C.green, have = ns.Farm.Have(m.itemId), goal = m.need, depth = m.depth }
         end
     end
     local singles = ns.Farm.Ids()
