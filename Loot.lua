@@ -126,6 +126,17 @@ local function onLootReady()
     local ok, n = pcall(GetNumLootItems)
     n = ok and plain(n) or 0
     local corpses = {} -- [guid] = { [itemId] = true }
+    if n == 0 then
+        -- An empty loot window has no slots to name the corpse; use the dead creature you targeted
+        -- or are pointing at. That's a sure empty corpse.
+        for _, unit in ipairs({ "target", "mouseover" }) do
+            local guid = plain(UnitGUID(unit))
+            if guid and not seen[guid] and npcFromGuid(guid) and plain(UnitIsDead(unit)) == true then
+                countEmpty(guid)
+                return
+            end
+        end
+    end
     for slot = 1, n do
         local link = plain(GetLootSlotLink(slot))
         local itemId = link and tonumber(link:match("|Hitem:(%d+)"))
