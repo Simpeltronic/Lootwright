@@ -18,6 +18,7 @@ Usage:
 """
 
 import gzip
+import math
 import pathlib
 import re
 import sys
@@ -250,19 +251,21 @@ def sql_table(sql, table):
 
 
 def loot_tables(sql, table):
-    """[entry] = [(item, chance, group, mincountOrRef), ...]"""
+    """[entry] = [(item, chance, group, mincountOrRef, condition), ...]"""
     out = {}
     for d in sql_table(sql, table)[1]:
         out.setdefault(int(d["entry"]), []).append(
-            (int(d["item"]), float(d["ChanceOrQuestChance"]), int(d["groupid"]), int(d["mincountOrRef"])))
+            (int(d["item"]), float(d["ChanceOrQuestChance"]), int(d["groupid"]), int(d["mincountOrRef"]),
+             int(d["condition_id"])))
     return out
 
 
-def resolve_loot(entries, refs, mult=1.0, acc=None, depth=0):
+def resolve_loot(entries, refs, mult=1.0, acc=None, depth=0, special=None):
     """acc[item] = chance (0-1) to drop from one kill.
     CMaNGOS rules: ungrouped entries roll on their own; in a group one entry drops, and entries
     with chance 0 split what the explicit chances leave. A negative chance is a quest-only drop.
-    mincountOrRef < 0 points to reference_loot_template entry -n, rolled with the row's chance."""
+    mincountOrRef < 0 points to reference_loot_template entry -n, rolled with the row's chance.
+    special (a set) collects items whose rate holds only on a quest or a condition."""
     acc = {} if acc is None else acc
     groups = {}
     for e in entries:
@@ -273,32 +276,85 @@ def resolve_loot(entries, refs, mult=1.0, acc=None, depth=0):
             zeros = [e for e in es if not e[1]]
             if zeros:
                 share = max(0.0, 100 - sum(abs(e[1]) for e in es)) / len(zeros)
-        for item, chance, _, ref in es:
+        for item, chance, _, ref, cond in es:
             p = mult * (abs(chance) if chance else (share if gid else 100)) / 100
             if ref < 0:
                 if depth < 5:
-                    resolve_loot(refs.get(-ref, []), refs, p, acc, depth + 1)
+                    resolve_loot(refs.get(-ref, []), refs, p, acc, depth + 1, special)
             else:
                 acc[item] = acc.get(item, 0.0) + p
+                if special is not None and (chance < 0 or cond):
+                    special.add(item)
     return acc
 
 
-def build_mob_rates(sql):
-    """mobRates[item] = "npc:pct;..." for drops of at least CMANGOS_MIN_PCT percent."""
+def build_mob_rates(sql, keep_npcs=()):
+    """mobRates[item] = "npc:pct;..." for drops of at least CMANGOS_MIN_PCT percent.
+    Also returns {(npc, item): pct} with every rate (no cutoff) for the npcs in keep_npcs,
+    with None for quest-only and conditional drops (their rate isn't per kill for everyone)."""
     creature, refs = loot_tables(sql, "creature_loot_template"), loot_tables(sql, "reference_loot_template")
     cols, npcs = sql_table(sql, "creature_template")
     loot_col = next(c for c in cols if c.lower() == "lootid")
-    per_item = {}
+    per_item, full = {}, {}
     for d in npcs:
         npc, loot = int(d["Entry"]), int(d[loot_col])
         if not loot or loot not in creature:
             continue
-        for item, p in resolve_loot(creature[loot], refs).items():
+        special = set()
+        for item, p in resolve_loot(creature[loot], refs, special=special).items():
             pct = min(p, 1.0) * 100
             if pct >= CMANGOS_MIN_PCT:
                 per_item.setdefault(item, []).append((npc, pct))
-    return {item: ";".join("%d:%s" % (n, ("%.2f" % p).rstrip("0").rstrip(".")) for n, p in sorted(rows))
-            for item, rows in sorted(per_item.items())}
+            if npc in keep_npcs:
+                full[(npc, item)] = None if item in special else pct
+    rates = {item: ";".join("%d:%s" % (n, ("%.2f" % p).rstrip("0").rstrip(".")) for n, p in sorted(rows))
+             for item, rows in sorted(per_item.items())}
+    return rates, full
+
+
+# ---------------------------------------------------------------- agreement check
+AGREE_MIN_KILLS = 20  # measured rates from fewer kills say too little to judge a source by
+
+
+def wilson(k, n, z=1.96):
+    """95% range (0-1) for a drop chance seen k times in n kills."""
+    p, d = k / n, 1 + z * z / n
+    mid, half = (p + z * z / (2 * n)) / d, z * math.sqrt(p * (1 - p) / n + z * z / (4 * n * n)) / d
+    return max(0.0, mid - half), min(1.0, mid + half)
+
+
+def agreement(boss_loot, source_rates, name):
+    """Compares a source's {(npc, item): pct} with ForeverDB's rates measured in Forever (src f).
+    A pair agrees when the source's rate lies in the 95% range the measured kills allow; a source
+    that is right for Forever agrees on about 95% of pairs. Only bosses the source knows count."""
+    known_npcs = {n for n, _ in source_rates}
+    hits, misses, missing = 0, [], 0
+    for item, s in boss_loot.items():
+        for e in s.split(";"):
+            npc, pct, kills, src = e.split(":")
+            npc, pct, kills = int(npc), float(pct), int(kills)
+            if src != "f" or kills < AGREE_MIN_KILLS or pct <= 0 or npc not in known_npcs:
+                continue
+            lo, hi = wilson(round(pct * kills / 100), kills)
+            if (npc, item) not in source_rates:
+                missing += 1  # dropped in Forever, unknown to the source (often an item new in Forever)
+                continue
+            got = source_rates[(npc, item)]
+            if got is None:
+                continue
+            if lo <= got / 100 <= hi:
+                hits += 1
+            else:
+                misses.append((abs(got - pct), npc, item, got, pct, kills))
+    total = hits + len(misses)
+    if not total:
+        print(f"Agreement {name} vs Forever: no overlapping measured boss drops")
+        return
+    print(f"Agreement {name} vs Forever: {hits}/{total} measured boss drops ({100 * hits // total}%) "
+          f"inside the 95% range (rates from {AGREE_MIN_KILLS}+ kills; ~95% means the source fits Forever); "
+          f"{missing} more Forever drops the source doesn't have")
+    for _, npc, item, got, pct, kills in sorted(misses, reverse=True)[:5]:
+        print(f"  biggest miss: npc {npc} item {item}: {name} {got:.1f}%, Forever {pct:.1f}% over {kills} kills")
 
 
 def find_cmangos_dump():
@@ -310,10 +366,14 @@ def find_cmangos_dump():
 
 
 def self_check():
-    refs = {5: [(10, 0, 1, 1), (11, 0, 1, 1)]}
-    got = resolve_loot([(1, 50, 0, 1), (2, 0, 1, 1), (3, 60, 1, 1), (0, 20, 0, -5)], refs)
+    refs = {5: [(10, 0, 1, 1, 0), (11, 0, 1, 1, 0)]}
+    special = set()
+    got = resolve_loot([(1, -50, 0, 1, 0), (2, 0, 1, 1, 0), (3, 60, 1, 1, 0), (0, 20, 0, -5, 0)], refs, special=special)
     assert {k: round(v, 3) for k, v in got.items()} == {1: 0.5, 2: 0.4, 3: 0.6, 10: 0.1, 11: 0.1}, got
+    assert special == {1}, special
     sql = "CREATE TABLE `t` (\n  `a` int,\n  `b` text\n) ENGINE=x;\nINSERT INTO `t` VALUES (1,'x\\'y,)'),(2,'');\n"
+    lo, hi = wilson(5, 10)
+    assert lo < 0.5 < hi and wilson(0, 30)[0] == 0 and 0.1 < wilson(0, 30)[1] < 0.13, (lo, hi, wilson(0, 30))
     assert list(sql_rows(sql, "t")) == [["1", "x'y,)"], ["2", ""]] and sql_columns(sql, "t") == ["a", "b"]
     p = LuaParser('{[10]={"a\\"b",2.5,true},x={3,4},-- c\n[ "k" ]="v",5}').value()
     assert p[10] == ["a\"b", 2.5, True] and p["x"] == [3, 4] and p["k"] == "v" and p[1] == 5, p
@@ -334,7 +394,7 @@ def main():
 
     dump = find_cmangos_dump()
     with gzip.open(dump, "rt", encoding="utf-8", errors="replace") as f:
-        mob_rates = build_mob_rates(f.read())
+        mob_rates, cm_boss = build_mob_rates(f.read(), keep_npcs=set(bosses))
     assert mob_rates, "no CMaNGOS loot parsed"
 
     body = lua({
@@ -362,6 +422,7 @@ def main():
           f"{len(boss_loot)} boss-loot items from {len(bosses)} bosses, "
           f"{len(mob_rates)} items with CMaNGOS mob rates, "
           f"{OUT.stat().st_size // 1024} KB (ForeverDB {meta.get('version')})")
+    agreement(boss_loot, cm_boss, "CMaNGOS")
 
 
 if __name__ == "__main__":
