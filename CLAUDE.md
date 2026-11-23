@@ -40,6 +40,7 @@ Read `ROADMAP.md` for the full plan. This file is the short version plus the fac
 - **Craft colour on recipe materials (verified in game):** materials some ForeverDB recipe makes (`Data.CraftedBy(itemId)` -> profession, recipe name; any profession, indexed once) show in `Theme.C.craft`, WoW's spell/trade-skill link blue (71d5ff), on the Farm tab and the tracker, with a tooltip "Usually crafted: Tailoring (Bolt of Linen Cloth)". Vendor-only grey wins over it; plain farmable materials stay green.
 - **Craftable items from Search (verified in game, commit 5654d1b; the recipe choice only shows for your own professions, which the user likes):** `FarmPopup` always farms the recipe (no choice, user's later call; a craft-blue note says so) when `Prof.RecipeFor(id)` finds a recipe of yours with reagents; recipe mode calls `ProfUI.FarmRecipe(rec, crafts, prof)` (shared with the Professions tab) with crafts = ceil((goal - have) / makes) and hides No goal. Colour rule everywhere (user's choice): green farm, `C.craft` blue crafted (`Data.CraftedBy`), grey vendor-only, gold recipe; single farm items use it on the Farm tab and tracker. Search list: blue "craft" tag before the recipe-use count, names keep farm green / favourite gold, tooltip "Crafted: <prof> (<recipe>)".
 - **Bank counts (verified in game):** `Farm.Bank(itemId)` = `GetItemCount(id, true)` minus bags/equipped; the Farm tab shows inside the count, in slate blue, only what the bank can still cover of the goal (1 in bags + 10 in bank for 3 -> "1(2) / 3", user's choice), and the bar fills that part in a lighter green after the bag part; the tooltip line has the full bank count. The tracker does the same (`Tracker.lua` fillRow, `bankFill`). Display only: goals and needs count bags and equipped. Refreshes on `BANKFRAME_OPENED` / `PLAYERBANKSLOTS_CHANGED`. Recipe goals are `owned + crafts x makes` (verified in game).
+- **Endless farming (0.11.0, not yet verified in game):** single items only (user's choice). An empty goal box + Farm/Enter, or the "Endless" button (was "No goal"), farms without a goal (`Farm.SetGoal(id, nil)`). Farm tab and tracker show "32 · 1 stack" and a bar that fills per stack (`Farm.StackSize`, `C_Item.GetItemMaxStackSize`; no bar for unstackable items). Recipes keep their craft goal.
 - Pin clicks: an `OnMouseDown` script on the pin is allowed (RareScanner does it); only `OnEnter`/`OnLeave` scripts trip the canvas assert.
 
 ## Reading game output from here
@@ -52,8 +53,10 @@ Read `ROADMAP.md` for the full plan. This file is the short version plus the fac
 - **Game:** WoW Forever (not a beta: don't call it one in player-facing text). TOC `## Interface: 16001`. A `_Forever.toc` suffix is also accepted.
 - **Client:** Forever runs on the **modern (Midnight) client UI**, not Classic. Use modern APIs (`C_AddOns`, `C_Map`, `C_Timer`, `C_Item`, `Settings`, `BackdropTemplate`). Do not copy old Classic-only snippets.
 - **Combat restrictions** of the modern client apply. Keep the UI out-of-combat and don't read protected data during fights.
-- **Install path:** `Z:\Blizzard\World of Warcraft\_forever_\Interface\AddOns\Lootwright`
-- **Project folder:** `I:\VibeStuff\Wow addons\ItemFinder`. The AddOns folder should be a junction to this folder (`mklink /J`), so there is one copy of the files.
+- **Install path (Windows):** `Z:\Blizzard\World of Warcraft\_forever_\Interface\AddOns\Lootwright`
+- **Install path (Bazzite Linux, since 20 Nov 2026):** `~/Games/battlenet/drive_c/Program Files (x86)/World of Warcraft/_forever_/Interface/AddOns/` (Battle.net in Lutris with GE-Proton). `Lootwright`, `Lootwright_Data` and `Lootwright_Professions` there are symlinks to the project folder and its two sub-addon folders. WowUp-CF skips symlinked folders, so it never updates them.
+- **Project folder:** `I:\VibeStuff\Wow addons\ItemFinder` on Windows, `/var/mnt/I/VibeStuff/Wow addons/ItemFinder` on Linux (the same NTFS partition, mounted read-write). On Windows the AddOns folders are junctions to it (`mklink /J`); on Linux they are symlinks. Either way there is one copy of the files.
+- **Linux note:** on Linux, Z: (the Windows WoW install and its `Screenshots` folder) is read-only and hidden, so screenshots taken in the Linux client land in the Linux install's `_forever_/Screenshots` instead.
 - **Testing:** the game can't be run from here. After each change the user runs `/reload` and pastes any Lua errors back. `/console scriptErrors 1` shows them. There is no Lua installed in the cloud workspace, so syntax can't be checked there. If a local `luac`/`luajit` exists, use it with `-p`.
 
 ## Data sources (decided)
@@ -134,7 +137,7 @@ Claude decides when to bump and says so. Versions are `major.minor.patch`; under
 
 **0.10.0 released 19 Nov 2026** (Release file on CurseForge; the first upload attempt never saved, the second (zip attached via the browser tools) went in as "Lootwright 0.10.0", R, approved on 19 Nov; held commits pushed; new description, summary line and Media gallery set up: old 0.9.0 farm-tab and tracker gallery images deleted, 5 new ones uploaded with titles, farm-tab and tracker featured). CurseForge gallery images must be under 850 px wide. 0.9.0 was approved the same day.
 
-Changelog page: `docs/changelog.html`, published at https://claude.ai/artifact/SZg9WLE5Pd7FdH7bSoAsjX (pinned in the user's sidebar). From a new conversation, read it first and publish with `url` set to that link so it stays the same. Released: **0.10.0**. The next change bumps to 0.10.1 or 0.11.0 by the rules above.
+Changelog page: `docs/changelog.html`, published at https://claude.ai/artifact/SZg9WLE5Pd7FdH7bSoAsjX (pinned in the user's sidebar). From a new conversation, read it first and publish with `url` set to that link so it stays the same. Released: **0.10.0**. Next: **0.11.0** (not released yet): endless farming.
 
 ## Workflow
 

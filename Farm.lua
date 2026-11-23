@@ -68,6 +68,12 @@ Farm.Have = have
 
 -- How many are in your bank (shown only; goals count bags and equipped). The game knows the bank
 -- once you've opened it this session, so this can be 0 until then.
+-- Max stack size of an item, or nil when it doesn't stack (endless farm rows fill per stack).
+function Farm.StackSize(itemId)
+    local ok, s = pcall(C_Item.GetItemMaxStackSize, itemId)
+    return (ok and type(s) == "number" and s > 1) and s or nil
+end
+
 function Farm.Bank(itemId)
     local ok, all = pcall(C_Item.GetItemCount, itemId, true)
     if not ok or type(all) ~= "number" then return 0 end

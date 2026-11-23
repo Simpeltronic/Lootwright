@@ -27,7 +27,7 @@ local function update()
     if not itemId then return end
     local n, h = amount(), have()
     if n <= 0 then
-        moreText:SetText("")
+        moreText:SetText(mode == "item" and "|cffc9a24aendless|r" or "")
     elseif n <= h then
         moreText:SetText("|cffff8040You already have " .. h .. "|r")
     elseif mode == "recipe" then
@@ -53,8 +53,9 @@ local function confirm(withGoal)
     if not itemId then return end
     if withGoal then
         local n = amount()
+        if n <= 0 and mode == "item" then return confirm(false) end -- empty goal box: farm without end
         if n <= have() then
-            hint:SetText("|cffff8040Pick a number above what you already have, or use No goal.|r")
+            hint:SetText("|cffff8040Pick a number above what you already have, or leave it empty for endless.|r")
             return
         end
         if mode == "recipe" then
@@ -64,7 +65,7 @@ local function confirm(withGoal)
             ns.Farm.SetGoal(itemId, n)
         end
     else
-        ns.Farm.SetGoal(itemId, nil) -- farm without a goal
+        ns.Farm.SetGoal(itemId, nil) -- endless: farm without a goal
     end
     frame:Hide()
     ns.UI.OnFarmChanged()
@@ -162,7 +163,7 @@ local function build()
     farmB:SetBackdropBorderColor(T.RGB(C.greenEdge))
     farmB:GetFontString():SetTextColor(T.RGB(C.green))
     farmB:SetScript("OnClick", function() confirm(true) end)
-    noGoalB = T.Button(frame, "No goal", 64, 22)
+    noGoalB = T.Button(frame, "Endless", 64, 22)
     noGoalB:SetPoint("LEFT", farmB, "RIGHT", 6, 0)
     noGoalB:SetScript("OnClick", function() confirm(false) end)
     stopB = T.Button(frame, "Stop farming", 90, 22)

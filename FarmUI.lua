@@ -149,8 +149,16 @@ local function initRow(button, d)
         else
             button.name:SetTextColor(0.25, 1, 0.25)
         end
-        button.count:SetText(d.goal and (n .. bank .. " / " .. d.goal) or (n .. bank .. "  (no goal)"))
-        setBar(button.bar, n, d.goal, fromBank)
+        if d.goal then
+            button.count:SetText(n .. bank .. " / " .. d.goal)
+            setBar(button.bar, n, d.goal, fromBank)
+        else
+            -- Endless: "32 · 1 stack", and the bar fills toward the next full stack, then starts over.
+            local stack = ns.Farm.StackSize(d.id)
+            local full = stack and math.floor(n / stack) or 0
+            button.count:SetText(n .. bank .. (full > 0 and ("|cff8a93a3 · " .. full .. (full == 1 and " stack" or " stacks") .. "|r") or ""))
+            setBar(button.bar, stack and (n % stack) or 0, stack)
+        end
     end
 end
 

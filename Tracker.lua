@@ -95,6 +95,14 @@ local function fillRow(r, line)
     r.count:SetText(line.have .. (fromBank > 0 and ("|cff7d8cad(" .. fromBank .. ")|r") or "")
         .. (goal and ("/" .. goal) or "") .. ((goal and line.have >= goal) and READY or ""))
     r.count:SetTextColor(T.RGB(T.C.muted))
+    if not goal and line.endless then
+        -- Endless: "32 · 1 stack", and the bar fills toward the next full stack, then starts over.
+        local stack = ns.Farm.StackSize(line.itemId)
+        local full = stack and math.floor(line.have / stack) or 0
+        if full > 0 then r.count:SetText(line.have .. " · " .. full .. (full == 1 and " stack" or " stacks")) end
+        goal, fromBank = stack, 0
+        line = { have = stack and (line.have % stack) or 0, depth = line.depth }
+    end
     if goal and goal > 0 then
         r.track:Show()
         r.fill:SetShown(line.have > 0)
@@ -136,7 +144,7 @@ local function collect()
     table.sort(singles, function(a, b) return itemName(a) < itemName(b) end)
     for _, id in ipairs(singles) do
         lines[#lines + 1] = { itemId = id, label = itemName(id), color = ns.Data.CraftedBy(id) and C.craft or C.green, have = ns.Farm.Have(id),
-            goal = ns.Farm.Goal(id), depth = 0 }
+            goal = ns.Farm.Goal(id), endless = not ns.Farm.Goal(id), depth = 0 }
     end
     return lines
 end
