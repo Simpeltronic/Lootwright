@@ -71,6 +71,11 @@ Farm.Have = have
 -- Max stack size of an item, or nil when it doesn't stack (endless farm rows fill per stack).
 function Farm.StackSize(itemId)
     local ok, s = pcall(C_Item.GetItemMaxStackSize, itemId)
+    if not (ok and type(s) == "number") then
+        -- Fallback: the 8th value of GetItemInfo is the stack size (nil until the item is cached).
+        local info = C_Item.GetItemInfo or GetItemInfo
+        ok, s = pcall(function() return select(8, info(itemId)) end)
+    end
     return (ok and type(s) == "number" and s > 1) and s or nil
 end
 
