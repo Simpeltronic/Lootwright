@@ -114,7 +114,7 @@ A small panel that keeps your farm list on screen, bank counts included. Drag an
 ![The farm tracker](TRACKER_IMG_URL)
 
 ### Help work out real Forever drop rates (opt-in)
-Most normal-mob rates today are rough Classic numbers. If you opt in, Lootwright counts what you loot, on your PC only, and once you've looted a mob 20 times its tooltip shows your own rate, and mobs that never drop the item go grey. Share your counts with `/if share` (copy, paste into a web form, no account needed) and they'll go into measured Forever rates for everyone. No names or positions are ever included.
+Most normal-mob rates today are rough Classic numbers. If you opt in, Lootwright counts what you loot, on your PC only, and once you've looted a mob 20 times its tooltip shows your own rate, and mobs that never drop the item go grey. Share your counts with `/if share` (copy, paste into a web form, no account needed) and they'll go into measured Forever rates for everyone. No names or positions are ever included. Counting pauses while you're in a group, because shared loot rules would make rates too high.
 
 ![Sharing your loot data](https://raw.githubusercontent.com/Simpeltronic/Lootwright/main/docs/curseforge/screens/share.png)
 
