@@ -76,7 +76,7 @@ local function buildWelcome()
     local intro = text(welcome, "GameFontHighlightSmall", 372)
     intro:SetPoint("TOPLEFT", 14, -42)
     intro:SetText("Search any item (|cffffffff/if|r or the minimap button) to see which mobs drop it, where, "
-        .. "at what level and how often. Farm it with map skulls, goals and recipes.\n\nTwo things are off until you turn them on:")
+        .. "at what level and how often. Farm it with map pins, goals and recipes.\n\nTwo things are off until you turn them on:")
 
     trackerCB = choice(welcome, intro, "Show the farm tracker",
         "A small on-screen panel with your farm list and progress bars. Drag items from your bags onto it to farm them.")

@@ -15,7 +15,7 @@ Decided: **Ko-fi** for donations, a **public GitHub repo** for source and bug re
 | `banner.png` | 1200 × 300 | First image of the description. |
 | `divider.png` | 1200 × 24 | Optional section break. At most 2–3 times. |
 | `screens/search-window.png` | 672 × 435 | Search tab (Gallery 1, inline under "Find where anything drops"). |
-| `screens/map-skulls.png` | 648 × 434 | Grouped farm skulls in Hillsbrad Foothills (Gallery 2, inline). |
+| `screens/map-skulls.png` | 834 × 557 | Grouped farm pins in Thousand Needles (Gallery 2, inline). |
 | `screens/amount-popup.png` | 1118 × 564 | The amount popup over the Search tab (Gallery 3, inline under "Farm with goals"). |
 | `screens/mob-tooltip.png` | 410 × 160 | A mob tooltip with the green "Farm:" line (Gallery 4). |
 | `screens/professions.png` | 868 × 564 | Professions tab with the Tailoring recipe list (Gallery 5). |
@@ -57,7 +57,7 @@ Images are drawn by `tools/make_brand.py` from the emblem (`tools/make_icons.py`
 | Field | Value |
 |---|---|
 | **Name** | Lootwright |
-| **Summary** (one sentence) | Find which mobs drop any item, where and how often, then farm it with goals, map skulls and recipe material lists. |
+| **Summary** (one sentence) | Find which mobs drop any item, where and how often, then farm it with goals, map pins and recipe material lists. |
 | **Main category** | Professions |
 | **Additional categories** | Map & Minimap, Tooltip, Bags & Inventory |
 | **Licence** | GNU General Public License v3 (GPL-3.0) |
@@ -94,19 +94,19 @@ Search by name, or shift-click any item. See every mob that drops it with level 
 ![The Search tab](SEARCH_IMG_URL)
 
 ### Farm with goals
-Press **Farm…** on an item and choose how many you want, like splitting a stack: type a number, use the mouse wheel, or pick +10, +20 or a stack. Mobs that drop it get a "Farm:" line on their tooltip and a skull on the world map. When your bags hold enough, it leaves the list by itself. For something your profession can craft, **Farm…** adds its recipe instead, so you farm the materials.
+Press **Farm…** on an item and choose how many you want, like splitting a stack: type a number, use the mouse wheel, or pick +10, +20 or a stack. Mobs that drop it get a "Farm:" line on their tooltip and a pin on the world map. When your bags hold enough, it turns gold with a check and stays until you remove it. For something your profession can craft, **Farm…** adds its recipe instead, so you farm the materials.
 
 ![Choosing how many to farm](POPUP_IMG_URL)
 
-![Farm skulls on the world map](MAP_IMG_URL)
+![Farm pins on the world map](MAP_IMG_URL)
 
 ### Farm a whole recipe
 On the Professions tab, pick a recipe and press **Farm recipe**. Every material becomes a goal. Crafted materials (in blue) open up into what they're made from if you have the profession (Bolt of Linen Cloth into Linen Cloth), vendor-only materials are greyed out, and you get a message as each material is ready, and when you can craft. Items in your bank show in the count, `1(2) / 3`, with a lighter green on the bar.
 
 ![A recipe on the Farm tab](FARMTAB_IMG_URL)
 
-### Map skulls and a waypoint arrow
-Click a mob to mark all its spawns. Mobs you're farming get small grouped skulls with a count. Click any skull for an arrow and the distance to it.
+### Map pins and a waypoint arrow
+Click a mob to mark all its spawns. Mobs you're farming get small grouped pins with the item's icon and a count. Click any pin for an arrow and the distance to it.
 
 ### Farm tracker
 A small panel that keeps your farm list on screen, bank counts included. Drag an item from your bags onto it to start farming it. Turn it on in the welcome window, with `/if mini` or in the options.
@@ -144,7 +144,7 @@ Untick what you don't need in the AddOns list:
 - **Lootwright - Data:** every recipe, dungeon boss loot and mob drop rates. Loads only when needed. Other addons can use it too, as the library LibLootwright.
 - **Lootwright - Professions:** the Professions tab.
 
-Single features (tooltip lines, map skulls, the arrow, messages, the minimap button, the tracker) can be switched in `/if options`.
+Single features (tooltip lines, map pins, the arrow, messages, the minimap button, the tracker) can be switched in `/if options`.
 
 ## Good to know
 
@@ -210,12 +210,12 @@ CurseForge wants real in-game screenshots. All eleven are in `screens/`, real an
 | # | Shot | Caption | Status |
 |---|---|---|---|
 | 1 | Search tab with an item selected, Reagents pill on | Find every mob that drops an item, best rates first | `screens/search-window.png` |
-| 2 | World map with small grouped farm skulls (press Clear pins first, so only farm skulls show) | Farm skulls on the map, grouped by area | `screens/map-skulls.png` |
+| 2 | World map with small grouped farm pins (press Clear pins first, so only farm pins show) | Farm pins on the map, grouped by area | `screens/map-skulls.png` |
 | 3 | The amount popup open over the Farm button | Choose how many you want | `screens/amount-popup.png` |
 | 4 | A mob hovered with the green "Farm: … (have 12/40)" line | Mobs you need are marked on their tooltip | `screens/mob-tooltip.png` |
 | 5 | Professions tab with the recipe list | Every recipe, and what it takes to make it | `screens/professions.png` (no recipe selected; a retake with one selected would show its materials) |
 | 6 | Farm tab with a recipe group, a crafted material opened up, a check mark | Farm a whole recipe, step by step | `screens/farm-tab.png` (retaken for 0.10.0: blue crafted material, bank count `1(2) / 3`) |
-| 7 | The waypoint arrow on screen while walking to a spawn | Click a skull for an arrow to the spawn | `screens/arrow.png` |
+| 7 | The waypoint arrow on screen while walking to a spawn | Click a pin for an arrow to the spawn | `screens/arrow.png` |
 | 8 | The farm tracker next to the quest tracker | Keep your farm list on screen | `screens/tracker.png` (retaken for 0.10.0: blue crafted rows, bank counts) |
 | 9 | The welcome window with both options | Turn on what you want the first time you play | `screens/welcome.png` (0.10.0) |
 | 10 | The Search list with blue craft tags | See at a glance what you can craft | `screens/search-craft.png` (0.10.0) |

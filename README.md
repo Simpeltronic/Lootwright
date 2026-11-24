@@ -2,7 +2,7 @@
 
 # Lootwright
 
-**Find any item. Farm what you need.** A free addon for **WoW Forever**: type an item's name and see every mob that drops it, where they are, what level they are and how often it drops. Put it on your farm list with a goal, and the mobs you need get skulls on your map and a line on their tooltip until your bags hold enough.
+**Find any item. Farm what you need.** A free addon for **WoW Forever**: type an item's name and see every mob that drops it, where they are, what level they are and how often it drops. Put it on your farm list with a goal, and the mobs you need get pins on your map and a line on their tooltip until your bags hold enough.
 
 **Download:** [CurseForge](https://www.curseforge.com/wow/addons/lootwright) (needs [QuestieDB](https://www.curseforge.com/projects/1696795), not Questie itself)
 
@@ -11,7 +11,7 @@
 ## What it does
 
 - **Search any item** and see every mob that drops it: level, rank, zone and drop rate, best rates first and your zone on top. Filter by reagents, quest items, gear, other or dungeon drops.
-- **Farm with goals:** choose how many you want; mobs that drop it get map skulls and a "Farm:" tooltip line until you have enough.
+- **Farm with goals:** choose how many you want; mobs that drop it get map pins and a "Farm:" tooltip line until you have enough.
 - **Farm a whole recipe:** every material becomes a goal, crafted materials open up into what they're made from (if you have the profession), and you're told when you can craft. Items in your bank show in the count.
 - **Farm tracker** on screen, with bank counts.
 - **Every recipe** for every profession, including the ones you haven't learned.

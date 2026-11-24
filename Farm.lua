@@ -43,12 +43,12 @@ local function list() return charDB().farm end
 local function recipes() return charDB().farmRecipes end
 
 -- Live needs depend on bag counts and the list. Many places ask for them on each bag change (goals,
--- ready notices, map skulls, tracker, Farm tab) and on every mob-tooltip refresh, so each recipe's
+-- ready notices, map pins, tracker, Farm tab) and on every mob-tooltip refresh, so each recipe's
 -- rows and each item's need are worked out once and kept until the bags or the list change.
 local rowsCache = {} -- [recipe table] = Farm.Rows result
 local needCache = {} -- [itemId] = { need, names }
 
--- Every change to the farm list goes through here, so the map's farm skulls are refreshed here too
+-- Every change to the farm list goes through here, so the map's farm pins are refreshed here too
 -- (they once missed goals set through the amount popup). Cheap: the map only rebuilds when the set of
 -- wanted items actually changed.
 local function changed()
@@ -190,7 +190,7 @@ function Farm.Need(itemId)
 end
 
 local function notify()
-    changed() -- also refreshes the map's farm skulls
+    changed() -- also refreshes the map's farm pins
     if ns.UI.OnFarmChanged then ns.UI.OnFarmChanged() end
 end
 
@@ -319,7 +319,7 @@ end
 function Farm.WantedItems()
     local t = {}
     for id in pairs(list()) do
-        if not Farm.Done(id) then t[id] = true end -- finished items get no skulls
+        if not Farm.Done(id) then t[id] = true end -- finished items get no map pins
     end
     for id, m in pairs(materials()) do
         if m.farmable and (Farm.Need(id) or 0) > 0 then t[id] = true end

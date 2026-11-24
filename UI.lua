@@ -673,7 +673,7 @@ local function build()
         GameTooltip:SetOwner(self, "ANCHOR_TOP")
         GameTooltip:AddLine("Farm list", 1, 1, 1)
         GameTooltip:AddLine("Choose how many you want. Mobs that drop it get a \"Farm:\" line on their "
-            .. "tooltip and a skull on the map until your bags hold that many.", 0.8, 0.8, 0.8, true)
+            .. "tooltip and a pin on the map until your bags hold that many.", 0.8, 0.8, 0.8, true)
         GameTooltip:Show()
     end)
     farmButton:HookScript("OnLeave", function() GameTooltip:Hide() end)

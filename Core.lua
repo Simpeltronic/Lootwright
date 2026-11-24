@@ -9,7 +9,7 @@
 --   /if options         open Lootwright's options panel (feature toggles, sub-addon status)
 --   /if mini            toggle the farm tracker
 --   /if clear           remove the selected mob's world map pins
---   /if farmpins        toggle map skulls on every mob that drops a farm item
+--   /if farmpins        toggle map pins on every mob that drops a farm item
 --   /if prof            open the window on the Professions tab
 --   /if farm            open the window on the Farm tab
 --   /if status          check that QuestieDB is available and its contract matches
@@ -241,7 +241,7 @@ SlashCmdList["LOOTWRIGHT"] = function(input)
     if lower == "farmpins" then
         LootwrightDB.farmPins = LootwrightDB.farmPins == false -- nil (default) counts as on
         ns.Map.RefreshFarmPins(true)
-        say("Map skulls for farm mobs: " .. (LootwrightDB.farmPins ~= false and "on" or "off"))
+        say("Map pins for farm mobs: " .. (LootwrightDB.farmPins ~= false and "on" or "off"))
         return
     end
     if lower == "clear" then ns.Map.Clear(); say("Map pins cleared."); return end
