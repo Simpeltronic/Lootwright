@@ -27,6 +27,7 @@ Think of it as an inbox: rows arrive unchecked, you check them, only checked row
 - **Rows without an `x`** are never counted. The merge lists them as waiting.
 - **The same player sharing again:** their new row replaces their older one (same share ID). Approve the newer row with an `x`.
 - **GitHub shares** still come in through `gh` automatically. Only the form sheet needs the CSV step.
+- **Old addon versions:** a share from an addon older than 0.15.2 may include loot counted while in a group (that version pauses counting in groups), which makes rates too high. The review list marks such rows with the addon version and a warning, and the merge prints the already-approved old ones at the end. It's your call: players you know played solo are fine. Even an updated player's share still holds their old counts, so the version only tells you when they last shared.
 - **One row = one player.** If a row holds several share blocks, only the last counts, and the merge warns about it.
 
 ## Rules the data still has to pass (nothing to do by hand)

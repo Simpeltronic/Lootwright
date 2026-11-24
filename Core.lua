@@ -17,7 +17,7 @@
 --   /if raw npc <id>    dump raw fields for an NPC, including the spawn table layout
 
 local _, ns = ...
-local VERSION = "0.15.1"
+local VERSION = "0.15.2"
 ns.VERSION = VERSION
 LootwrightDB = LootwrightDB or {}
 

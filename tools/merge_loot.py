@@ -135,6 +135,19 @@ def from_form():
     return from_form_text(FORM.read_text(encoding="utf-8-sig")) if FORM.exists() else ([], [])
 
 
+CLEAN_FROM = (0, 15, 2)  # first addon version that pauses loot counting in a group
+
+
+def old_note(version):
+    """Warning text when a share comes from an addon older than CLEAN_FROM. A share holds all of a
+    player's counts, so even an updated player may still carry old group counts: you decide per share."""
+    try:
+        v = tuple(int(x) for x in version.split("."))
+    except ValueError:
+        v = (0,)
+    return "" if v >= CLEAN_FROM else f" [addon {version}: older than 0.15.2, may include group loot]"
+
+
 def show_form_waiting(waiting, approved):
     """Prints form rows waiting for review. 'known' = that share ID is already approved (an update)."""
     if not waiting:
@@ -144,10 +157,10 @@ def show_form_waiting(waiting, approved):
     for number, when, body in waiting:
         if len(list(parse(body))) > 1:
             print(f"  row {number}: WARNING, {len(list(parse(body)))} share blocks in one row; only the last would count, look closely")
-        for _, build, sid, mobs in parse(body):
+        for version, build, sid, mobs in parse(body):
             print(f"  row {number} ({when}): id {sid}{' (update of an approved share)' if sid in known else ''}, "
                   f"build {build}, {len(mobs)} mob kinds, {sum(m['n'] for m in mobs.values())} corpses, "
-                  f"biggest {max((m['n'] for m in mobs.values()), default=0)} on one mob")
+                  f"biggest {max((m['n'] for m in mobs.values()), default=0)} on one mob{old_note(version)}")
 
 
 def show_waiting(waiting):
@@ -161,8 +174,9 @@ def show_waiting(waiting):
         except (subprocess.CalledProcessError, OSError):
             created = "?"
         mobs = [m for share in parse(body) for m in share[3].values()]
+        versions = "".join(old_note(share[0]) for share in parse(body))
         print(f"  #{number} by {who} (account since {created}): {len(mobs)} mob kinds, "
-              f"{sum(m['n'] for m in mobs)} corpses  https://github.com/{REPO}/issues/{number}")
+              f"{sum(m['n'] for m in mobs)} corpses{versions}  https://github.com/{REPO}/issues/{number}")
     print(f"Approve one: gh issue edit <number> --repo {REPO} --add-label {APPROVED}")
 
 
@@ -170,6 +184,7 @@ def self_check():
     s = "!LW:1!0.9.1;1.60.1;0a1b2c3d;3240:20:3:5128=9,5470=2;99:5:5:;7:1:0:1=9!End:LW!"
     (_, build, sid, mobs), = parse(s)
     assert build == "1.60.1" and sid == "0a1b2c3d", (build, sid)
+    assert old_note("0.15.2") == "" and old_note("0.16.0") == "" and old_note("0.14.0") and old_note("x") and old_note("0.9.1")
     assert mobs == {3240: {"n": 20, "e": 3, "items": {5128: 9, 5470: 2}}, 99: {"n": 5, "e": 5, "items": {}}}, mobs
     sheet = f'Timestamp,Share,OK\n2026-11-25,"{s}",x\n2026-11-26,"{s}",\nnoise,hello,x\n'
     ok, wait = from_form_text(sheet)
@@ -206,6 +221,9 @@ def main():
         print(f"build {build}: {corpses} corpses, {len(mobs)} mob kinds ({enough} with 20+ corpses)")
     print(f"{len(shares)} shares from {players} players -> {OUT.relative_to(OUT.parent.parent.parent)}")
     print("Contributors: " + ", ".join(sorted({w for w, _ in texts if w})))
+    olds = sorted({f"{who or sid} ({version})" for who, text in texts for version, _, sid, _ in parse(text) if old_note(version)})
+    if olds:  # already approved: your call, e.g. trusted solo players are fine
+        print("Approved shares from addons older than 0.15.2 (may include group loot): " + ", ".join(olds))
     show_waiting(waiting)
     if len(sys.argv) == 1:
         show_form_waiting(form_waiting, form_ok)

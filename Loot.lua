@@ -1,8 +1,9 @@
 -- Lootwright Loot.lua: records your own loot, so Lootwright can show drop rates measured by you.
 -- LootwrightDB.loot = { since = game build, mobs = { [npcId] = { n = corpses, e = empty ones, [itemId] = corpses it was on } } }
--- n counts looted corpses plus empty kills: when your target dies (your tap, not in a group) and
--- CanLootUnit says it has no loot, it counts as an empty corpse. Kills with loot you never take don't
--- count at all. Kills that weren't your target can't be seen as empty, so rates may still be a bit high.
+-- n counts looted corpses plus empty kills: when your target dies (your tap) and CanLootUnit says it has
+-- no loot, it counts as an empty corpse. Nothing is recorded while you're in a group (shared loot rules
+-- would make rates too high). Kills with loot you never take don't count at all. Kills that weren't
+-- your target can't be seen as empty, so rates may still be a bit high.
 -- Option recordLoot: opt-in (only true records; asked in the welcome window). /if loot shows a summary,
 -- /if loot debug prints each recorded corpse.
 
@@ -124,6 +125,9 @@ end
 
 local function onLootReady()
     if LootwrightDB.recordLoot ~= true then return end
+    -- In a group the loot may not be all yours (rolls, round robin, master loot) and empty kills can't be
+    -- told from "not your turn", so counts would be too high. Pause recording until you leave the group.
+    if IsInGroup() then return end
     local ok, n = pcall(GetNumLootItems)
     n = ok and plain(n) or 0
     local corpses = {} -- [guid] = { [itemId] = true }
