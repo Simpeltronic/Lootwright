@@ -2,6 +2,11 @@
 
 Versions follow the rules in `CLAUDE.md` ("Versions and changelog"). Newest first.
 
+## 0.15.2, not released yet
+
+### Changed
+- **Loot counting pauses while you're in a group:** with group loot rules (rolls, round robin, master loot) the loot isn't all yours, and empty kills can't be told from "not your turn", so grouped counts made drop rates come out too high. Nothing is recorded in a group any more; it resumes when you leave. Counts you already have stay as they are.
+
 ## 0.15.1, 24 November 2026
 
 ### Fixed
