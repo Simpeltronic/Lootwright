@@ -6,42 +6,46 @@ local _, ns = ...
 local Options = {}
 ns.Options = Options
 
+-- Grouped under headings ({ head = ... } entries); default-off toggles (defaultOff) are on only when true.
 local TOGGLES = {
+    { head = "Tooltips" },
     { key = "tooltip", label = "\"Drops from\" line on item tooltips",
       tip = "Item tooltips list the top 3 mobs that drop the item.",
       onChange = function() ns.UI.ClearTooltipCache() end },
     { key = "farmTooltip", label = "\"Farm:\" line on mob tooltips",
       tip = "Mobs that drop something on your farm list say so on their tooltip." },
-    { key = "farmPins", label = "Pins mobs on Map that drops your items",
-      tip = "Grouped pins on every mob that drops a farm item or a material you still need.",
-      onChange = function() ns.Map.RefreshFarmPins(true) end },
-    { key = "arrow", label = "Waypoint arrow when you click a Lootwright Pin",
-      tip = "Shows an arrow and distance to the spawn. The map marker is set either way." },
-    { key = "farmAlerts", label = "Farm updates displayed on screen",
-      tip = "Goal reached, material ready and \"craft it\" messages. They always go to chat." },
-    { key = "minimapButton", label = "Minimap button",
-      tip = "The Lootwright emblem on the minimap. Left-click opens the window, right-click opens these options.",
-      onChange = function() ns.MinimapButton.Refresh() end },
+    { head = "World map" },
     { key = "mapPins", label = "Lootwright pins on the world map",
       tip = "Pins for the mob you clicked and for farm spawns. Also the \"Lootwright\" checkbox on the map itself.",
       onChange = function()
           if ns.Map.toggle then ns.Map.toggle:SetChecked(LootwrightDB.mapPins ~= false) end
           ns.Map.RefreshFarmPins(true)
       end },
-    { key = "mapToggle", label = "\"Lootwright\" checkbox on the world map",
+    { key = "farmPins", label = "Pins on mobs that drop your farm items",
+      tip = "Grouped pins on every mob that drops a farm item or a material you still need.",
+      onChange = function() ns.Map.RefreshFarmPins(true) end },
+    { key = "mapToggle", label = "\"Lootwright\" checkbox on the map",
       tip = "The small checkbox in the map's bottom-right corner that shows or hides Lootwright's pins. "
           .. "Hide it if it covers something; the pins option above still works.",
       onChange = function()
           if ns.Map.toggle then ns.Map.toggle:SetShown(LootwrightDB.mapToggle ~= false) end
       end },
-    -- Off by default (defaultOff): only true turns it on.
-    { key = "recordLoot", label = "Help improve drop rates: record my loot", defaultOff = true,
-      tip = "Counts the corpses you loot and what was on them, on this PC only, so mob tooltips show your own drop rate. "
-          .. "Share it with /if share; Lootwright reminds you now and then. No names or positions." },
-    { key = "tracker", label = "Display Farm Tracker on HUD", defaultOff = true,
+    { key = "arrow", label = "Waypoint arrow when you click a pin",
+      tip = "Shows an arrow and distance to the spawn. The map marker is set either way." },
+    { head = "Farming" },
+    { key = "tracker", label = "Farm tracker on screen", defaultOff = true,
       tip = "A small panel that shows your farm list all the time. Drag an item from your bags onto it to farm it. "
           .. "Also /if mini.",
       onChange = function() ns.Tracker.Refresh() end },
+    { key = "farmAlerts", label = "Farm updates on screen (chat always)",
+      tip = "Goal reached, material ready and \"craft it\" messages. They always go to chat." },
+    { head = "General" },
+    { key = "minimapButton", label = "Minimap button",
+      tip = "The Lootwright emblem on the minimap. Left-click opens the window, right-click opens these options.",
+      onChange = function() ns.MinimapButton.Refresh() end },
+    { key = "recordLoot", label = "Help improve drop rates: record my loot", defaultOff = true,
+      tip = "Counts the corpses you loot and what was on them, on this PC only, so mob tooltips show your own drop rate. "
+          .. "Share it with /if share; Lootwright reminds you now and then. No names or positions." },
 }
 
 -- Default-on toggles are on unless set to false; default-off toggles only when set to true.
@@ -87,31 +91,38 @@ local function build()
     sub:SetText("Switch off what you don't use.")
 
     local prev = sub
-    for i, t in ipairs(TOGGLES) do
-        local cb = CreateFrame("CheckButton", nil, panel, "UICheckButtonTemplate")
-        cb:SetSize(24, 24)
-        cb:SetPoint("TOPLEFT", prev, "BOTTOMLEFT", i == 1 and -2 or 0, i == 1 and -14 or -6)
-        cb.key, cb.toggle = t.key, t
-        local fs = cb:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
-        fs:SetPoint("LEFT", cb, "RIGHT", 4, 1)
-        fs:SetText(t.label)
-        cb:SetScript("OnClick", function(self)
-            LootwrightDB[t.key] = self:GetChecked() and true or false
-            if t.onChange then t.onChange() end
-        end)
-        cb:SetScript("OnEnter", function(self)
-            GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
-            GameTooltip:AddLine(t.label, 1, 1, 1)
-            GameTooltip:AddLine(t.tip, 0.8, 0.8, 0.8, true)
-            GameTooltip:Show()
-        end)
-        cb:SetScript("OnLeave", function() GameTooltip:Hide() end)
-        checks[#checks + 1] = cb
-        prev = cb
+    for _, t in ipairs(TOGGLES) do
+        if t.head then
+            local h = panel:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+            h:SetPoint("TOPLEFT", prev, "BOTTOMLEFT", prev == sub and 0 or 2, -14)
+            h:SetText(t.head)
+            prev = h
+        else
+            local cb = CreateFrame("CheckButton", nil, panel, "UICheckButtonTemplate")
+            cb:SetSize(24, 24)
+            cb:SetPoint("TOPLEFT", prev, "BOTTOMLEFT", prev.toggle and 0 or -2, prev.toggle and -2 or -4)
+            cb.key, cb.toggle = t.key, t
+            local fs = cb:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
+            fs:SetPoint("LEFT", cb, "RIGHT", 4, 1)
+            fs:SetText(t.label)
+            cb:SetScript("OnClick", function(self)
+                LootwrightDB[t.key] = self:GetChecked() and true or false
+                if t.onChange then t.onChange() end
+            end)
+            cb:SetScript("OnEnter", function(self)
+                GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
+                GameTooltip:AddLine(t.label, 1, 1, 1)
+                GameTooltip:AddLine(t.tip, 0.8, 0.8, 0.8, true)
+                GameTooltip:Show()
+            end)
+            cb:SetScript("OnLeave", function() GameTooltip:Hide() end)
+            checks[#checks + 1] = cb
+            prev = cb
+        end
     end
 
     local head = panel:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    head:SetPoint("TOPLEFT", prev, "BOTTOMLEFT", 2, -24)
+    head:SetPoint("TOPLEFT", prev, "BOTTOMLEFT", 2, -14)
     head:SetText("Parts")
     local hint = panel:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
     hint:SetPoint("TOPLEFT", head, "BOTTOMLEFT", 0, -4)
