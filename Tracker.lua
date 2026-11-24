@@ -92,7 +92,8 @@ local function fillRow(r, line)
     -- "1(2)/3", as on the Farm tab: the bank part is only what it can still cover of the goal.
     local banked = line.itemId and ns.Farm.Bank(line.itemId) or 0
     local fromBank = goal and math.min(banked, math.max(0, goal - line.have)) or banked
-    r.count:SetText(line.have .. (fromBank > 0 and ("|cff7d8cad(" .. fromBank .. ")|r") or "")
+    local bankDone = goal and fromBank > 0 and line.have + fromBank >= goal -- light gold: the bank completes it
+    r.count:SetText(line.have .. (fromBank > 0 and ((bankDone and "|cfff0d58c(" or "|cff7d8cad(") .. fromBank .. ")|r") or "")
         .. (goal and ("/" .. goal) or "") .. ((goal and line.have >= goal) and READY or ""))
     r.count:SetTextColor(T.RGB(T.C.muted))
     if line.done then
@@ -118,6 +119,8 @@ local function fillRow(r, line)
         r.fill:SetWidth(math.max(1, w * math.min(line.have, goal) / goal))
         r.fill:SetVertexColor(T.RGB(line.done and T.C.brass or (line.have >= goal and T.C.green or T.C.greenEdge)))
         if fromBank > 0 then
+            if bankDone then r.bankFill:SetColorTexture(0.941, 0.835, 0.549, 1)
+            else r.bankFill:SetColorTexture(0.62, 0.9, 0.62, 1) end
             r.bankFill:ClearAllPoints()
             r.bankFill:SetPoint("TOP", r.track)
             r.bankFill:SetPoint("BOTTOM", r.track)

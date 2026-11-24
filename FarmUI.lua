@@ -24,12 +24,14 @@ local function setBar(bar, n, goal, fromBank)
     if n >= goal then bar:SetStatusBarColor(0.25, 1, 0.25) else bar:SetStatusBarColor(0.25, 0.7, 0.25) end
     if not bar.bankFill then
         bar.bankFill = bar:CreateTexture(nil, "ARTWORK", nil, 1)
-        bar.bankFill:SetColorTexture(0.62, 0.9, 0.62, 1)
         bar.bankFill:SetPoint("TOP")
         bar.bankFill:SetPoint("BOTTOM")
     end
     fromBank = fromBank or 0
     if fromBank > 0 and n < goal then
+        -- Light gold when the bank completes the goal (you have enough, it's in the bank), else light green.
+        if n + fromBank >= goal then bar.bankFill:SetColorTexture(0.941, 0.835, 0.549, 1)
+        else bar.bankFill:SetColorTexture(0.62, 0.9, 0.62, 1) end
         bar.bankFill:SetPoint("LEFT", bar, "LEFT", BAR_W * n / goal, 0)
         bar.bankFill:SetWidth(math.max(1, BAR_W * fromBank / goal))
         bar.bankFill:Show()
@@ -115,7 +117,8 @@ local function initRow(button, d)
     -- so 1 in bags + 10 in bank for 3 shows 1(2) / 3. The tooltip has the full bank count.
     local goal = (d.kind == "recipe" and d.target) or (d.kind == "mat" and d.need) or d.goal
     local fromBank = goal and math.min(banked, math.max(0, goal - n)) or banked
-    local bank = fromBank > 0 and ("|cff7d8cad(" .. fromBank .. ")|r") or ""
+    local bankDone = goal and fromBank > 0 and n + fromBank >= goal -- the bank completes the goal
+    local bank = fromBank > 0 and ((bankDone and "|cfff0d58c(" or "|cff7d8cad(") .. fromBank .. ")|r") or ""
 
     button.name:ClearAllPoints()
     local indent = d.kind == "mat" and (8 + 20 * (d.depth or 1)) or 8
