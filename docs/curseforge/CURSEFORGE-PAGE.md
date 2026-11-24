@@ -114,7 +114,7 @@ A small panel that keeps your farm list on screen, bank counts included. Drag an
 ![The farm tracker](TRACKER_IMG_URL)
 
 ### Help work out real Forever drop rates (opt-in)
-Most normal-mob rates today are rough Classic numbers. If you opt in, Lootwright counts what you loot, on your PC only, and once you've looted a mob 20 times its tooltip shows your own rate, and mobs that never drop the item go grey. Share your counts with `/if share` (copy, paste into a GitHub form) and they'll go into measured Forever rates for everyone. No names or positions are ever included.
+Most normal-mob rates today are rough Classic numbers. If you opt in, Lootwright counts what you loot, on your PC only, and once you've looted a mob 20 times its tooltip shows your own rate, and mobs that never drop the item go grey. Share your counts with `/if share` (copy, paste into a web form, no account needed) and they'll go into measured Forever rates for everyone. No names or positions are ever included.
 
 ![Sharing your loot data](https://raw.githubusercontent.com/Simpeltronic/Lootwright/main/docs/curseforge/screens/share.png)
 
@@ -154,7 +154,7 @@ Single features (tooltip lines, map pins, the arrow, messages, the minimap butto
 
 ## Problems and ideas
 
-Report bugs and ideas on [GitHub Issues](https://github.com/Simpeltronic/Lootwright/issues), or email lootwright-dev@proton.me if you don't use GitHub (that works for `/if share` loot data too). If something breaks, type `/console scriptErrors 1`, do it again, and include the error text.
+Report bugs and ideas on [GitHub Issues](https://github.com/Simpeltronic/Lootwright/issues), or email lootwright-dev@proton.me if you don't use GitHub (that works for `/if share` loot data too, though the web form in the share window is quicker). If something breaks, type `/console scriptErrors 1`, do it again, and include the error text.
 
 ## Credits
 

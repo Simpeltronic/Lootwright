@@ -16,6 +16,8 @@ Shared text is untrusted: only the strict format below is accepted, anything els
 The merged counts are open data under CC BY 4.0 (players agree to that on the share form; see NOTICE.md).
 """
 
+import csv
+import io
 import json
 import pathlib
 import re
@@ -26,6 +28,7 @@ REPO = "Simpeltronic/Lootwright"
 OWNER = REPO.split("/")[0]
 APPROVED = "loot-ok"
 OUT = pathlib.Path(__file__).resolve().parent / "data" / "community_loot.json"
+FORM = OUT.parent / "form_shares.csv"  # the Google Form sheet, exported as CSV
 
 SHARE = re.compile(r"!LW:1!([\w.\-]{1,20});([\w.\-]{1,20});([0-9a-f]{8});([0-9:;,=]*)!End:LW!")
 MOB = re.compile(r"(\d{1,7}):(\d{1,6}):(\d{1,6}):((?:\d{1,7}=\d{1,6})(?:,\d{1,7}=\d{1,6})*)?")
@@ -105,6 +108,45 @@ def from_issues():
     return approved, waiting
 
 
+def from_form_text(text):
+    """(approved [(None, row text)], waiting [(row number, time, row text)]) from the Google Form sheet.
+
+    Export the sheet as CSV. A row counts only when its "OK" column is not empty (you type x there
+    after reviewing it). Approved shares are keyed by their share ID, since a form has no accounts.
+    """
+    rows = list(csv.reader(io.StringIO(text)))
+    if not rows:
+        return [], []
+    ok = next((i for i, h in enumerate(rows[0]) if h.strip().lower() == "ok"), None)
+    approved, waiting = [], []
+    for number, row in enumerate(rows[1:], start=2):  # row 1 is the header, as in the sheet
+        body = " ".join(row)
+        if not SHARE.search(body.replace("\n", "")):
+            continue
+        if ok is not None and ok < len(row) and row[ok].strip():
+            approved.append((None, body))
+        else:
+            waiting.append((number, row[0] if row else "", body))
+    return approved, waiting
+
+
+def from_form():
+    return from_form_text(FORM.read_text(encoding="utf-8-sig")) if FORM.exists() else ([], [])
+
+
+def show_form_waiting(waiting, approved):
+    """Prints form rows waiting for review. 'known' = that share ID is already approved (an update)."""
+    if not waiting:
+        return
+    known = {sid for _, text in approved for _, _, sid, _ in parse(text)}
+    print(f"\n{len(waiting)} form rows wait for your review (they don't count until you type x in the OK column):")
+    for number, when, body in waiting:
+        for _, build, sid, mobs in parse(body):
+            print(f"  row {number} ({when}): id {sid}{' (update of an approved share)' if sid in known else ''}, "
+                  f"build {build}, {len(mobs)} mob kinds, {sum(m['n'] for m in mobs.values())} corpses, "
+                  f"biggest {max((m['n'] for m in mobs.values()), default=0)} on one mob")
+
+
 def show_waiting(waiting):
     """Prints shares waiting for review: poster, account age and size, so fakes stand out."""
     if not waiting:
@@ -126,6 +168,9 @@ def self_check():
     (_, build, sid, mobs), = parse(s)
     assert build == "1.60.1" and sid == "0a1b2c3d", (build, sid)
     assert mobs == {3240: {"n": 20, "e": 3, "items": {5128: 9, 5470: 2}}, 99: {"n": 5, "e": 5, "items": {}}}, mobs
+    sheet = f'Timestamp,Share,OK\n2026-11-25,"{s}",x\n2026-11-26,"{s}",\nnoise,hello,x\n'
+    ok, wait = from_form_text(sheet)
+    assert len(ok) == 1 and [w[0] for w in wait] == [3], (ok, wait)
     old = {3240: {"n": 5, "e": 0, "items": {5128: 1}}}
     merged, players = merge([("1.60.1", "a", old), ("1.60.1", "a", mobs), ("1.60.1", "b", old)])
     assert players == 2 and merged["1.60.1"][3240] == {"n": 25, "e": 3, "items": {5128: 10, 5470: 2},
@@ -139,7 +184,12 @@ def main():
         texts = [(None, pathlib.Path(sys.argv[1]).read_text(encoding="utf-8"))]
     else:
         texts, waiting = from_issues()
-    shares = [(build, who or sid, mobs) for who, text in texts for _, build, sid, mobs in parse(text)]
+        form_ok, form_waiting = from_form()
+        texts += form_ok
+    # One player may share through GitHub and the form: a share ID already seen on a GitHub issue
+    # belongs to that account, so the later share replaces the earlier one instead of adding up.
+    owner = {sid: who for who, text in texts if who for _, _, sid, _ in parse(text)}
+    shares = [(build, who or owner.get(sid, sid), mobs) for who, text in texts for _, build, sid, mobs in parse(text)]
     merged, players = merge(shares)
     OUT.parent.mkdir(exist_ok=True)
     OUT.write_text(json.dumps(merged, indent=1, sort_keys=True), encoding="utf-8")
@@ -150,6 +200,8 @@ def main():
     print(f"{len(shares)} shares from {players} players -> {OUT.relative_to(OUT.parent.parent.parent)}")
     print("Contributors: " + ", ".join(sorted({w for w, _ in texts if w})))
     show_waiting(waiting)
+    if len(sys.argv) == 1:
+        show_form_waiting(form_waiting, form_ok)
 
 
 if __name__ == "__main__":

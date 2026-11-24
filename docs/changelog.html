@@ -52,8 +52,13 @@ code { font: 13px var(--mono); }
     <ul>
       <li><b>Drop rates from players:</b> loot that Lootwright players share with <code>/if share</code> now becomes drop rates for everyone, once a mob has 20 or more looted corpses in the shared data, from at least two players. They are measured in Forever, so they take priority over the other rates. The mob tooltip says "Measured in Forever by Lootwright players: 9 of 40 corpses". Mobs only players have seen dropping an item are added to the list. Your own counts still fill in where the shared data has fewer than 20 corpses. Shares are reviewed before they count, and numbers that don't fit other players' are left out.</li>
     </ul>
+    <h3>Changed</h3>
+    <ul>
+      <li><b>Sharing loot no longer needs a GitHub account:</b> the <code>/if share</code> window now links to a simple web form. Shares are still reviewed before they count.</li>
+    </ul>
     <h3>For developers</h3>
     <ul>
+      <li><code>tools/merge_loot.py</code> also reads the form's sheet (<code>tools/data/form_shares.csv</code>, only rows with <code>x</code> in the OK column). See <code>docs/loot-review.md</code>.</li>
       <li><code>LibLootwright.CommunityRates(itemId)</code> (added to contract 1): <code>{ [npcId] = { k, n } }</code> from shared loot. <code>tools/release.py</code> fetches the latest shares before building.</li>
     </ul>
   </section>
