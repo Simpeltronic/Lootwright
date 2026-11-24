@@ -252,7 +252,7 @@ end
 -- Counts only: no names, positions or GUIDs. The share id is random (made once per install) so
 -- tools/merge_loot.py keeps only the latest share from each player instead of adding them up.
 local EXPORT_VERSION = 1
-local SHARE_URL = "https://github.com/Simpeltronic/Lootwright/issues/new?template=loot-data.yml"
+local SHARE_URL = "https://docs.google.com/forms/d/e/1FAIpQLSdIGto84x7yXrYVuymZ4tesnzN8PcrUmV0tHfGXat3XFk770A/viewform"
 
 function Loot.ExportString()
     local l = db()
