@@ -383,47 +383,74 @@ def self_check():
 
 COMMUNITY = pathlib.Path(__file__).resolve().parent / "data" / "community_loot.json"
 COMMUNITY_MIN_CORPSES = 20  # same as Loot.MIN_CORPSES in game
-COMMUNITY_MIN_PLAYERS = 2   # shares are unreviewed GitHub posts: one account alone can't set a rate
+COMMUNITY_MIN_PLAYERS = 2   # one account alone can't set a rate
 COMMUNITY_MAX_PART = 0.75   # nor can one account hold more than this part of a mob's corpses
 
 
-def build_community(merged):
-    """communityRates[item] = "npc:k:n;..." from merge_loot.py's output (players' shared loot).
+def worst_outlier(by):
+    """The account whose rate for some item fits everyone else's worst, when its 95% range and the
+    others' 95% range don't overlap at all; else None. by = { account: {"n", "items": {item: k}} }."""
+    worst, gap = None, 0.0
+    items = {i for a in by.values() for i in a["items"]}
+    for who, a in by.items():
+        rest_n = sum(o["n"] for w, o in by.items() if w != who)
+        if not a["n"] or rest_n < COMMUNITY_MIN_CORPSES:
+            continue
+        for item in items:
+            rest_k = sum(o["items"].get(item, 0) for w, o in by.items() if w != who)
+            lo, hi = wilson(a["items"].get(item, 0), a["n"])
+            rlo, rhi = wilson(rest_k, rest_n)
+            g = max(rlo - hi, lo - rhi)
+            if g > gap:
+                worst, gap = who, g
+    return worst
 
-    Only mobs with at least COMMUNITY_MIN_CORPSES looted corpses from COMMUNITY_MIN_PLAYERS GitHub
-    accounts (merge_loot.py keeps one share per account), none of them over COMMUNITY_MAX_PART of
-    the corpses, counted over all builds together; only items seen on them.
+
+def build_community(merged, dropped=None):
+    """communityRates[item] = "npc:k:n;..." from merge_loot.py's output (players' approved shares).
+
+    Per mob, counts are summed per GitHub account over all builds; accounts whose numbers don't fit
+    the others' (outliers) are dropped. A mob gets rates only with COMMUNITY_MIN_CORPSES corpses from
+    COMMUNITY_MIN_PLAYERS accounts, none over COMMUNITY_MAX_PART of them; only items seen on it.
     shortcut: counts from all game builds are added up, and any build string is accepted;
     split per build (and check builds) if Forever changes mob loot.
     """
     mobs = {}
     for per_build in merged.values():
         for npc, m in per_build.items():
-            t = mobs.setdefault(int(npc), {"n": 0, "by": {}, "items": {}})
-            t["n"] += m["n"]
-            for who, n in m.get("by", {}).items():
-                t["by"][who] = t["by"].get(who, 0) + n
-            for item, k in m.get("items", {}).items():
-                t["items"][int(item)] = t["items"].get(int(item), 0) + k
+            by = mobs.setdefault(int(npc), {})
+            for who, a in m.get("by", {}).items():
+                t = by.setdefault(who, {"n": 0, "items": {}})
+                t["n"] += a["n"]
+                for item, k in a.get("items", {}).items():
+                    t["items"][int(item)] = t["items"].get(int(item), 0) + k
     rates = {}
-    for npc, t in sorted(mobs.items()):
-        by = t["by"].values()
-        if (t["n"] < COMMUNITY_MIN_CORPSES or len(by) < COMMUNITY_MIN_PLAYERS
-                or max(by) > COMMUNITY_MAX_PART * t["n"]):
+    for npc, by in sorted(mobs.items()):
+        while (who := worst_outlier(by)) is not None:  # one at a time: a faker skews everyone's "others"
+            del by[who]
+            if dropped is not None:
+                dropped.append((who, npc))
+        n = sum(a["n"] for a in by.values())
+        if n < COMMUNITY_MIN_CORPSES or len(by) < COMMUNITY_MIN_PLAYERS or                 max(a["n"] for a in by.values()) > COMMUNITY_MAX_PART * n:
             continue
-        for item, k in sorted(t["items"].items()):
-            if 0 < k <= t["n"]:
-                rates.setdefault(item, []).append(f"{npc}:{k}:{t['n']}")
+        for item in sorted({i for a in by.values() for i in a["items"]}):
+            k = sum(a["items"].get(item, 0) for a in by.values())
+            if 0 < k <= n:
+                rates.setdefault(item, []).append(f"{npc}:{k}:{n}")
     return {item: ";".join(v) for item, v in rates.items()}
 
 
 def main():
     self_check()
-    assert build_community({  # 7: two accounts over two builds; 8: too few; 9: one account in a fake build
-        "1.60.1": {"7": {"n": 15, "by": {"a": 15}, "items": {"5": 3}}, "8": {"n": 9, "items": {}},
-                   "9": {"n": 2, "by": {"a": 1, "b": 1}, "items": {}}},
-        "x": {"7": {"n": 10, "by": {"b": 10}, "items": {"5": 2, "6": 0}},
-              "9": {"n": 500, "by": {"a": 500}, "items": {"5": 500}}}}) == {5: "7:5:25"}
+    def acc(n, **items):
+        return {"n": n, "items": {k[1:]: v for k, v in items.items()}}
+    assert build_community({  # 7: two accounts over two builds; 8: one account; 9: one account dominates
+        "1.60.1": {"7": {"by": {"a": acc(15, i5=3)}}, "8": {"by": {"a": acc(30, i5=9)}},
+                   "9": {"by": {"a": acc(1), "b": acc(1)}}},
+        "x": {"7": {"by": {"b": acc(10, i5=2)}}, "9": {"by": {"a": acc(500, i5=500)}}}}) == {5: "7:5:25"}
+    # a faker claiming 100% where two players saw ~10% is left out; the honest pair still counts
+    fake = build_community({"1": {"6": {"by": {"a": acc(30, i4=3), "b": acc(30, i4=4), "c": acc(25, i4=25)}}}})
+    assert fake == {4: "6:7:60"}, fake
     src = pathlib.Path(sys.argv[1] if len(sys.argv) > 1 else DEFAULT_SRC)
     credit, recipes = read_assignment(src / "Recipes.lua", "recipes")
     _, loot = read_assignment(src / "Loot.lua", "lootDB")
@@ -440,7 +467,10 @@ def main():
     assert mob_rates, "no CMaNGOS loot parsed"
 
     # Players' shared loot (tools/merge_loot.py); optional, the build works without it.
-    community = build_community(json.loads(COMMUNITY.read_text(encoding="utf-8"))) if COMMUNITY.exists() else {}
+    dropped = []
+    community = build_community(json.loads(COMMUNITY.read_text(encoding="utf-8")), dropped) if COMMUNITY.exists() else {}
+    for who, npc in dropped:
+        print(f"Shared loot: {who}'s counts for npc {npc} don't fit the other players' and are left out")
 
     body = lua({
         "version": meta.get("version", "?"),

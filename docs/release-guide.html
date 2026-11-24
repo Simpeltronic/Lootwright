@@ -72,6 +72,7 @@ h3 { font: 600 12px/1 var(--body); letter-spacing: .08em; text-transform: upperc
       <h2>Build the zip</h2>
       <div class="cmd"><pre>python -I tools/release.py</pre><button type="button">Copy</button></div>
       <p>This fetches players' shared loot from GitHub (with <code>gh</code>; if that fails it uses the last fetched copy), rebuilds the data, makes <code>dist\Lootwright-0.x.y.zip</code>, checks that all version numbers match, and <b>copies the changelog to your clipboard</b>, ready to paste. It also saves it as <code>dist\changelog-0.x.y.md</code>.</p>
+      <p>If players posted loot shares since last time, the output lists them under <b>"shares wait for your review"</b>, with each poster's account age, mob count and corpse count. Shares only count once you approve them (see "Approving loot shares" below), so approve the good ones and run the build again. Your own shares always count.</p>
       <p>Copied something else since? Put the changelog back on the clipboard with:</p>
       <div class="cmd"><pre>python -I tools/release.py notes</pre><button type="button">Copy</button></div>
     </li>
@@ -114,6 +115,15 @@ h3 { font: 600 12px/1 var(--body); letter-spacing: .08em; text-transform: upperc
       <li><b>Description:</b> Description tab, Markdown editor, Save. The inline images load from GitHub (<code>docs/curseforge/screens/</code>), so replace a picture by pushing a new file with the same name.</li>
       <li><b>Gallery:</b> Media tab → Add media. Images must be under 850 px wide. Hover a picture for the edit (title, description, star = featured) and delete buttons.</li>
     </ul>
+    <h3>Approving loot shares</h3>
+    <p>Anyone can post a share on GitHub, so a share only counts toward drop rates after you add the <code>loot-ok</code> label. Only you can add labels on your repo.</p>
+    <ul>
+      <li><b>Approve:</b> open the issue on GitHub and add the <code>loot-ok</code> label, or run the command below with the issue number.</li>
+      <li><b>Looks fake?</b> A brand-new GitHub account, thousands of corpses on few mobs, or a share right after another from a new account. Close the issue without the label.</li>
+      <li><b>Automatic check:</b> even after you approve, the build leaves out an account whose numbers don't fit the other players' for a mob, and says so ("… don't fit the other players' and are left out").</li>
+      <li><b>Rates need:</b> 20+ corpses of a mob from at least two players, with no one player over 75% of them.</li>
+    </ul>
+    <div class="cmd"><pre>gh issue edit 12 --repo Simpeltronic/Lootwright --add-label loot-ok</pre><button type="button">Copy</button></div>
     <h3>If something goes wrong</h3>
     <ul>
       <li><b>"Core.lua says … but the TOCs say …"</b>: run <code>bump</code> again with the version you want; it sets all of them.</li>

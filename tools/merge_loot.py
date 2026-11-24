@@ -1,8 +1,11 @@
 """Merge shared loot data (from /if share, posted as GitHub issues with the loot-data label).
 
-Keeps only the latest share per share ID (a share always holds all of that player's counts),
+Only approved issues count: ones you gave the loot-ok label (only repo maintainers can add labels),
+or posted yourself. The others are listed as waiting, with the poster's account age, to review.
+Keeps only the latest share per GitHub account (a share always holds all of that player's counts),
 then adds the counts up per game build and writes tools/data/community_loot.json:
-  { build: { npcId: { "n": corpses, "e": empty, "items": { itemId: corpses with it } } } }
+  { build: { npcId: { "n": corpses, "e": empty, "items": { itemId: corpses with it },
+                      "by": { account: { "n": corpses, "items": {...} } } } } }
 
 Usage:
   python -I tools/merge_loot.py            reads the issues with gh
@@ -19,6 +22,8 @@ import subprocess
 import sys
 
 REPO = "Simpeltronic/Lootwright"
+OWNER = REPO.split("/")[0]
+APPROVED = "loot-ok"
 OUT = pathlib.Path(__file__).resolve().parent / "data" / "community_loot.json"
 
 SHARE = re.compile(r"!LW:1!([\w.\-]{1,20});([\w.\-]{1,20});([0-9a-f]{8});([0-9:;,=]*)!End:LW!")
@@ -57,7 +62,7 @@ def merge(shares):
         b = out.setdefault(build, {})
         for npc, m in mobs.items():
             t = b.setdefault(npc, {"n": 0, "e": 0, "by": {}, "items": {}})
-            t["by"][who] = m["n"]
+            t["by"][who] = {"n": m["n"], "items": dict(m["items"])}
             t["n"] += m["n"]
             t["e"] += m["e"]
             for item, c in m["items"].items():
@@ -65,13 +70,39 @@ def merge(shares):
     return out, len(latest)
 
 
+def gh(*args):
+    return subprocess.run(["gh", *args], capture_output=True, text=True, check=True).stdout
+
+
 def from_issues():
-    raw = subprocess.run(
-        ["gh", "issue", "list", "--repo", REPO, "--label", "loot-data", "--state", "all",
-         "--limit", "1000", "--json", "number,createdAt,body,author"],
-        capture_output=True, text=True, check=True).stdout
+    """(approved [(account, body)], waiting [(issue, account, body)]), oldest first."""
+    raw = gh("issue", "list", "--repo", REPO, "--label", "loot-data", "--state", "all",
+             "--limit", "1000", "--json", "number,createdAt,body,author,labels")
+    approved, waiting = [], []
     for issue in sorted(json.loads(raw), key=lambda i: i["createdAt"]):
-        yield (issue.get("author") or {}).get("login") or f"issue{issue['number']}", issue["body"] or ""
+        who = (issue.get("author") or {}).get("login") or f"issue{issue['number']}"
+        ok = who == OWNER or any(l.get("name") == APPROVED for l in issue.get("labels") or [])
+        if ok:
+            approved.append((who, issue["body"] or ""))
+        else:
+            waiting.append((issue["number"], who, issue["body"] or ""))
+    return approved, waiting
+
+
+def show_waiting(waiting):
+    """Prints shares waiting for review: poster, account age and size, so fakes stand out."""
+    if not waiting:
+        return
+    print(f"\n{len(waiting)} shares wait for your review (they don't count until approved):")
+    for number, who, body in waiting:
+        try:
+            created = gh("api", f"users/{who}", "--jq", ".created_at").strip()[:10]
+        except (subprocess.CalledProcessError, OSError):
+            created = "?"
+        mobs = [m for share in parse(body) for m in share[3].values()]
+        print(f"  #{number} by {who} (account since {created}): {len(mobs)} mob kinds, "
+              f"{sum(m['n'] for m in mobs)} corpses  https://github.com/{REPO}/issues/{number}")
+    print(f"Approve one: gh issue edit <number> --repo {REPO} --add-label {APPROVED}")
 
 
 def self_check():
@@ -81,15 +112,17 @@ def self_check():
     assert mobs == {3240: {"n": 20, "e": 3, "items": {5128: 9, 5470: 2}}, 99: {"n": 5, "e": 5, "items": {}}}, mobs
     old = {3240: {"n": 5, "e": 0, "items": {5128: 1}}}
     merged, players = merge([("1.60.1", "a", old), ("1.60.1", "a", mobs), ("1.60.1", "b", old)])
-    assert players == 2 and merged["1.60.1"][3240] == {"n": 25, "e": 3, "by": {"a": 20, "b": 5}, "items": {5128: 10, 5470: 2}}, merged
+    assert players == 2 and merged["1.60.1"][3240] == {"n": 25, "e": 3, "items": {5128: 10, 5470: 2},
+        "by": {"a": {"n": 20, "items": {5128: 9, 5470: 2}}, "b": {"n": 5, "items": {5128: 1}}}}, merged
 
 
 def main():
     self_check()
+    waiting = []
     if len(sys.argv) > 1:  # a file you saved yourself (emailed shares): trusted, keyed by share ID
         texts = [(None, pathlib.Path(sys.argv[1]).read_text(encoding="utf-8"))]
     else:
-        texts = list(from_issues())
+        texts, waiting = from_issues()
     shares = [(build, who or sid, mobs) for who, text in texts for _, build, sid, mobs in parse(text)]
     merged, players = merge(shares)
     OUT.parent.mkdir(exist_ok=True)
@@ -100,6 +133,7 @@ def main():
         print(f"build {build}: {corpses} corpses, {len(mobs)} mob kinds ({enough} with 20+ corpses)")
     print(f"{len(shares)} shares from {players} players -> {OUT.relative_to(OUT.parent.parent.parent)}")
     print("Contributors: " + ", ".join(sorted({w for w, _ in texts if w})))
+    show_waiting(waiting)
 
 
 if __name__ == "__main__":
