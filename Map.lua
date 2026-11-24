@@ -24,6 +24,7 @@ local farmPins = {} -- { { mapId, x, y, mob = { name, minLevel, maxLevel, farmIt
 local provider
 
 local pinMixin -- built on first use, once MapCanvasPinMixin is surely loaded
+local missing  -- defined with the farm pins below; the tooltip uses it too
 
 local function setup()
     if provider then return true end
@@ -52,6 +53,12 @@ local function setup()
         self.icon:SetPoint("BOTTOMRIGHT", self, "BOTTOMRIGHT", -inset, inset)
         local itemId = p.itemId or (not p.small and mobItem) or nil
         self.icon:SetTexture(itemId and C_Item.GetItemIconByID(itemId) or FALLBACK_ICON)
+        if p.extra and p.extra > 0 then
+            self.badge:SetText("+" .. p.extra)
+            self.badge:Show()
+        else
+            self.badge:Hide()
+        end
         if p.count and p.count > 1 then
             self.countText:SetText(p.count)
             self.countText:Show()
@@ -81,7 +88,12 @@ local function setup()
             GameTooltip:AddLine(m.name)
             GameTooltip:AddLine("Level " .. ns.LevelText(m.minLevel, m.maxLevel), 1, 1, 1)
         end
-        if m.farmItems then GameTooltip:AddLine("Farm: " .. table.concat(m.farmItems, ", "), 0.25, 1, 0.25, true) end
+        for _, id in ipairs(m.farmIds or {}) do
+            local icon = C_Item.GetItemIconByID(id) or FALLBACK_ICON
+            local left = missing(id)
+            GameTooltip:AddLine("|T" .. icon .. ":0|t " .. (ns.Data.ItemName(id) or ("item " .. id))
+                .. (left > 0 and ("  |cffaaaaaa(need " .. left .. ")|r") or ""), 0.25, 1, 0.25)
+        end
         GameTooltip:AddLine("Click: set waypoint", 0.2, 1, 0.6)
         GameTooltip:Show()
     end
@@ -117,6 +129,11 @@ local function setup()
         f.countText = f:CreateFontString(nil, "OVERLAY", "NumberFontNormalSmall")
         f.countText:SetPoint("LEFT", f, "RIGHT", 1, 0)
         f.countText:Hide()
+        -- "+N" at the top-left edge: more farm items drop here than the one in the icon.
+        f.badge = f:CreateFontString(nil, "OVERLAY", "NumberFontNormalSmall")
+        f.badge:SetPoint("BOTTOMRIGHT", f, "TOPLEFT", 4, -4)
+        f.badge:SetTextColor(0.941, 0.835, 0.549)
+        f.badge:Hide()
         f:EnableMouse(true) -- hover goes through pinMixin:OnMouseEnter/Leave; the map asserts on own OnEnter scripts
         -- OnMouseDown as a script is fine (RareScanner's pins do the same on this client).
         f:SetScript("OnMouseDown", function(self, button) self:OnMouseDown(button) end)
@@ -194,6 +211,11 @@ end
 -- Farm pins
 ----------------------------------------------------------------------
 local srcCache, spawnCache = {}, {} -- per item / per NPC; the data doesn't change in a session
+
+-- How many of an item you still need (0 for endless items or when you have enough).
+missing = function(itemId)
+    return math.max(0, (ns.Farm.Need(itemId) or 0) - ns.Farm.Have(itemId))
+end
 local GROUP_CELL = 0.04             -- farm spawns closer than 4% of the map share one pin
 local farmSig                       -- the wanted-items set the pins were built for
 
@@ -227,7 +249,8 @@ function Map.RefreshFarmPins(force)
                 local e = byNpc[m.npcId] or { mob = m, items = {} }
                 byNpc[m.npcId] = e
                 e.items[#e.items + 1] = ns.Data.ItemName(id) or ("item " .. id)
-                e.itemId = e.itemId or id -- the pin shows this item's icon
+                e.ids = e.ids or {}
+                e.ids[#e.ids + 1] = id
             end
         end
     end
@@ -246,7 +269,7 @@ function Map.RefreshFarmPins(force)
             local c = cells[k]
             if not c then
                 c = { mapId = p.mapId, sx = 0, sy = 0, n = 0, kinds = {}, kindOrder = {}, items = {}, itemSeen = {},
-                    itemId = e.itemId }
+                    ids = {}, idSeen = {} }
                 cells[k] = c
                 order[#order + 1] = k
             end
@@ -261,6 +284,9 @@ function Map.RefreshFarmPins(force)
             for _, it in ipairs(e.items) do
                 if not c.itemSeen[it] then c.itemSeen[it] = true; c.items[#c.items + 1] = it end
             end
+            for _, id in ipairs(e.ids) do
+                if not c.idSeen[id] then c.idSeen[id] = true; c.ids[#c.ids + 1] = id end
+            end
         end
     end
 
@@ -268,15 +294,18 @@ function Map.RefreshFarmPins(force)
     for _, k in ipairs(order) do
         local c = cells[k]
         table.sort(c.kindOrder, function(a, b) return a.count > b.count end)
+        -- Several farm items here: the icon shows the one you still need most, a "+N" badge the rest.
+        -- shortcut: the order is set when the pins are rebuilt (farm list changes), not on every bag change.
+        table.sort(c.ids, function(a, b) return missing(a) > missing(b) end)
         local mobInfo
         if c.n == 1 then
             local only = c.kindOrder[1]
-            mobInfo = { name = only.name, minLevel = only.minLevel, maxLevel = only.maxLevel, farmItems = c.items }
+            mobInfo = { name = only.name, minLevel = only.minLevel, maxLevel = only.maxLevel, farmIds = c.ids }
         else
-            mobInfo = { name = c.kindOrder[1].name, group = c.kindOrder, count = c.n, farmItems = c.items }
+            mobInfo = { name = c.kindOrder[1].name, group = c.kindOrder, count = c.n, farmIds = c.ids }
         end
-        farmPins[#farmPins + 1] = { mapId = c.mapId, x = c.sx / c.n, y = c.sy / c.n, small = true, count = c.n, itemId = c.itemId,
-            mob = mobInfo }
+        farmPins[#farmPins + 1] = { mapId = c.mapId, x = c.sx / c.n, y = c.sy / c.n, small = true, count = c.n,
+            itemId = c.ids[1], extra = #c.ids - 1, mob = mobInfo }
     end
     if setup() and WorldMapFrame:IsShown() then provider:RefreshAllData() end
 end
