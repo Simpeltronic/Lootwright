@@ -137,7 +137,7 @@ Claude decides when to bump and says so. Versions are `major.minor.patch`; under
 
 **0.10.0 released 19 Nov 2026** (Release file on CurseForge; the first upload attempt never saved, the second (zip attached via the browser tools) went in as "Lootwright 0.10.0", R, approved on 19 Nov; held commits pushed; new description, summary line and Media gallery set up: old 0.9.0 farm-tab and tracker gallery images deleted, 5 new ones uploaded with titles, farm-tab and tracker featured). CurseForge gallery images must be under 850 px wide. 0.9.0 was approved the same day.
 
-Changelog page: `docs/changelog.html`, published at https://claude.ai/artifact/SZg9WLE5Pd7FdH7bSoAsjX (pinned in the user's sidebar). From a new conversation, read it first and publish with `url` set to that link so it stays the same. Released: **0.10.0**. Next: **0.11.0** (not released yet): endless farming.
+Changelog page: `docs/changelog.html`, published at https://claude.ai/artifact/SZg9WLE5Pd7FdH7bSoAsjX (pinned in the user's sidebar). From a new conversation, read it first and publish with `url` set to that link so it stays the same. Released: **0.11.0** (24 Nov 2026, uploaded via the browser tools; endless farming). The next change bumps to 0.11.1 or 0.12.0 by the rules above. 0.10.0 had 29 downloads by then.
 
 ## Workflow
 

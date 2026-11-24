@@ -2,7 +2,7 @@
 
 Versions follow the rules in `CLAUDE.md` ("Versions and changelog"). Newest first.
 
-## 0.11.0, not released yet
+## 0.11.0, 24 November 2026
 
 ### New
 - **Endless farming:** leave the goal box empty (or press Endless) to keep farming an item without a set goal. On the Farm tab and the tracker it shows "32 · 1 stack", and the bar fills toward the next full stack, then starts over.
