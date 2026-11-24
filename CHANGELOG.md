@@ -2,13 +2,14 @@
 
 Versions follow the rules in `CLAUDE.md` ("Versions and changelog"). Newest first.
 
-## 0.15.0, not released yet
+## 0.15.0, 24 November 2026
 
 ### New
 - **Click to share:** the thank-you line in chat at login now has a clickable "[Share your loot data]" that opens the share window, like Questie's links. `/if share` still works.
 
 ### Changed
 - **The share reminder is a chat line with a click link now,** not a window in the middle of the screen. If you were in combat at login, or play a long session without logging in again, it appears at your next loading screen (a zone change or instance) once you have 100 or more new counted corpses. It shows at most once per session, and only if you turned on loot counting.
+- **Boss loot and recipes refreshed** from ForeverDB.net (24 November 2026): about 230 more boss-loot items.
 - **New option "Share reminder as a pop-up window"** (off by default) in Options > General: tick it to get the small reminder window in the middle of the screen instead of the chat line.
 
 ### For developers
