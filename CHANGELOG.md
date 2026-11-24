@@ -5,7 +5,7 @@ Versions follow the rules in `CLAUDE.md` ("Versions and changelog"). Newest firs
 ## 0.12.0, not released yet
 
 ### New
-- **New map pins:** the item you're hunting, shown inside a Lootwright frame: brass for the mob you clicked on the Search tab, green for farm spawns (now 12 px, with the spawn count beside it). Replaces the raid skull, so Lootwright's pins no longer look like other addons' markers.
+- **New map pins:** the item you're hunting, shown round on a light disc with a dark rim: brass for the mob you clicked on the Search tab, green for farm spawns (now 12 px, with the spawn count beside it, not on top). Replaces the raid skull, so Lootwright's pins no longer look like other addons' markers and stand out on orange maps.
 
 ### Changed
 - **Finished goals stay until you remove them.** When you reach a farm goal, the item turns gold with a check (name, count and a full gold bar) on the Farm tab and the tracker, instead of disappearing. Its mobs lose their map skulls and "Farm:" line. Press Remove when you're done with it.

@@ -44,3 +44,6 @@ frames_on_map.png: proof sheet (real in-game map crop, farm 11 px / target 15 px
 Files: frame_target.png (brass), frame_farm.png (green). Made by Python PIL script `make_frames_final.py` (no AI model). Layers from the outside in: dark #14171C outline 3 px, band 10 px (brass #C9A24A / green #4FD36A), dark line 1 px, bone #E8E4D8 line 2 px, transparent window. The 1 px dark line keeps the bone line from merging with the band.
 Window rect at 64 px: (16,16)-(48,48), inset 16 px on every side, size 32x32. As fractions of the texture: left/top 0.25, right/bottom 0.75 (so the icon is half the width and height). At 12 px the window is 6 px, at 14 px 7 px.
 frames_final_on_map.png: proof sheet (real map crop, farm 13 px / target 15 px, real and 2x, a 36-farm-pin density test where the extra pins are jittered copies so they overlap, and a strip at 64/14/12 px), made by the same script.
+
+## disc_*_D1..D3.png, discs_on_map.png
+Questie-style backdrops (a light disc behind the item icon), made by `make_discs.py` (Python PIL, 8x supersampling; D1/D2 use a Gaussian-blurred edge). The mock uses Simon's own screenshot as the map. No AI image model.

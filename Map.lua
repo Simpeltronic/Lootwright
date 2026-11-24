@@ -1,5 +1,5 @@
--- Lootwright Map.lua: world map pins: the hunted item's icon inside a Lootwright frame (brass for the
--- clicked mob, green for farm spawns; user's choice, docs/design-brief/pins). Two sets:
+-- Lootwright Map.lua: world map pins: the hunted item's icon, round, on a light disc with a dark rim
+-- (brass for the clicked mob, green for farm spawns; user's choice "D3", docs/design-brief/pins). Two sets:
 --   the selected mob's spawns (click a mob row; "Clear pins" removes them), and
 --   farm pins: every mob that drops something on the farm list (single items and materials still
 --   needed), kept up to date as the list and bags change. /if farmpins turns them off.
@@ -12,8 +12,9 @@ local Map = {}
 ns.Map = Map
 
 local TEMPLATE = "LootwrightWorldMapPin"
-local FRAME_TARGET = ns.Theme.MEDIA .. "frame_target" -- brass, clicked mob (via MEDIA so package.py ships it)
-local FRAME_FARM = ns.Theme.MEDIA .. "frame_farm"     -- green, farm spawns
+local DISC_TARGET = ns.Theme.MEDIA .. "disc_target" -- light brass disc, clicked mob (via MEDIA so package.py ships it)
+local DISC_FARM = ns.Theme.MEDIA .. "disc_farm"     -- light green disc, farm spawns
+local ROUND_MASK = "Interface\\CharacterFrame\\TempPortraitAlphaMask" -- the game's own circle mask
 local FALLBACK_ICON = 134400 -- question mark, when the item has no icon yet
 
 local pins = {}   -- { { mapId, x, y }, ... } for the current mob
@@ -41,14 +42,14 @@ local function setup()
         self:SetPosition(p.x, p.y)
         self.point, self.mob = p, m
         -- Farm pins are smaller; a group shows how many spawns it holds. The item icon fills the
-        -- frame's window (the middle half), the frame sits on top.
+        -- disc underneath, the item icon on top (round, 40/64 of the pin; square 34/64 without a mask).
         local size = p.small and 12 or 14
         self:SetSize(size, size)
-        self.frameTex:SetTexture(p.small and FRAME_FARM or FRAME_TARGET)
-        -- The icon fills the frame's window: the middle half of the pin.
+        self.disc:SetTexture(p.small and DISC_FARM or DISC_TARGET)
+        local inset = size * (self.mask and 12 or 15) / 64
         self.icon:ClearAllPoints()
-        self.icon:SetPoint("TOPLEFT", self, "TOPLEFT", size / 4, -size / 4)
-        self.icon:SetPoint("BOTTOMRIGHT", self, "BOTTOMRIGHT", -size / 4, size / 4)
+        self.icon:SetPoint("TOPLEFT", self, "TOPLEFT", inset, -inset)
+        self.icon:SetPoint("BOTTOMRIGHT", self, "BOTTOMRIGHT", -inset, inset)
         local itemId = p.itemId or (not p.small and mobItem) or nil
         self.icon:SetTexture(itemId and C_Item.GetItemIconByID(itemId) or FALLBACK_ICON)
         if p.count and p.count > 1 then
@@ -97,13 +98,24 @@ local function setup()
     pool.createFunc = function()
         local f = CreateFrame("Frame", nil, WorldMapFrame:GetCanvas())
         f:SetSize(14, 14)
-        f.icon = f:CreateTexture(nil, "ARTWORK")
+        f.disc = f:CreateTexture(nil, "ARTWORK")
+        f.disc:SetAllPoints()
+        f.icon = f:CreateTexture(nil, "OVERLAY")
         f.icon:SetTexCoord(0.08, 0.92, 0.08, 0.92) -- trim the icon's own border
-        f.frameTex = f:CreateTexture(nil, "OVERLAY")
-        f.frameTex:SetAllPoints()
+        -- Round icon via a mask texture; if this client lacks masks, the icon stays square (smaller).
+        if f.CreateMaskTexture then
+            local ok, mask = pcall(f.CreateMaskTexture, f)
+            if ok and mask then
+                mask:SetTexture(ROUND_MASK, "CLAMPTOBLACKADDITIVE", "CLAMPTOBLACKADDITIVE")
+                mask:SetAllPoints(f.icon)
+                f.icon:AddMaskTexture(mask)
+                f.mask = mask
+            end
+        end
 
+        -- The spawn count sits right of the pin, not on top of the icon.
         f.countText = f:CreateFontString(nil, "OVERLAY", "NumberFontNormalSmall")
-        f.countText:SetPoint("BOTTOMRIGHT", f, "BOTTOMRIGHT", 5, -3)
+        f.countText:SetPoint("LEFT", f, "RIGHT", 1, 0)
         f.countText:Hide()
         f:EnableMouse(true) -- hover goes through pinMixin:OnMouseEnter/Leave; the map asserts on own OnEnter scripts
         -- OnMouseDown as a script is fine (RareScanner's pins do the same on this client).

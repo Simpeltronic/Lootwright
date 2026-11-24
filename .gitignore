@@ -3,8 +3,9 @@
 dist/
 tools/data/
 docs/design-brief/pins/*
-!docs/design-brief/pins/frame_target.png
-!docs/design-brief/pins/frame_farm.png
-!docs/design-brief/pins/make_frames_final.py
+!docs/design-brief/pins/disc_target_D3.png
+!docs/design-brief/pins/disc_farm_D3.png
+!docs/design-brief/pins/make_discs.py
+!docs/design-brief/pins/discs_on_map.png
 !docs/design-brief/pins/tools.md
 !docs/design-brief/pins/preview_sheet.png
