@@ -13,7 +13,7 @@ Versions follow the rules in `CLAUDE.md` ("Versions and changelog"). Newest firs
 ### Changed
 - **Bank that completes a goal shows in light gold:** when your bags plus your bank reach the goal, the bank part of the count and the bar turn light gold instead of light green, so you can see you already have enough, waiting in the bank.
 - **Goals below what you have add on top:** in the farm popup, a number at or below your bag count is added to it (you have 30, type 1: farm to 31). The line next to the box shows it in light gold, e.g. "+1 on top (goal 31)". Bank items still show in brackets on the Farm tab.
-- **Finished goals stay until you remove them.** When you reach a farm goal, the item turns gold with a check (name, count and a full gold bar) on the Farm tab and the tracker, instead of disappearing. Its mobs lose their map skulls and "Farm:" line. Press Remove when you're done with it.
+- **Finished goals stay until you remove them.** When you reach a farm goal, the item turns gold with a check (name, count and a full gold bar) on the Farm tab and the tracker, instead of disappearing. Its mobs lose their map pins and "Farm:" line. Press Remove when you're done with it.
 - **Finished recipes too:** when you've crafted enough, the recipe row turns gold and stays until you remove it; its material rows go away.
 
 ### Fixed
