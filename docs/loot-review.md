@@ -15,12 +15,19 @@ Think of it as an inbox: rows arrive unchecked, you check them, only checked row
    - It starts with `!LW:1!` and ends with `!End:LW!`.
    - It's not huge for one player (hundreds of mob kinds with thousands of corpses each is suspicious).
    - The same share ID repeated is fine: the latest approved one wins.
-2. Looks fine? Type **x** in the OK column of that row. Looks fake or odd? Leave it empty (or write "no").
-3. File > Download > **CSV**. Save it as `tools/data/form_shares.csv` (replace the old one).
+2. Looks fine? Type **x** in the OK column of that row (only a plain `x` counts). Looks fake or odd? Leave it empty; anything other than `x` stays waiting.
+3. File > Download > **Comma-separated values (.csv)**. Save it as `tools/data/form_shares.csv` and **replace the old file**. The download always holds every row (old and new, with your earlier `x` marks), and the merge rebuilds the totals from scratch each time, so never add rows by hand.
 4. Run `python -I tools/merge_loot.py`. It prints:
    - the approved totals (corpses, mob kinds with 20+ corpses),
    - **"N form rows wait for your review"** with, per row: share ID, build, mob kinds, corpses, and whether it updates an approved share. Anything listed there is NOT counted yet.
 5. `python -I tools/release.py` does steps 4 and the rest of the build.
+
+## Good to know
+
+- **Rows without an `x`** are never counted. The merge lists them as waiting.
+- **The same player sharing again:** their new row replaces their older one (same share ID). Approve the newer row with an `x`.
+- **GitHub shares** still come in through `gh` automatically. Only the form sheet needs the CSV step.
+- **One row = one player.** If a row holds several share blocks, only the last counts, and the merge warns about it.
 
 ## Rules the data still has to pass (nothing to do by hand)
 

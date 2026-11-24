@@ -111,7 +111,7 @@ def from_issues():
 def from_form_text(text):
     """(approved [(None, row text)], waiting [(row number, time, row text)]) from the Google Form sheet.
 
-    Export the sheet as CSV. A row counts only when its "OK" column is not empty (you type x there
+    Export the sheet as CSV. A row counts only when its "OK" column is exactly x (you type it there
     after reviewing it). Approved shares are keyed by their share ID, since a form has no accounts.
     """
     rows = list(csv.reader(io.StringIO(text)))
@@ -124,7 +124,7 @@ def from_form_text(text):
         blocks = [m.group(0) for m in SHARE.finditer(body.replace("\n", ""))]
         if not blocks:
             continue
-        if ok is not None and ok < len(row) and row[ok].strip():
+        if ok is not None and ok < len(row) and row[ok].strip().lower() == "x":  # "no", "?" etc. stay waiting
             approved.append((None, blocks[-1]))  # one row = one player: extra share blocks in a row never count
         else:
             waiting.append((number, row[0] if row else "", body))
@@ -174,6 +174,7 @@ def self_check():
     sheet = f'Timestamp,Share,OK\n2026-11-25,"{s}",x\n2026-11-26,"{s}",\nnoise,hello,x\n'
     ok, wait = from_form_text(sheet)
     assert len(ok) == 1 and [w[0] for w in wait] == [3], (ok, wait)
+    assert not from_form_text(f'Timestamp,Share,OK\n1,"{s}",no\n')[0]  # only x approves
     two = f'Timestamp,Share,OK\n1,"{s} {s.replace("0a1b2c3d", "ffffffff")}",x\n'
     assert len(list(parse(from_form_text(two)[0][0][1]))) == 1  # a row with two blocks counts once
     old = {3240: {"n": 5, "e": 0, "items": {5128: 1}}}
