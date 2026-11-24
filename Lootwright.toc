@@ -8,6 +8,7 @@
 ## Dependencies: QuestieDB
 ## X-QuestieDB-Contract: 4
 ## SavedVariables: LootwrightDB
+## SavedVariablesPerCharacter: LootwrightCharDB
 ## IconTexture: Interface\AddOns\Lootwright\Media\emblem
 
 Core.lua

@@ -3,9 +3,9 @@
 -- Unlike favorites, this affects the game world, so keep the list short.
 --
 -- Two kinds of entries:
---   single items   LootwrightDB.farm = { [itemId] = true | { goal = n } }. With a goal, the item
+--   single items   LootwrightCharDB.farm = { [itemId] = true | { goal = n } } (per character). With a goal, the item
 --                  leaves the list once the bags hold that many.
---   recipe groups  LootwrightDB.farmRecipes = { [key] = { name, itemId, makes, crafts, target,
+--   recipe groups  LootwrightCharDB.farmRecipes = { [key] = { name, itemId, makes, crafts, target,
 --                  reagents = { { itemId, count, vendorOnly, sub }, ... } } }. The group (and its
 --                  materials) leaves the list once the bags hold `target` of the crafted item;
 --                  materials never leave on their own. target = owned + crafts x makes, where owned
@@ -25,15 +25,22 @@ local index    -- [npcId] = { { itemId, rate, fewKills }, ... }
 local matIndex -- [itemId] = { farmable = bool } for every material at any depth
 -- Both are rebuilt when the farm list changes.
 
-local function list()
-    LootwrightDB.farm = LootwrightDB.farm or {}
-    return LootwrightDB.farm
+-- The farm list is per character (LootwrightCharDB, SavedVariablesPerCharacter). It used to be shared
+-- (LootwrightDB.farm / .farmRecipes): the first character to log in after the change takes it over,
+-- the others start empty (user's choice).
+local function charDB()
+    LootwrightCharDB = LootwrightCharDB or {}
+    local c = LootwrightCharDB
+    if not c.farm then
+        c.farm, c.farmRecipes = LootwrightDB.farm or {}, LootwrightDB.farmRecipes or {}
+        LootwrightDB.farm, LootwrightDB.farmRecipes = nil, nil
+    end
+    return c
 end
 
-local function recipes()
-    LootwrightDB.farmRecipes = LootwrightDB.farmRecipes or {}
-    return LootwrightDB.farmRecipes
-end
+local function list() return charDB().farm end
+
+local function recipes() return charDB().farmRecipes end
 
 -- Live needs depend on bag counts and the list. Many places ask for them on each bag change (goals,
 -- ready notices, map skulls, tracker, Farm tab) and on every mob-tooltip refresh, so each recipe's
