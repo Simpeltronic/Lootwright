@@ -186,7 +186,10 @@ def main():
         texts, waiting = from_issues()
         form_ok, form_waiting = from_form()
         texts += form_ok
-    shares = [(build, who or sid, mobs) for who, text in texts for _, build, sid, mobs in parse(text)]
+    # One player may share through GitHub and the form: a share ID already seen on a GitHub issue
+    # belongs to that account, so the later share replaces the earlier one instead of adding up.
+    owner = {sid: who for who, text in texts if who for _, _, sid, _ in parse(text)}
+    shares = [(build, who or owner.get(sid, sid), mobs) for who, text in texts for _, build, sid, mobs in parse(text)]
     merged, players = merge(shares)
     OUT.parent.mkdir(exist_ok=True)
     OUT.write_text(json.dumps(merged, indent=1, sort_keys=True), encoding="utf-8")
