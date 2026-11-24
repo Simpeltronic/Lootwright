@@ -2,6 +2,14 @@
 
 Versions follow the rules in `CLAUDE.md` ("Versions and changelog"). Newest first.
 
+## 0.14.1, not released yet
+
+### Changed
+- **The "Share your loot data?" reminder is easier to catch:** if you were in combat at login, or play a long session without logging in again, it now appears at your next loading screen (a zone change or instance) once you have 100 or more new counted corpses. It still shows at most once per session, and only if you turned on loot counting.
+
+### For developers
+- `tools/merge_loot.py`: only a plain `x` in the form sheet's OK column approves a row; one form row counts as one player; a form share is linked to a GitHub account only for the repo owner's own shares. Steps in `docs/loot-review.md`.
+
 ## 0.14.0, 24 November 2026
 
 ### New

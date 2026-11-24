@@ -1,8 +1,9 @@
 -- Lootwright Welcome.lua: the first-start window and the share reminder.
 -- Welcome (once, LootwrightDB.welcomed; again with /if welcome): what Lootwright does, and two
 -- opt-ins, both off until ticked: the farm tracker (LootwrightDB.tracker) and recording your loot
--- (LootwrightDB.recordLoot). Reminder (players who opted in): at login, once you've counted
--- REMIND_EVERY corpses since your last share, a small window offers /if share.
+-- (LootwrightDB.recordLoot). Reminder (players who opted in): at login (or the next loading screen
+-- if you were in combat), once you've counted REMIND_EVERY corpses since your last share, a small
+-- window offers /if share. At most once per session.
 
 local _, ns = ...
 local Welcome = {}
@@ -137,15 +138,27 @@ local function buildReminder()
     end)
 end
 
+local asked -- the window was shown this session; later loading screens don't ask again
+
 local function remind()
-    if LootwrightDB.recordLoot ~= true or not ns.Loot or type(LootwrightDB.loot) ~= "table" then return end
+    if asked or LootwrightDB.recordLoot ~= true or not ns.Loot or type(LootwrightDB.loot) ~= "table" then return end
     local new = ns.Loot.Total() - (LootwrightDB.loot.sharedN or 0)
     if new < REMIND_EVERY or InCombatLockdown() then return end
+    asked = true
     if not reminder then buildReminder() end
     reminderText:SetText("You've counted " .. new .. " corpses since you last shared. Sharing them helps work out "
         .. "real Forever drop rates for everyone. It takes a minute: copy, paste into the form, done.")
     reminder:Show()
 end
+
+-- A second chance during play: the login check is skipped in combat, and long sessions never log in
+-- again. Each loading screen (zone, instance) tries once the login check has run, until it has asked.
+local ready
+local events = CreateFrame("Frame")
+events:RegisterEvent("PLAYER_ENTERING_WORLD")
+events:SetScript("OnEvent", function()
+    if ready and not asked then C_Timer.After(5, remind) end
+end)
 
 function Welcome.OnLogin()
     -- A little after login, so the window doesn't fight the loading screen.
@@ -156,5 +169,6 @@ function Welcome.OnLogin()
                 .. " corpses counted so far. /if share sends them in.")
         end
         remind()
+        ready = true
     end)
 end
