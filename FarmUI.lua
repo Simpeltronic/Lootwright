@@ -160,6 +160,17 @@ local function initRow(button, d)
             setBar(button.bar, stack and (n % stack) or 0, stack)
         end
     end
+    -- Goal reached: gold name, count and full bar; the row stays until the player removes it.
+    if d.done then
+        button.name:SetText(button.name:GetText() .. READY)
+        button.name:SetTextColor(ns.Theme.RGB(ns.Theme.C.brass))
+        button.count:SetText("|cffc9a24a" .. n .. " / " .. (d.target or d.goal or n) .. "|r")
+        button.bar:SetMinMaxValues(0, 1)
+        button.bar:SetValue(1)
+        button.bar:SetStatusBarColor(ns.Theme.RGB(ns.Theme.C.brass))
+        if button.bar.bankFill then button.bar.bankFill:Hide() end
+        button.bar:Show()
+    end
 end
 
 function FarmUI.Build(parent)
@@ -194,14 +205,14 @@ function FarmUI.Refresh()
     if not (page and page:IsShown()) then return end
     local rows = {}
     for _, r in ipairs(ns.Farm.RecipeList()) do
-        rows[#rows + 1] = { kind = "recipe", key = r.key, name = r.name, id = r.itemId, target = r.target, crafts = r.crafts, owned = r.owned }
+        rows[#rows + 1] = { kind = "recipe", key = r.key, name = r.name, id = r.itemId, target = r.target, crafts = r.crafts, owned = r.owned, done = r.done }
         for _, m in ipairs(r.rows or {}) do
             rows[#rows + 1] = { kind = "mat", id = m.itemId, need = m.need, vendorOnly = m.vendorOnly,
                 depth = m.depth, crafted = m.crafted, subName = m.subName, recipe = m.via }
         end
     end
     local singles = {}
-    for _, id in ipairs(ns.Farm.Ids()) do singles[#singles + 1] = { kind = "item", id = id, goal = ns.Farm.Goal(id) } end
+    for _, id in ipairs(ns.Farm.Ids()) do singles[#singles + 1] = { kind = "item", id = id, goal = ns.Farm.Goal(id), done = ns.Farm.Done(id) } end
     table.sort(singles, function(a, b) return itemName(a.id) < itemName(b.id) end)
     for _, s in ipairs(singles) do rows[#rows + 1] = s end
     list:SetDataProvider(CreateDataProvider(rows))

@@ -95,7 +95,13 @@ local function fillRow(r, line)
     r.count:SetText(line.have .. (fromBank > 0 and ("|cff7d8cad(" .. fromBank .. ")|r") or "")
         .. (goal and ("/" .. goal) or "") .. ((goal and line.have >= goal) and READY or ""))
     r.count:SetTextColor(T.RGB(T.C.muted))
-    if not goal and line.endless then
+    if line.done then
+        -- Goal reached: gold label, count and full bar; stays until removed on the Farm tab.
+        r.name:SetTextColor(T.RGB(T.C.brass))
+        r.count:SetText("|cffc9a24a" .. line.have .. (goal and ("/" .. goal) or "") .. "|r" .. READY)
+        goal, fromBank = 1, 0
+        line = { have = 1, depth = line.depth, done = true }
+    elseif not goal and line.endless then
         -- Endless: "32 · 1 stack", and the bar fills toward the next full stack, then starts over.
         local stack = ns.Farm.StackSize(line.itemId)
         local full = stack and math.floor(line.have / stack) or 0
@@ -110,7 +116,7 @@ local function fillRow(r, line)
         -- the row is WIDTH wide; the track runs from the name's left edge to 8 px from the right.
         local w = WIDTH - 8 - (8 + 14 * (line.depth or 0) + 14 + 5)
         r.fill:SetWidth(math.max(1, w * math.min(line.have, goal) / goal))
-        r.fill:SetVertexColor(T.RGB(line.have >= goal and T.C.green or T.C.greenEdge))
+        r.fill:SetVertexColor(T.RGB(line.done and T.C.brass or (line.have >= goal and T.C.green or T.C.greenEdge)))
         if fromBank > 0 then
             r.bankFill:ClearAllPoints()
             r.bankFill:SetPoint("TOP", r.track)
@@ -133,7 +139,7 @@ end
 local function collect()
     local C, lines = T.C, {}
     for _, rec in ipairs(ns.Farm.RecipeList()) do
-        lines[#lines + 1] = { itemId = rec.itemId, label = rec.name, color = C.yellow,
+        lines[#lines + 1] = { itemId = rec.itemId, label = rec.name, color = rec.done and C.brass or C.yellow, done = rec.done,
             have = rec.itemId and ns.Farm.Have(rec.itemId) or 0, goal = rec.target, depth = 0 }
         for _, m in ipairs(rec.rows or {}) do
             lines[#lines + 1] = { itemId = m.itemId, label = itemName(m.itemId),
@@ -144,7 +150,7 @@ local function collect()
     table.sort(singles, function(a, b) return itemName(a) < itemName(b) end)
     for _, id in ipairs(singles) do
         lines[#lines + 1] = { itemId = id, label = itemName(id), color = ns.Data.CraftedBy(id) and C.craft or C.green, have = ns.Farm.Have(id),
-            goal = ns.Farm.Goal(id), endless = not ns.Farm.Goal(id), depth = 0 }
+            goal = ns.Farm.Goal(id), endless = not ns.Farm.Goal(id), done = ns.Farm.Done(id), depth = 0 }
     end
     return lines
 end

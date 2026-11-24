@@ -99,6 +99,7 @@ end
 function Farm.Rows(r)
     if rowsCache[r] then return rowsCache[r] end
     local rows = {}
+    if r.done then rowsCache[r] = rows return rows end -- finished: only the gold recipe row stays
     local function walk(reagents, crafts, depth, via)
         for _, rg in ipairs(reagents or {}) do
             local need = rg.count * crafts
@@ -128,12 +129,20 @@ local function materials()
             if rg.sub then walk(rg.sub.reagents) end
         end
     end
-    for _, r in pairs(recipes()) do walk(r.reagents) end
+    for _, r in pairs(recipes()) do
+        if not r.done then walk(r.reagents) end
+    end
     return matIndex
 end
 
 -- True when the item is on the farm list in any way (single item or recipe material).
-function Farm.Has(itemId) return list()[itemId] ~= nil or materials()[itemId] ~= nil end
+function Farm.Has(itemId) return (list()[itemId] ~= nil and not Farm.Done(itemId)) or materials()[itemId] ~= nil end
+
+-- A single item whose goal was reached: it stays on the list (gold) until the player removes it.
+function Farm.Done(itemId)
+    local v = list()[itemId]
+    return type(v) == "table" and v.done == true
+end
 
 -- True when the item is on the list as a single item (what the Farm button toggles).
 function Farm.IsSingle(itemId) return list()[itemId] ~= nil end
@@ -217,22 +226,22 @@ end
 local function checkGoals()
     local any = false
     for itemId, v in pairs(list()) do
-        if type(v) == "table" and v.goal then
+        if type(v) == "table" and v.goal and not v.done then
             local n = have(itemId)
             if n >= v.goal then
-                list()[itemId] = nil
+                v.done = true -- stays (gold) until the player removes it
                 any = true
                 announce("Farm goal reached: " .. (ns.Data.ItemName(itemId) or ("item " .. itemId))
-                    .. " " .. n .. "/" .. v.goal .. ". Removed from the farm list.")
+                    .. " " .. n .. "/" .. v.goal .. ". Remove it on the Farm tab when you like.")
             end
         end
     end
     for key, r in pairs(recipes()) do
-        if r.itemId and r.target and have(r.itemId) >= r.target then
-            recipes()[key] = nil
+        if r.itemId and r.target and not r.done and have(r.itemId) >= r.target then
+            r.done = true -- stays (gold) until the player removes it
             any = true
             announce("Recipe goal reached: " .. r.name .. " " .. have(r.itemId) .. "/" .. r.target
-                .. ". Removed it and its materials from the farm list.")
+                .. ". Remove it on the Farm tab when you like.")
         end
     end
     if any then notify() end
@@ -291,7 +300,7 @@ end
 function Farm.RecipeList()
     local t = {}
     for key, r in pairs(recipes()) do
-        t[#t + 1] = { key = key, name = r.name, itemId = r.itemId, target = r.target, crafts = r.crafts, owned = r.owned,
+        t[#t + 1] = { key = key, name = r.name, itemId = r.itemId, target = r.target, crafts = r.crafts, owned = r.owned, done = r.done,
             rows = Farm.Rows(r) }
     end
     table.sort(t, function(a, b) return a.name < b.name end)
@@ -302,7 +311,9 @@ end
 -- Returns { [itemId] = true }.
 function Farm.WantedItems()
     local t = {}
-    for id in pairs(list()) do t[id] = true end
+    for id in pairs(list()) do
+        if not Farm.Done(id) then t[id] = true end -- finished items get no skulls
+    end
     for id, m in pairs(materials()) do
         if m.farmable and (Farm.Need(id) or 0) > 0 then t[id] = true end
     end
@@ -321,7 +332,9 @@ local function build()
     index = {}
     if not ns.Data.Available() then return end
     local ids = {}
-    for itemId in pairs(list()) do ids[itemId] = true end
+    for itemId in pairs(list()) do
+        if not Farm.Done(itemId) then ids[itemId] = true end -- finished items get no mob lines
+    end
     for itemId, m in pairs(materials()) do
         if m.farmable then ids[itemId] = true end -- vendor-only materials get no mob lines
     end
