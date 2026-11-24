@@ -28,6 +28,12 @@ local TOGGLES = {
           if ns.Map.toggle then ns.Map.toggle:SetChecked(LootwrightDB.mapPins ~= false) end
           ns.Map.RefreshFarmPins(true)
       end },
+    { key = "mapToggle", label = "\"Lootwright\" checkbox on the world map",
+      tip = "The small checkbox in the map's bottom-right corner that shows or hides Lootwright's pins. "
+          .. "Hide it if it covers something; the pins option above still works.",
+      onChange = function()
+          if ns.Map.toggle then ns.Map.toggle:SetShown(LootwrightDB.mapToggle ~= false) end
+      end },
     -- Off by default (defaultOff): only true turns it on.
     { key = "recordLoot", label = "Help improve drop rates: record my loot", defaultOff = true,
       tip = "Counts the corpses you loot and what was on them, on this PC only, so mob tooltips show your own drop rate. "

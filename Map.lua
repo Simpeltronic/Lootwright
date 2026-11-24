@@ -189,6 +189,7 @@ local function setup()
         GameTooltip:Show()
     end)
     cb:SetScript("OnLeave", function() GameTooltip:Hide() end)
+    cb:SetShown(LootwrightDB.mapToggle ~= false)
     Map.toggle = cb
     return true
 end
