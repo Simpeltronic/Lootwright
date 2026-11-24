@@ -5,7 +5,7 @@ Versions follow the rules in `CLAUDE.md` ("Versions and changelog"). Newest firs
 ## 0.14.0, not released yet
 
 ### New
-- **Drop rates from players:** loot that Lootwright players share with `/if share` now becomes drop rates for everyone, once a mob has 20 or more looted corpses in the shared data. They are measured in Forever, so they take priority over the other rates. The mob tooltip says "Measured in Forever by Lootwright players: 9 of 40 corpses". Mobs only players have seen dropping an item are added to the list. Your own counts still fill in where the shared data has fewer than 20 corpses.
+- **Drop rates from players:** loot that Lootwright players share with `/if share` now becomes drop rates for everyone, once a mob has 20 or more looted corpses in the shared data, from at least two players. They are measured in Forever, so they take priority over the other rates. The mob tooltip says "Measured in Forever by Lootwright players: 9 of 40 corpses". Mobs only players have seen dropping an item are added to the list. Your own counts still fill in where the shared data has fewer than 20 corpses.
 
 ### For developers
 - `LibLootwright.CommunityRates(itemId)` (added to contract 1): `{ [npcId] = { k, n } }` from shared loot. `tools/release.py` fetches the latest shares before building.

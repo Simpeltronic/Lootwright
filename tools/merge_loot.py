@@ -43,15 +43,20 @@ def parse(text):
 
 
 def merge(shares):
-    """shares: [(build, sid, mobs)] oldest first. Latest share per sid wins; sums per build."""
+    """shares: [(build, who, mobs)] oldest first. Latest share per contributor wins; sums per build.
+
+    who is the GitHub account that posted the issue (not the share ID inside the text, which the
+    poster chooses), so one account counts once however many shares it posts. "p" = contributors.
+    """
     latest = {}
-    for build, sid, mobs in shares:
-        latest[sid] = (build, mobs)
+    for build, who, mobs in shares:
+        latest[who] = (build, mobs)
     out = {}
     for build, mobs in latest.values():
         b = out.setdefault(build, {})
         for npc, m in mobs.items():
-            t = b.setdefault(npc, {"n": 0, "e": 0, "items": {}})
+            t = b.setdefault(npc, {"n": 0, "e": 0, "p": 0, "items": {}})
+            t["p"] += 1
             t["n"] += m["n"]
             t["e"] += m["e"]
             for item, c in m["items"].items():
@@ -62,10 +67,10 @@ def merge(shares):
 def from_issues():
     raw = subprocess.run(
         ["gh", "issue", "list", "--repo", REPO, "--label", "loot-data", "--state", "all",
-         "--limit", "1000", "--json", "number,createdAt,body"],
+         "--limit", "1000", "--json", "number,createdAt,body,author"],
         capture_output=True, text=True, check=True).stdout
     for issue in sorted(json.loads(raw), key=lambda i: i["createdAt"]):
-        yield issue["body"] or ""
+        yield (issue.get("author") or {}).get("login") or f"issue{issue['number']}", issue["body"] or ""
 
 
 def self_check():
@@ -75,13 +80,16 @@ def self_check():
     assert mobs == {3240: {"n": 20, "e": 3, "items": {5128: 9, 5470: 2}}, 99: {"n": 5, "e": 5, "items": {}}}, mobs
     old = {3240: {"n": 5, "e": 0, "items": {5128: 1}}}
     merged, players = merge([("1.60.1", "a", old), ("1.60.1", "a", mobs), ("1.60.1", "b", old)])
-    assert players == 2 and merged["1.60.1"][3240] == {"n": 25, "e": 3, "items": {5128: 10, 5470: 2}}, merged
+    assert players == 2 and merged["1.60.1"][3240] == {"n": 25, "e": 3, "p": 2, "items": {5128: 10, 5470: 2}}, merged
 
 
 def main():
     self_check()
-    texts = [pathlib.Path(sys.argv[1]).read_text(encoding="utf-8")] if len(sys.argv) > 1 else list(from_issues())
-    shares = [(build, sid, mobs) for text in texts for _, build, sid, mobs in parse(text)]
+    if len(sys.argv) > 1:  # a file you saved yourself (emailed shares): trusted, keyed by share ID
+        texts = [(None, pathlib.Path(sys.argv[1]).read_text(encoding="utf-8"))]
+    else:
+        texts = list(from_issues())
+    shares = [(build, who or sid, mobs) for who, text in texts for _, build, sid, mobs in parse(text)]
     merged, players = merge(shares)
     OUT.parent.mkdir(exist_ok=True)
     OUT.write_text(json.dumps(merged, indent=1, sort_keys=True), encoding="utf-8")
@@ -90,6 +98,7 @@ def main():
         enough = sum(1 for m in mobs.values() if m["n"] >= 20)
         print(f"build {build}: {corpses} corpses, {len(mobs)} mob kinds ({enough} with 20+ corpses)")
     print(f"{len(shares)} shares from {players} players -> {OUT.relative_to(OUT.parent.parent.parent)}")
+    print("Contributors: " + ", ".join(sorted({w for w, _ in texts if w})))
 
 
 if __name__ == "__main__":

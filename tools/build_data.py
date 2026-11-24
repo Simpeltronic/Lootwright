@@ -383,24 +383,30 @@ def self_check():
 
 COMMUNITY = pathlib.Path(__file__).resolve().parent / "data" / "community_loot.json"
 COMMUNITY_MIN_CORPSES = 20  # same as Loot.MIN_CORPSES in game
+COMMUNITY_MIN_PLAYERS = 2   # shares are unreviewed GitHub posts: one account alone can't set a rate
 
 
 def build_community(merged):
     """communityRates[item] = "npc:k:n;..." from merge_loot.py's output (players' shared loot).
 
-    Only mobs with at least COMMUNITY_MIN_CORPSES looted corpses, and only items seen on them.
-    shortcut: counts from all game builds are added up; split per build if Forever changes mob loot.
+    Only mobs with at least COMMUNITY_MIN_CORPSES looted corpses from COMMUNITY_MIN_PLAYERS GitHub
+    accounts (merge_loot.py counts one share per account), and only items seen on them.
+    shortcut: counts from all game builds are added up, and contributors are the most in any one build;
+    split per build if Forever changes mob loot.
+    shortcut: one contributor can still hold most of a mob's corpses; cap each account's part
+    in merge_loot.py if abuse shows up.
     """
     mobs = {}
     for per_build in merged.values():
         for npc, m in per_build.items():
-            t = mobs.setdefault(int(npc), {"n": 0, "items": {}})
+            t = mobs.setdefault(int(npc), {"n": 0, "p": 0, "items": {}})
             t["n"] += m["n"]
+            t["p"] = max(t["p"], m.get("p", 1))
             for item, k in m.get("items", {}).items():
                 t["items"][int(item)] = t["items"].get(int(item), 0) + k
     rates = {}
     for npc, t in sorted(mobs.items()):
-        if t["n"] < COMMUNITY_MIN_CORPSES:
+        if t["n"] < COMMUNITY_MIN_CORPSES or t["p"] < COMMUNITY_MIN_PLAYERS:
             continue
         for item, k in sorted(t["items"].items()):
             if 0 < k <= t["n"]:
@@ -410,8 +416,9 @@ def build_community(merged):
 
 def main():
     self_check()
-    assert build_community({"1.60.1": {"7": {"n": 15, "items": {"5": 3}}, "8": {"n": 9, "items": {}}},
-                            "1.60.2": {"7": {"n": 10, "items": {"5": 2, "6": 0}}}}) == {5: "7:5:25"}
+    assert build_community({"1.60.1": {"7": {"n": 15, "p": 2, "items": {"5": 3}}, "8": {"n": 9, "items": {}},
+                                       "9": {"n": 500, "p": 1, "items": {"5": 500}}},
+                            "1.60.2": {"7": {"n": 10, "p": 1, "items": {"5": 2, "6": 0}}}}) == {5: "7:5:25"}
     src = pathlib.Path(sys.argv[1] if len(sys.argv) > 1 else DEFAULT_SRC)
     credit, recipes = read_assignment(src / "Recipes.lua", "recipes")
     _, loot = read_assignment(src / "Loot.lua", "lootDB")
