@@ -46,17 +46,18 @@ def merge(shares):
     """shares: [(build, who, mobs)] oldest first. Latest share per contributor wins; sums per build.
 
     who is the GitHub account that posted the issue (not the share ID inside the text, which the
-    poster chooses), so one account counts once however many shares it posts. "p" = contributors.
+    poster chooses), so one account counts once however many shares it posts.
+    "by" = corpses per contributor, so build_data.py can check contributors over all builds.
     """
     latest = {}
     for build, who, mobs in shares:
         latest[who] = (build, mobs)
     out = {}
-    for build, mobs in latest.values():
+    for who, (build, mobs) in latest.items():
         b = out.setdefault(build, {})
         for npc, m in mobs.items():
-            t = b.setdefault(npc, {"n": 0, "e": 0, "p": 0, "items": {}})
-            t["p"] += 1
+            t = b.setdefault(npc, {"n": 0, "e": 0, "by": {}, "items": {}})
+            t["by"][who] = m["n"]
             t["n"] += m["n"]
             t["e"] += m["e"]
             for item, c in m["items"].items():
@@ -80,7 +81,7 @@ def self_check():
     assert mobs == {3240: {"n": 20, "e": 3, "items": {5128: 9, 5470: 2}}, 99: {"n": 5, "e": 5, "items": {}}}, mobs
     old = {3240: {"n": 5, "e": 0, "items": {5128: 1}}}
     merged, players = merge([("1.60.1", "a", old), ("1.60.1", "a", mobs), ("1.60.1", "b", old)])
-    assert players == 2 and merged["1.60.1"][3240] == {"n": 25, "e": 3, "p": 2, "items": {5128: 10, 5470: 2}}, merged
+    assert players == 2 and merged["1.60.1"][3240] == {"n": 25, "e": 3, "by": {"a": 20, "b": 5}, "items": {5128: 10, 5470: 2}}, merged
 
 
 def main():

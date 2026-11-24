@@ -384,29 +384,32 @@ def self_check():
 COMMUNITY = pathlib.Path(__file__).resolve().parent / "data" / "community_loot.json"
 COMMUNITY_MIN_CORPSES = 20  # same as Loot.MIN_CORPSES in game
 COMMUNITY_MIN_PLAYERS = 2   # shares are unreviewed GitHub posts: one account alone can't set a rate
+COMMUNITY_MAX_PART = 0.75   # nor can one account hold more than this part of a mob's corpses
 
 
 def build_community(merged):
     """communityRates[item] = "npc:k:n;..." from merge_loot.py's output (players' shared loot).
 
     Only mobs with at least COMMUNITY_MIN_CORPSES looted corpses from COMMUNITY_MIN_PLAYERS GitHub
-    accounts (merge_loot.py counts one share per account), and only items seen on them.
-    shortcut: counts from all game builds are added up, and contributors are the most in any one build;
-    split per build if Forever changes mob loot.
-    shortcut: one contributor can still hold most of a mob's corpses; cap each account's part
-    in merge_loot.py if abuse shows up.
+    accounts (merge_loot.py keeps one share per account), none of them over COMMUNITY_MAX_PART of
+    the corpses, counted over all builds together; only items seen on them.
+    shortcut: counts from all game builds are added up, and any build string is accepted;
+    split per build (and check builds) if Forever changes mob loot.
     """
     mobs = {}
     for per_build in merged.values():
         for npc, m in per_build.items():
-            t = mobs.setdefault(int(npc), {"n": 0, "p": 0, "items": {}})
+            t = mobs.setdefault(int(npc), {"n": 0, "by": {}, "items": {}})
             t["n"] += m["n"]
-            t["p"] = max(t["p"], m.get("p", 1))
+            for who, n in m.get("by", {}).items():
+                t["by"][who] = t["by"].get(who, 0) + n
             for item, k in m.get("items", {}).items():
                 t["items"][int(item)] = t["items"].get(int(item), 0) + k
     rates = {}
     for npc, t in sorted(mobs.items()):
-        if t["n"] < COMMUNITY_MIN_CORPSES or t["p"] < COMMUNITY_MIN_PLAYERS:
+        by = t["by"].values()
+        if (t["n"] < COMMUNITY_MIN_CORPSES or len(by) < COMMUNITY_MIN_PLAYERS
+                or max(by) > COMMUNITY_MAX_PART * t["n"]):
             continue
         for item, k in sorted(t["items"].items()):
             if 0 < k <= t["n"]:
@@ -416,9 +419,11 @@ def build_community(merged):
 
 def main():
     self_check()
-    assert build_community({"1.60.1": {"7": {"n": 15, "p": 2, "items": {"5": 3}}, "8": {"n": 9, "items": {}},
-                                       "9": {"n": 500, "p": 1, "items": {"5": 500}}},
-                            "1.60.2": {"7": {"n": 10, "p": 1, "items": {"5": 2, "6": 0}}}}) == {5: "7:5:25"}
+    assert build_community({  # 7: two accounts over two builds; 8: too few; 9: one account in a fake build
+        "1.60.1": {"7": {"n": 15, "by": {"a": 15}, "items": {"5": 3}}, "8": {"n": 9, "items": {}},
+                   "9": {"n": 2, "by": {"a": 1, "b": 1}, "items": {}}},
+        "x": {"7": {"n": 10, "by": {"b": 10}, "items": {"5": 2, "6": 0}},
+              "9": {"n": 500, "by": {"a": 500}, "items": {"5": 500}}}}) == {5: "7:5:25"}
     src = pathlib.Path(sys.argv[1] if len(sys.argv) > 1 else DEFAULT_SRC)
     credit, recipes = read_assignment(src / "Recipes.lua", "recipes")
     _, loot = read_assignment(src / "Loot.lua", "lootDB")
