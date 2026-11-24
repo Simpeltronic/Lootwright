@@ -30,7 +30,7 @@ local TOGGLES = {
       end },
     -- Off by default (defaultOff): only true turns it on.
     { key = "pinOverlap", label = "Let Lootwright pins overlap other addons' pins", defaultOff = true,
-      tip = "Off: Lootwright moves its pins a little to the side when they would cover Questie's or RareScanner's pins.",
+      tip = "Off: when a Lootwright pin would cover Questie's or RareScanner's pin, Lootwright hides it and adds its info to that pin's tooltip.",
       onChange = function() ns.Map.RefreshFarmPins(true) end },
     { key = "recordLoot", label = "Help improve drop rates: record my loot", defaultOff = true,
       tip = "Counts the corpses you loot and what was on them, on this PC only, so mob tooltips show your own drop rate. "
