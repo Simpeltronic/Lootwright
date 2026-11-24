@@ -27,96 +27,6 @@ local pinMixin -- built on first use, once MapCanvasPinMixin is surely loaded
 
 local missing  -- defined with the farm pins below; the tooltip uses it too
 
--- Other addons' pins (Questie, RareScanner...): when one of ours would cover one of theirs, ours is
--- hidden and its info goes into their tooltip instead (unless the player allows overlap, option
--- pinOverlap). Questie kill-quest pins for mobs that drop a farm item get an "also drops" line.
-local notes = setmetatable({}, { __mode = "k" }) -- [their frame] = { lines } from our hidden pins
-local hooked = setmetatable({}, { __mode = "k" })
-
-local function pinLines(p, m)
-    local lines = {}
-    for _, id in ipairs(m and m.farmIds or {}) do
-        local left = missing(id)
-        lines[#lines + 1] = "Lootwright: " .. (ns.Data.ItemName(id) or ("item " .. id))
-            .. (left > 0 and (" (need " .. left .. ")") or "")
-    end
-    if #lines == 0 and m and m.name then lines[1] = "Lootwright: " .. m.name end
-    return lines
-end
-
-local function addOurLines(frame)
-    local any = false
-    local d = frame.data -- Questie: Type "monster" + ObjectiveTargetId (the NPC) on kill objectives
-    if type(d) == "table" and d.Type == "monster" and tonumber(d.ObjectiveTargetId) then
-        for _, e in ipairs(ns.Farm.ForNpc(tonumber(d.ObjectiveTargetId)) or {}) do
-            GameTooltip:AddLine("Lootwright: also drops " .. ns.Farm.Line(e), 0.25, 1, 0.25, true)
-            any = true
-        end
-    end
-    for _, line in ipairs(notes[frame] or {}) do
-        GameTooltip:AddLine(line, 0.25, 1, 0.25, true)
-        any = true
-    end
-    if any then GameTooltip:Show() end
-end
-
--- Their tooltip frame: HereBeDragons pins (Questie) hold the addon's icon frame in .icon, which has
--- its own OnEnter; other canvas pins use OnMouseEnter methods. Hooked once per frame.
-local function tooltipFrame(o)
-    if o.icon and o.icon.HookScript and o.icon:GetScript("OnEnter") then return o.icon, "script" end
-    if type(o.OnMouseEnter) == "function" then return o, "method" end
-end
-
-local function hookTooltip(frame, how)
-    if hooked[frame] then return end
-    hooked[frame] = true
-    if how == "script" then
-        frame:HookScript("OnEnter", function(self) addOurLines(self) end)
-    else
-        hooksecurefunc(frame, "OnMouseEnter", function(self) addOurLines(self) end)
-    end
-end
-
-local function resolveOverlaps()
-    if not (WorldMapFrame and WorldMapFrame:IsShown() and WorldMapFrame.EnumerateAllPins) then return end
-    local canvas = WorldMapFrame:GetCanvas()
-    local w, h = canvas:GetSize()
-    if not w or w == 0 or h == 0 then return end
-    local others, ours = {}, {}
-    local ok = pcall(function()
-        for pin in WorldMapFrame:EnumerateAllPins() do
-            if pin.normalizedX and pin:IsShown() then
-                if pin.pinTemplate == TEMPLATE then ours[#ours + 1] = pin
-                else others[#others + 1] = pin end
-            end
-        end
-    end)
-    if not ok then return end
-    wipe(notes)
-    for _, o in ipairs(others) do
-        local f, how = tooltipFrame(o)
-        if f then hookTooltip(f, how) end
-    end
-    if LootwrightDB.pinOverlap == true then return end
-    for _, pin in ipairs(ours) do
-        local reach0 = pin:GetWidth()
-        for _, o in ipairs(others) do
-            local reach = (reach0 + o:GetWidth()) / 2
-            if math.abs((o.normalizedX - pin.normalizedX) * w) < reach
-                and math.abs((o.normalizedY - pin.normalizedY) * h) < reach then
-                local f = tooltipFrame(o)
-                if f then -- only hide ours when their tooltip can carry our info
-                    local list = notes[f] or {}
-                    notes[f] = list
-                    for _, line in ipairs(pinLines(pin.point, pin.mob)) do list[#list + 1] = line end
-                    pin:Hide()
-                end
-                break
-            end
-        end
-    end
-end
-
 local function setup()
     if provider then return true end
     if not WorldMapFrame and C_AddOns and C_AddOns.LoadAddOn then C_AddOns.LoadAddOn("Blizzard_WorldMap") end
@@ -255,7 +165,6 @@ local function setup()
         for _, p in ipairs(farmPins) do
             if p.mapId == mapId then self:GetMap():AcquirePin(TEMPLATE, p, p.mob) end
         end
-        C_Timer.After(0, resolveOverlaps) -- other addons' pins may be added after ours
     end
     WorldMapFrame:AddDataProvider(provider)
 
@@ -434,15 +343,4 @@ loginFrame:SetScript("OnEvent", function()
         setup() -- the provider must exist so the pins show when the map opens
         Map.RefreshFarmPins(true)
     end)
-end)
-
--- Questie and others redraw their pins when quests change: redraw ours too, so the nudging stays right.
-local questWatch = CreateFrame("Frame")
-for _, ev in ipairs({ "QUEST_TURNED_IN", "QUEST_ACCEPTED", "QUEST_REMOVED" }) do
-    pcall(questWatch.RegisterEvent, questWatch, ev)
-end
-questWatch:SetScript("OnEvent", function()
-    if provider and WorldMapFrame and WorldMapFrame:IsShown() then
-        C_Timer.After(0.5, function() provider:RefreshAllData() end)
-    end
 end)
