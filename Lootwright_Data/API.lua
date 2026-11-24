@@ -11,6 +11,9 @@
 --   LibLootwright.RequireContract(n)       true if this library offers contract n, else false + message
 --   LibLootwright.MobRates(itemId)         { [npcId] = percent } from CMaNGOS classic-db (Classic 1.12,
 --                                          drops of 1% and up, rough for Forever), or nil
+--   LibLootwright.CommunityRates(itemId)   { [npcId] = { k = corpses with the item, n = looted corpses } } from
+--                                          Lootwright players' shared loot in Forever (mobs with 20+ corpses;
+--                                          open data, CC BY 4.0, credit "Lootwright players"), or nil
 --   LibLootwright.BossLoot(itemId)         { [npcId] = { rate = percent or nil, kills = n, measured = bool } }
 --                                          dungeon and raid bosses; measured = rate measured in Forever
 --                                          (ForeverDB.net, over `kills` kills), else Classic data; or nil
@@ -39,6 +42,15 @@ function Lib.MobRates(itemId)
     if type(s) ~= "string" then return nil end
     local t = {}
     for npc, pct in s:gmatch("(%d+):([%d.]+)") do t[tonumber(npc)] = tonumber(pct) end
+    return t
+end
+
+-- Added to contract 1 in Lootwright 0.14.0 (new function, nothing else changed).
+function Lib.CommunityRates(itemId)
+    local s = data.communityRates and data.communityRates[itemId]
+    if type(s) ~= "string" then return nil end
+    local t = {}
+    for npc, k, n in s:gmatch("(%d+):(%d+):(%d+)") do t[tonumber(npc)] = { k = tonumber(k), n = tonumber(n) } end
     return t
 end
 

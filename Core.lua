@@ -17,7 +17,7 @@
 --   /if raw npc <id>    dump raw fields for an NPC, including the spawn table layout
 
 local _, ns = ...
-local VERSION = "0.13.0"
+local VERSION = "0.14.0"
 ns.VERSION = VERSION
 LootwrightDB = LootwrightDB or {}
 
@@ -187,6 +187,11 @@ local function cmdStatus()
     local gen = ns.GetGen()
     say("Recipes, boss loot, mob rates (Lootwright_Data): " .. (gen and ("ForeverDB " .. tostring(gen.version) .. ", " .. tostring(gen.mobRatesFrom)) or "off or not installed")
         .. ". Data from ForeverDB.net (https://foreverdb.net) and CMaNGOS classic-db")
+    if gen then
+        local n = 0
+        for _ in pairs(gen.communityRates or {}) do n = n + 1 end
+        say("Players' shared loot: " .. n .. " items with rates from 20+ corpses (open data, CC BY 4.0)")
+    end
     say("Professions (Lootwright_Professions): " .. (ns.ProfUI and "loaded" or "off or not installed"))
 end
 

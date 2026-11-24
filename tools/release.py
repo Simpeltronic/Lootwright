@@ -1,6 +1,6 @@
 """One command for releases: bump the version, build everything, mark a release done.
 
-  python -I tools/release.py                 build: data, zip, checks, prints the changelog section
+  python -I tools/release.py                 build: shared loot, data, zip, checks, copies the changelog
   python -I tools/release.py bump patch      0.10.0 -> 0.10.1 (fixes, data rebuilds, tweaks)
   python -I tools/release.py bump minor      0.10.1 -> 0.11.0 (new features, options, data sources)
   python -I tools/release.py bump 1.0.0      an exact version
@@ -117,6 +117,10 @@ def notes(version=None):
 
 def build():
     version = current()
+    print("--- merge_loot.py (players' shared loot from GitHub)")
+    r = subprocess.run([sys.executable, "-I", str(ROOT / "tools" / "merge_loot.py")], cwd=ROOT)
+    if r.returncode:
+        print("Couldn't fetch shared loot (no gh or no network); building with the last merged file.")
     for script in ("build_data.py", "package.py"):
         print(f"--- {script}")
         r = subprocess.run([sys.executable, "-I", str(ROOT / "tools" / script)], cwd=ROOT)

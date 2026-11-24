@@ -56,7 +56,7 @@ local function isChecked(t)
 end
 
 local SUBADDONS = {
-    { name = "Lootwright_Data", label = "Lootwright - Data", what = "recipes, boss loot (ForeverDB.net) and mob drop rates (CMaNGOS)" },
+    { name = "Lootwright_Data", label = "Lootwright - Data", what = "recipes, boss loot (ForeverDB.net), mob drop rates (CMaNGOS, players' shared loot)" },
     { name = "Lootwright_Professions", label = "Lootwright - Professions", what = "the Professions tab" },
 }
 

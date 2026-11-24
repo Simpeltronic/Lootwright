@@ -71,7 +71,7 @@ h3 { font: 600 12px/1 var(--body); letter-spacing: .08em; text-transform: upperc
     <li class="step">
       <h2>Build the zip</h2>
       <div class="cmd"><pre>python -I tools/release.py</pre><button type="button">Copy</button></div>
-      <p>This rebuilds the data, makes <code>dist\Lootwright-0.x.y.zip</code>, checks that all version numbers match, and <b>copies the changelog to your clipboard</b>, ready to paste. It also saves it as <code>dist\changelog-0.x.y.md</code>.</p>
+      <p>This fetches players' shared loot from GitHub (with <code>gh</code>; if that fails it uses the last fetched copy), rebuilds the data, makes <code>dist\Lootwright-0.x.y.zip</code>, checks that all version numbers match, and <b>copies the changelog to your clipboard</b>, ready to paste. It also saves it as <code>dist\changelog-0.x.y.md</code>.</p>
       <p>Copied something else since? Put the changelog back on the clipboard with:</p>
       <div class="cmd"><pre>python -I tools/release.py notes</pre><button type="button">Copy</button></div>
     </li>

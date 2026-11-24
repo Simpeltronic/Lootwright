@@ -193,6 +193,9 @@ local function initMobRow(button, r)
             elseif m.notSeen then
                 GameTooltip:AddLine(string.format("Not seen in your loot: none on %d corpses, so likely not %s here",
                     m.ownN, ns.RateText(m.rate, false, m.rough)), 1, 0.5, 0.25)
+            elseif m.source == "community" then
+                GameTooltip:AddLine(string.format("Measured in Forever by Lootwright players: %d of %d corpses",
+                    m.commK, m.commN), 0.4, 0.8, 1)
             elseif m.source == "you" then
                 GameTooltip:AddLine("Drop rate from your own loot", 0.4, 0.8, 1)
             elseif m.rough then
@@ -760,7 +763,7 @@ local function build()
     local foot = page:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
     foot:SetPoint("BOTTOMLEFT", 260, 12)
     foot:SetJustifyH("LEFT")
-    foot:SetText("Rates: QuestieDB, ForeverDB.net and CMaNGOS data. ~ = rough, * = very few kills.")
+    foot:SetText("Rates: players' shared loot, QuestieDB, ForeverDB.net and CMaNGOS. ~ = rough, * = very few kills.")
 
     filterText = page:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     filterText:SetPoint("BOTTOMRIGHT", -16, 12)

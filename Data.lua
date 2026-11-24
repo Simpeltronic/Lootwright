@@ -176,6 +176,21 @@ local function mobRates(itemId)
     return lib and lib.MobRates(itemId)
 end
 
+-- Players' shared loot (LibLootwright.CommunityRates): { [npcId] = { k, n } } for mobs with 20+ corpses, or nil.
+local function communityRates(itemId)
+    local lib = ns.Lib()
+    return lib and lib.CommunityRates and lib.CommunityRates(itemId)
+end
+
+-- A community rate is measured in Forever by many players, so it beats every other rate except a
+-- ForeverDB boss rate measured over more kills.
+local function applyCommunity(row, c)
+    if not c then return end
+    if row.source == "foreverdb" and (row.kills or 0) >= c.n then return end
+    row.rate, row.source, row.rough, row.fewKills, row.kills = 100 * c.k / c.n, "community", false, false, nil
+    row.commK, row.commN = c.k, c.n
+end
+
 -- A plain mob row from QuestieDB, with no rate yet.
 local function npcRow(L, npcId)
     return {
@@ -195,8 +210,8 @@ end
 --   item seen: your measured rate replaces an unknown or rough one (source "you");
 --   never seen and the shown rate is above what your corpses allow: notSeen (grey, sorted last).
 -- Same 95% range test as build_data.py's agreement check.
--- When community rates arrive: don't add these counts to them (shared kills are already in them);
--- use your counts only where the community has too few corpses.
+-- Never added to community rates (your shared kills are already in them): a community rate isn't
+-- unknown or rough, so your counts only replace rates where the community has too few corpses.
 local function applyOwnLoot(row, itemId)
     if not ns.Loot then return end
     local k, n = ns.Loot.Get(row.npcId, itemId)
@@ -243,6 +258,7 @@ function Data.GetSources(itemId)
     end
     local boss = bossLoot(itemId) or {}
     local cm = mobRates(itemId) or {}
+    local comm = communityRates(itemId) or {}
     local seen = {}
     for _, npcId in ipairs(npcs) do
         local rate, src = dropRate(itemId, npcId)
@@ -264,6 +280,7 @@ function Data.GetSources(itemId)
             -- rough: CMaNGOS matched only 38% of rates measured in Forever (build_data.py agreement check)
             row.rate, row.source, row.fewKills, row.rough = cm[npcId], "cmangos", false, true
         end
+        applyCommunity(row, comm[npcId])
         seen[npcId] = true
         result.mobs[#result.mobs + 1] = row
     end
@@ -287,6 +304,7 @@ function Data.GetSources(itemId)
                 fewKills = false,
             }
             applyBossLoot(row, b)
+            applyCommunity(row, comm[npcId])
             seen[npcId] = true
             result.mobs[#result.mobs + 1] = row
         end
@@ -298,6 +316,17 @@ function Data.GetSources(itemId)
         if not seen[npcId] and L.Npc.name(npcId) then
             local row = npcRow(L, npcId)
             row.rate, row.source, row.rough, row.cmOnly = pct, "cmangos", true, true
+            applyCommunity(row, comm[npcId])
+            seen[npcId] = true
+            result.mobs[#result.mobs + 1] = row
+        end
+    end
+
+    -- Mobs players' shared loot shows dropping it that no source lists.
+    for npcId, c in pairs(comm) do
+        if not seen[npcId] and L.Npc.name(npcId) then
+            local row = npcRow(L, npcId)
+            applyCommunity(row, c)
             seen[npcId] = true
             result.mobs[#result.mobs + 1] = row
         end
