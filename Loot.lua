@@ -198,6 +198,12 @@ do
     assert(lo < 50 and hi > 50 and Loot.Range(0, 30) == 0)
 end
 
+-- Quest items are never recorded (they drop only on the quest), so your loot can't judge them.
+function Loot.IsQuestItem(itemId)
+    local ok, _, _, _, _, _, classId = pcall(C_Item.GetItemInfoInstant, itemId)
+    return ok and classId == 12
+end
+
 -- Your count for one mob and item: corpses it was on, looted corpses. nil when you've looted none.
 function Loot.Get(npcId, itemId)
     local l = LootwrightDB.loot
@@ -219,6 +225,7 @@ end
 -- Tooltip line for a mob row, e.g. "You: 9 of 40 corpses (22.5%, likely 12-38%)", or nil.
 -- inside: true/false when the source rate fits your range (enough corpses), else nil.
 function Loot.Line(npcId, itemId, sourceRate)
+    if Loot.IsQuestItem(itemId) then return "Quest item: not counted in your loot" end
     local k, n = Loot.Get(npcId, itemId)
     if not k then return nil end
     local line = string.format("You: %d of %d corpses", k, n)

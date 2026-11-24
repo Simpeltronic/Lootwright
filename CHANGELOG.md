@@ -2,6 +2,11 @@
 
 Versions follow the rules in `CLAUDE.md` ("Versions and changelog"). Newest first.
 
+## 0.15.1, not released yet
+
+### Fixed
+- **Quest items no longer turn mobs grey:** Lootwright never counts quest items in your loot (they drop only while you're on the quest), so after 20 corpses it read "0 seen" and marked every mob "Not seen in your loot": grey, last in the list and without map pins. Quest items are now left out of that check, and the mob tooltip says "Quest item: not counted in your loot" instead of "0 of 13 corpses".
+
 ## 0.15.0, 24 November 2026
 
 ### New

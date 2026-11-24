@@ -213,7 +213,7 @@ end
 -- Never added to community rates (your shared kills are already in them): a community rate isn't
 -- unknown or rough, so your counts only replace rates where the community has too few corpses.
 local function applyOwnLoot(row, itemId)
-    if not ns.Loot then return end
+    if not ns.Loot or ns.Loot.IsQuestItem(itemId) then return end -- quest items are never recorded: 0 means nothing
     local k, n = ns.Loot.Get(row.npcId, itemId)
     if not k or n < ns.Loot.MIN_CORPSES then return end
     row.ownK, row.ownN = k, n
