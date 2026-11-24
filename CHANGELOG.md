@@ -11,6 +11,9 @@ Versions follow the rules in `CLAUDE.md` ("Versions and changelog"). Newest firs
 - **Finished goals stay until you remove them.** When you reach a farm goal, the item turns gold with a check (name, count and a full gold bar) on the Farm tab and the tracker, instead of disappearing. Its mobs lose their map skulls and "Farm:" line. Press Remove when you're done with it.
 - **Finished recipes too:** when you've crafted enough, the recipe row turns gold and stays until you remove it; its material rows go away.
 
+### Fixed
+- Farming something your profession can craft (like Bolt of Silk Cloth) added it as a plain item instead of its recipe, when the game reported an empty realm name. Lootwright now asks the game which professions you have.
+
 ## 0.11.0, 24 November 2026
 
 ### New

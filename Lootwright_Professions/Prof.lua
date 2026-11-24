@@ -22,11 +22,37 @@ local function itemIdFromLink(link)
     return type(link) == "string" and tonumber(link:match("item:(%d+)")) or nil
 end
 
+-- The saved-scans key for this character: "Name-Realm". On Forever the realm name can come back
+-- empty, so fall back to the normalized realm name, then to this name's existing saved entry.
+local function charKey()
+    local name = UnitName("player") or "?"
+    local realm = GetRealmName()
+    if (not realm or realm == "") and GetNormalizedRealmName then realm = GetNormalizedRealmName() end
+    if realm and realm ~= "" then return name .. "-" .. realm end
+    for k, v in pairs(LootwrightDB.prof) do
+        if k:sub(1, #name + 1) == name .. "-" and next(v) then return k end
+    end
+    return name .. "-?"
+end
+
 local function store()
     LootwrightDB.prof = LootwrightDB.prof or {}
-    local key = (UnitName("player") or "?") .. "-" .. (GetRealmName() or "?")
+    local key = charKey()
     LootwrightDB.prof[key] = LootwrightDB.prof[key] or {}
     return LootwrightDB.prof[key]
+end
+
+-- Professions the game says this character has right now ({ [name] = true }), or nil if it can't say.
+local function liveProfessions()
+    if not (GetProfessions and GetProfessionInfo) then return nil end
+    local ok, a, b, c, d, e = pcall(GetProfessions)
+    if not ok then return nil end
+    local t, any = {}, false
+    for _, i in pairs({ a, b, c, d, e }) do
+        local ok2, name = pcall(GetProfessionInfo, i)
+        if ok2 and type(name) == "string" then t[name], any = true, true end
+    end
+    return any and t or nil
 end
 
 local function scanModern()
@@ -120,7 +146,11 @@ function Prof.List()
     return mine
 end
 
-function Prof.IsMine(name) return store()[name] ~= nil end
+-- True if this character has the profession: asks the game first, then the saved scans.
+function Prof.IsMine(name)
+    local live = liveProfessions()
+    return (live and live[name]) or store()[name] ~= nil
+end
 
 local function parseReagents(s)
     local t = {}
