@@ -16,9 +16,16 @@
 --   /if raw item <id>   dump raw fields for an item
 --   /if raw npc <id>    dump raw fields for an NPC, including the spawn table layout
 
+-- HOW TO READ THIS FILE
+-- WoW loads every file listed in Lootwright.toc, in order, and gives each one two values
+-- through "...": the addon's name and a table that all files of the addon share.
+-- We call that shared table "ns" (namespace). A function stored as ns.Something in one file
+-- can be called from any other file. "local" means "only visible inside this file".
 local _, ns = ...
-local VERSION = "0.14.0"
+local VERSION = "0.14.0" -- must match "## Version" in the three .toc files (tools/release.py bump does both)
 ns.VERSION = VERSION
+-- LootwrightDB is our saved-variables table (named in the .toc). WoW fills it from disk after
+-- this file runs, so "or {}" only creates an empty one on the very first start.
 LootwrightDB = LootwrightDB or {}
 
 -- The one global Lootwright exposes: its namespace, so the sub-addons (Lootwright_Data,
@@ -30,9 +37,12 @@ LootwrightNS = ns
 -- Loaded the first time something asks for it; nil when it's off or missing.
 local triedData = false
 function ns.Lib()
+    -- Already loaded? Hand it back straight away.
     if LibLootwright and LibLootwright.data then return LibLootwright end
+    -- We already tried once and it failed (addon off or missing): don't try again every call.
     if triedData then return nil end
     triedData = true
+    -- Ask the game to load the data addon now. pcall = "run this, and don't crash if it errors".
     if C_AddOns and C_AddOns.LoadAddOn then pcall(C_AddOns.LoadAddOn, "Lootwright_Data") end
     return LibLootwright and LibLootwright.data and LibLootwright or nil
 end
@@ -42,6 +52,8 @@ function ns.GetGen()
     return lib and lib.data
 end
 
+-- say(): print a line to the chat window, in Lootwright's green. Every other file uses this
+-- (as ns.say) so all our messages look the same and end up in the saved log below.
 local function say(msg)
     msg = tostring(msg)
     print("|cff33ff99Lootwright|r " .. msg)
@@ -49,11 +61,13 @@ local function say(msg)
     -- Read LootwrightDB at call time: the saved table replaces the global after this file runs.
     local log = LootwrightDB.log or {}
     LootwrightDB.log = log
-    log[#log + 1] = date("%H:%M:%S ") .. msg
-    if #log > 500 then table.remove(log, 1) end
+    log[#log + 1] = date("%H:%M:%S ") .. msg -- #log is the list length; this adds one line at the end
+    if #log > 500 then table.remove(log, 1) end -- keep only the last 500 lines (drop the oldest)
 end
 ns.say = say
 
+-- needLib(): true if QuestieDB (our item/mob database) is available. If not, tell the player why
+-- and return false, so the caller can stop early.
 local function needLib()
     if ns.Data.Available() then return true end
     say("QuestieDB's API (LibQuestieDB) is not available. Is the QuestieDB addon enabled? Try /if status.")
@@ -63,8 +77,10 @@ end
 ----------------------------------------------------------------------
 -- Shared formatting (chat and UI)
 ----------------------------------------------------------------------
+-- Mob rank numbers (from the database) -> the word shown to the player. Normal mobs show nothing.
 ns.RANKS = { [0] = "", [1] = "Elite", [2] = "Rare Elite", [3] = "Boss", [4] = "Rare" }
 
+-- LevelText(5, 8) -> "5-8", LevelText(5, 5) -> "5", unknown level -> "?"
 function ns.LevelText(lo, hi)
     if not lo or lo == 0 then return "?" end
     if not hi or hi == lo or hi == 0 then return tostring(lo) end
@@ -87,8 +103,11 @@ function ns.RateTier(r)
 end
 
 -- Highest rate first within each tier (real, rough, few kills, unknown, not seen), then by name.
+-- This is a "comparison function" for table.sort: it answers "should a come before b?".
 function ns.SortByRate(a, b)
     local ta, tb = ns.RateTier(a), ns.RateTier(b)
+    -- 1) a better tier always wins, 2) in the same tier a higher rate wins,
+    -- 3) on a tie sort by name, 4) last resort: mob ID, so the order is always the same.
     if ta ~= tb then return ta < tb end
     if a.rate and a.rate ~= b.rate then return a.rate > b.rate end
     if a.name ~= b.name then return a.name < b.name end
@@ -98,8 +117,10 @@ end
 ----------------------------------------------------------------------
 -- Chat output
 ----------------------------------------------------------------------
-local MAX_NPCS = 25
+local MAX_NPCS = 25 -- the chat shows at most this many mobs per item
 
+-- showItem(): print one item's sources to chat: the mobs that drop it (best rate first),
+-- then how many objects (chests, nodes) and vendors also have it.
 local function showItem(itemId)
     if not needLib() then return end
     local name = ns.Data.ItemName(itemId) or ("item " .. itemId)
@@ -124,6 +145,7 @@ local function showItem(itemId)
                 ns.RateText(r.rate, r.fewKills, r.rough), r.source and (" [" .. r.source .. "]") or ""))
         end
     end
+    -- Footnotes: explain "*" and "~" once, and only if some row actually uses them.
     for _, r in ipairs(rows) do
         if r.fewKills then say("  * rate from very few kills, unreliable") break end
     end
@@ -134,6 +156,9 @@ local function showItem(itemId)
     if src.vendors > 0 then say("  Sold by " .. src.vendors .. " vendor(s).") end
 end
 
+-- search(): look an item up by name. The search can take a moment (it works in small chunks so
+-- the game never freezes), so Search.Find calls the function we pass in when it has the result.
+-- ids = matching item IDs, nExact = how many of them match the typed name exactly.
 local function search(text)
     ns.Search.Find(text, function(ids, nExact)
         if nExact >= 1 then
@@ -156,6 +181,7 @@ end
 ----------------------------------------------------------------------
 -- Debug helpers
 ----------------------------------------------------------------------
+-- Only used by /if raw: show a value in a short readable form (a table shows its size).
 local function describe(v)
     local tv = type(v)
     if tv == "table" then return "table[" .. ns.Data.CountKeys(v) .. "]" end
@@ -163,6 +189,8 @@ local function describe(v)
     return tostring(v)
 end
 
+-- Print a table's entries, indented. depth = how many levels of sub-tables to open.
+-- Stops after 8 entries so chat isn't flooded. (Calls itself for sub-tables: "recursion".)
 local function dumpTable(t, indent, depth)
     local shown = 0
     for k, v in pairs(t) do
@@ -173,6 +201,8 @@ local function dumpTable(t, indent, depth)
     end
 end
 
+-- /if status: a health check. Is QuestieDB there, does its API version fit, is our own data loaded?
+-- First thing to run when something looks broken.
 local function cmdStatus()
     local s = ns.Data.Status()
     say("LibQuestieDB: " .. (s.lib and "found" or "NOT found"))
@@ -195,6 +225,7 @@ local function cmdStatus()
     say("Professions (Lootwright_Professions): " .. (ns.ProfUI and "loaded" or "off or not installed"))
 end
 
+-- /if raw item <id> or /if raw npc <id>: dump what the database holds, unprocessed. For debugging.
 local function cmdRaw(kind, id)
     if not needLib() then return end
     id = tonumber(id)
@@ -219,11 +250,15 @@ end
 ----------------------------------------------------------------------
 -- Slash command
 ----------------------------------------------------------------------
+-- Registering a slash command takes two parts: SLASH_<NAME>1, 2, ... are the words that trigger it,
+-- and SlashCmdList["<NAME>"] is the function WoW calls with whatever the player typed after it.
 SLASH_LOOTWRIGHT1 = "/if"
 SLASH_LOOTWRIGHT2 = "/lootwright"
 SlashCmdList["LOOTWRIGHT"] = function(input)
-    input = (input or ""):match("^%s*(.-)%s*$")
-    local lower = input:lower()
+    input = (input or ""):match("^%s*(.-)%s*$") -- trim spaces from both ends
+    local lower = input:lower() -- lowercase copy for matching commands; "input" keeps the original
+    -- Below: each "if" checks one command word and returns. The first match wins, so anything
+    -- that matches no command word falls through to the item search at the very bottom.
 
     if input == "" then ns.UI.Toggle(); return end
     if lower == "help" then
@@ -274,6 +309,9 @@ SlashCmdList["LOOTWRIGHT"] = function(input)
     search(input)
 end
 
+-- Run once when the player logs in (or /reloads). WoW tells addons about things that happen
+-- through "events", and only a frame can listen to them. So we make an invisible frame and
+-- ask it to tell us about the PLAYER_LOGIN event.
 local f = CreateFrame("Frame")
 f:RegisterEvent("PLAYER_LOGIN")
 f:SetScript("OnEvent", function()
