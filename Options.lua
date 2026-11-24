@@ -46,6 +46,9 @@ local TOGGLES = {
     { key = "recordLoot", label = "Help improve drop rates: record my loot", defaultOff = true,
       tip = "Counts the corpses you loot and what was on them, on this PC only, so mob tooltips show your own drop rate. "
           .. "Share it with /if share; Lootwright reminds you now and then. No names or positions." },
+    { key = "reminderBox", label = "Share reminder as a pop-up window", defaultOff = true,
+      tip = "When you have 100 or more new counted corpses, Lootwright reminds you once per session. By default that is "
+          .. "a line in chat with a click link. Tick this to get a small window in the middle of the screen instead." },
 }
 
 -- Default-on toggles are on unless set to false; default-off toggles only when set to true.

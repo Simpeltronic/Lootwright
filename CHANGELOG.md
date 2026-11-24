@@ -8,7 +8,8 @@ Versions follow the rules in `CLAUDE.md` ("Versions and changelog"). Newest firs
 - **Click to share:** the thank-you line in chat at login now has a clickable "[Share your loot data]" that opens the share window, like Questie's links. `/if share` still works.
 
 ### Changed
-- **The "Share your loot data?" reminder is easier to catch:** if you were in combat at login, or play a long session without logging in again, it now appears at your next loading screen (a zone change or instance) once you have 100 or more new counted corpses. It still shows at most once per session, and only if you turned on loot counting.
+- **The share reminder is a chat line with a click link now,** not a window in the middle of the screen. If you were in combat at login, or play a long session without logging in again, it appears at your next loading screen (a zone change or instance) once you have 100 or more new counted corpses. It shows at most once per session, and only if you turned on loot counting.
+- **New option "Share reminder as a pop-up window"** (off by default) in Options > General: tick it to get the small reminder window in the middle of the screen instead of the chat line.
 
 ### For developers
 - `tools/merge_loot.py`: only a plain `x` in the form sheet's OK column approves a row; one form row counts as one player; a form share is linked to a GitHub account only for the repo owner's own shares. Steps in `docs/loot-review.md`.
