@@ -23,18 +23,30 @@ local function setAmount(n)
 end
 
 -- "28 more" under the field, or a warning when the goal is already met.
+-- The bag count to farm to: a number above what you have is the goal itself; one at or below it
+-- is added on top (you have 30, type 1: farm to 31).
+local ON_TOP = "|cfff0d58c" -- light gold, a variant of the brass used for finished goals
+local function goalFor(n)
+    local h = have()
+    return n > h and n or h + n
+end
+
 local function update()
     if not itemId then return end
     local n, h = amount(), have()
     if n <= 0 then
         moreText:SetText(mode == "item" and "|cffc9a24aendless|r" or "")
-    elseif n <= h then
-        moreText:SetText("|cffff8040You already have " .. h .. "|r")
-    elseif mode == "recipe" then
-        local makes = math.max(1, tonumber(recipe.makes) or 1)
-        moreText:SetText((n - h) .. " more = " .. math.ceil((n - h) / makes) .. " crafts")
+        return
+    end
+    local more = goalFor(n) - h
+    local crafts = ""
+    if mode == "recipe" then
+        crafts = " = " .. math.ceil(more / math.max(1, tonumber(recipe.makes) or 1)) .. " crafts"
+    end
+    if n <= h then
+        moreText:SetText(ON_TOP .. "+" .. more .. " on top (goal " .. (h + more) .. ")" .. crafts .. "|r")
     else
-        moreText:SetText((n - h) .. " more")
+        moreText:SetText(more .. " more" .. crafts)
     end
 end
 
@@ -54,15 +66,16 @@ local function confirm(withGoal)
     if withGoal then
         local n = amount()
         if n <= 0 and mode == "item" then return confirm(false) end -- empty goal box: farm without end
-        if n <= have() then
-            hint:SetText("|cffff8040Pick a number above what you already have, or leave it empty for endless.|r")
+        if n <= 0 then
+            hint:SetText("|cffff8040Pick how many to craft.|r")
             return
         end
+        local goal = goalFor(n)
         if mode == "recipe" then
             local makes = math.max(1, tonumber(recipe.makes) or 1)
-            ns.ProfUI.FarmRecipe(recipe, math.ceil((n - have()) / makes), recipeProf)
+            ns.ProfUI.FarmRecipe(recipe, math.ceil((goal - have()) / makes), recipeProf)
         else
-            ns.Farm.SetGoal(itemId, n)
+            ns.Farm.SetGoal(itemId, goal)
         end
     else
         ns.Farm.SetGoal(itemId, nil) -- endless: farm without a goal
