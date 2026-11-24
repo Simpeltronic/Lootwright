@@ -117,7 +117,7 @@ end
 ----------------------------------------------------------------------
 -- Chat output
 ----------------------------------------------------------------------
-local MAX_NPCS = 25 -- the chat shows at most this many mobs per item (the window shows all)
+local MAX_NPCS = 25 -- the chat shows at most this many mobs per item
 
 -- showItem(): print one item's sources to chat: the mobs that drop it (best rate first),
 -- then how many objects (chests, nodes) and vendors also have it.
@@ -309,8 +309,9 @@ SlashCmdList["LOOTWRIGHT"] = function(input)
     search(input)
 end
 
--- Run once when the player logs in (or /reloads). WoW has no "on load" hook, so we make an
--- invisible frame and ask it to tell us about the PLAYER_LOGIN event.
+-- Run once when the player logs in (or /reloads). WoW tells addons about things that happen
+-- through "events", and only a frame can listen to them. So we make an invisible frame and
+-- ask it to tell us about the PLAYER_LOGIN event.
 local f = CreateFrame("Frame")
 f:RegisterEvent("PLAYER_LOGIN")
 f:SetScript("OnEvent", function()
