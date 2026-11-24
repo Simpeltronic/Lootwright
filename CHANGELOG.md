@@ -2,7 +2,7 @@
 
 Versions follow the rules in `CLAUDE.md` ("Versions and changelog"). Newest first.
 
-## 0.14.0, not released yet
+## 0.14.0, 24 November 2026
 
 ### New
 - **Drop rates from players:** loot that Lootwright players share with `/if share` now becomes drop rates for everyone, once a mob has 20 or more looted corpses in the shared data, from at least two players. They are measured in Forever, so they take priority over the other rates. The mob tooltip says "Measured in Forever by Lootwright players: 9 of 40 corpses". Mobs only players have seen dropping an item are added to the list. Your own counts still fill in where the shared data has fewer than 20 corpses. Shares are reviewed before they count, and numbers that don't fit other players' are left out.
