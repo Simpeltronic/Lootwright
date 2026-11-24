@@ -1,4 +1,5 @@
--- Lootwright Map.lua: world map pins. Two sets on the same skull icon:
+-- Lootwright Map.lua: world map pins: the hunted item's icon inside a Lootwright frame (brass for the
+-- clicked mob, green for farm spawns; user's choice, docs/design-brief/pins). Two sets:
 --   the selected mob's spawns (click a mob row; "Clear pins" removes them), and
 --   farm pins: every mob that drops something on the farm list (single items and materials still
 --   needed), kept up to date as the list and bags change. /if farmpins turns them off.
@@ -11,10 +12,13 @@ local Map = {}
 ns.Map = Map
 
 local TEMPLATE = "LootwrightWorldMapPin"
-local ICON = "Interface\\TargetingFrame\\UI-RaidTargetingIcon_8" -- skull
+local FRAME_TARGET = ns.Theme.MEDIA .. "frame_target" -- brass, clicked mob (via MEDIA so package.py ships it)
+local FRAME_FARM = ns.Theme.MEDIA .. "frame_farm"     -- green, farm spawns
+local FALLBACK_ICON = 134400 -- question mark, when the item has no icon yet
 
 local pins = {}   -- { { mapId, x, y }, ... } for the current mob
 local mob         -- the mob row table the pins belong to
+local mobItem     -- the item searched when that mob was clicked (its icon goes in the pins)
 local farmPins = {} -- { { mapId, x, y, mob = { name, minLevel, maxLevel, farmItems } }, ... }
 local provider
 
@@ -36,9 +40,17 @@ local function setup()
         self:UseFrameLevelType("PIN_FRAME_LEVEL_AREA_POI")
         self:SetPosition(p.x, p.y)
         self.point, self.mob = p, m
-        -- Farm pins are smaller; a group shows how many spawns it holds.
-        local size = p.small and 10 or 14
+        -- Farm pins are smaller; a group shows how many spawns it holds. The item icon fills the
+        -- frame's window (the middle half), the frame sits on top.
+        local size = p.small and 12 or 14
         self:SetSize(size, size)
+        self.frameTex:SetTexture(p.small and FRAME_FARM or FRAME_TARGET)
+        -- The icon fills the frame's window: the middle half of the pin.
+        self.icon:ClearAllPoints()
+        self.icon:SetPoint("TOPLEFT", self, "TOPLEFT", size / 4, -size / 4)
+        self.icon:SetPoint("BOTTOMRIGHT", self, "BOTTOMRIGHT", -size / 4, size / 4)
+        local itemId = p.itemId or (not p.small and mobItem) or nil
+        self.icon:SetTexture(itemId and C_Item.GetItemIconByID(itemId) or FALLBACK_ICON)
         if p.count and p.count > 1 then
             self.countText:SetText(p.count)
             self.countText:Show()
@@ -85,9 +97,11 @@ local function setup()
     pool.createFunc = function()
         local f = CreateFrame("Frame", nil, WorldMapFrame:GetCanvas())
         f:SetSize(14, 14)
-        local tex = f:CreateTexture(nil, "OVERLAY")
-        tex:SetAllPoints()
-        tex:SetTexture(ICON)
+        f.icon = f:CreateTexture(nil, "ARTWORK")
+        f.icon:SetTexCoord(0.08, 0.92, 0.08, 0.92) -- trim the icon's own border
+        f.frameTex = f:CreateTexture(nil, "OVERLAY")
+        f.frameTex:SetAllPoints()
+
         f.countText = f:CreateFontString(nil, "OVERLAY", "NumberFontNormalSmall")
         f.countText:SetPoint("BOTTOMRIGHT", f, "BOTTOMRIGHT", 5, -3)
         f.countText:Hide()
@@ -126,7 +140,7 @@ local function setup()
 end
 
 -- Show pins for one mob (a row from Data.GetSources) and open the world map on its main zone.
-function Map.ShowMob(m)
+function Map.ShowMob(m, itemId)
     if InCombatLockdown() then ns.say("Map pins can't be changed in combat."); return end
     if not setup() then ns.say("The world map isn't available."); return end
     local list, mainMap = ns.Data.GetSpawns(m.npcId)
@@ -134,7 +148,7 @@ function Map.ShowMob(m)
         ns.say("No map positions for " .. m.name .. " (it may only spawn inside an instance).")
         return
     end
-    pins, mob = list, m
+    pins, mob, mobItem = list, m, itemId
     if OpenWorldMap then
         OpenWorldMap(mainMap)
     else
@@ -160,7 +174,7 @@ function Map.SetWaypoint(p, m)
 end
 
 function Map.Clear()
-    pins, mob = {}, nil
+    pins, mob, mobItem = {}, nil, nil
     if provider then provider:RemoveAllData() end
 end
 
@@ -201,6 +215,7 @@ function Map.RefreshFarmPins(force)
                 local e = byNpc[m.npcId] or { mob = m, items = {} }
                 byNpc[m.npcId] = e
                 e.items[#e.items + 1] = ns.Data.ItemName(id) or ("item " .. id)
+                e.itemId = e.itemId or id -- the pin shows this item's icon
             end
         end
     end
@@ -218,7 +233,8 @@ function Map.RefreshFarmPins(force)
             local k = p.mapId .. ":" .. math.floor(p.x / GROUP_CELL) .. ":" .. math.floor(p.y / GROUP_CELL)
             local c = cells[k]
             if not c then
-                c = { mapId = p.mapId, sx = 0, sy = 0, n = 0, kinds = {}, kindOrder = {}, items = {}, itemSeen = {} }
+                c = { mapId = p.mapId, sx = 0, sy = 0, n = 0, kinds = {}, kindOrder = {}, items = {}, itemSeen = {},
+                    itemId = e.itemId }
                 cells[k] = c
                 order[#order + 1] = k
             end
@@ -247,7 +263,7 @@ function Map.RefreshFarmPins(force)
         else
             mobInfo = { name = c.kindOrder[1].name, group = c.kindOrder, count = c.n, farmItems = c.items }
         end
-        farmPins[#farmPins + 1] = { mapId = c.mapId, x = c.sx / c.n, y = c.sy / c.n, small = true, count = c.n,
+        farmPins[#farmPins + 1] = { mapId = c.mapId, x = c.sx / c.n, y = c.sy / c.n, small = true, count = c.n, itemId = c.itemId,
             mob = mobInfo }
     end
     if setup() and WorldMapFrame:IsShown() then provider:RefreshAllData() end

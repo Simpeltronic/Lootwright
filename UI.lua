@@ -221,7 +221,7 @@ local function initMobRow(button, r)
             GameTooltip:AddLine("Click: show spawns on the world map", 0.2, 1, 0.6)
             GameTooltip:Show()
         end)
-        button:SetScript("OnClick", function(self) ns.Map.ShowMob(self.mob) end)
+        button:SetScript("OnClick", function(self) ns.Map.ShowMob(self.mob, selectedId) end)
     end
     button.mob = r
     local rank = ns.RANKS[r.rank] or ""

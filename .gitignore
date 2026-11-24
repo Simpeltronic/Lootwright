@@ -2,3 +2,9 @@
 *.pyc
 dist/
 tools/data/
+docs/design-brief/pins/*
+!docs/design-brief/pins/frame_target.png
+!docs/design-brief/pins/frame_farm.png
+!docs/design-brief/pins/make_frames_final.py
+!docs/design-brief/pins/tools.md
+!docs/design-brief/pins/preview_sheet.png
