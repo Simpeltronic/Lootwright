@@ -1,7 +1,8 @@
 """Merge shared loot data (from /if share, posted as GitHub issues with the loot-data label).
 
-Only approved issues count: ones you gave the loot-ok label (only repo maintainers can add labels),
-or posted yourself. The others are listed as waiting, with the poster's account age, to review.
+Only approved issues count: ones you gave the loot-ok label (only repo maintainers can add labels)
+and that weren't edited after you added it, or that you posted yourself. An approved issue edited
+later goes back to waiting: remove and add the label again after checking it. The others are listed as waiting, with the poster's account age, to review.
 Keeps only the latest share per GitHub account (a share always holds all of that player's counts),
 then adds the counts up per game build and writes tools/data/community_loot.json:
   { build: { npcId: { "n": corpses, "e": empty, "items": { itemId: corpses with it },
@@ -74,6 +75,21 @@ def gh(*args):
     return subprocess.run(["gh", *args], capture_output=True, text=True, check=True).stdout
 
 
+def approved_unedited(number):
+    """True when the issue has the loot-ok label and its text wasn't edited after the label was
+    last added, so an approval covers only what you reviewed. Labels are visible in the issue's timeline."""
+    owner, name = REPO.split("/")
+    q = ('query($o:String!,$n:String!,$i:Int!){repository(owner:$o,name:$n){issue(number:$i){lastEditedAt '
+         'timelineItems(itemTypes:[LABELED_EVENT],last:50){nodes{... on LabeledEvent{createdAt label{name}}}}}}}')
+    issue = json.loads(gh("api", "graphql", "-f", f"query={q}", "-f", f"o={owner}", "-f", f"n={name}",
+                          "-F", f"i={number}"))["data"]["repository"]["issue"]
+    labelled = [e["createdAt"] for e in issue["timelineItems"]["nodes"] if (e.get("label") or {}).get("name") == APPROVED]
+    if not labelled:
+        return False
+    edited = issue.get("lastEditedAt")
+    return edited is None or edited < max(labelled)  # ISO 8601 UTC strings sort as times
+
+
 def from_issues():
     """(approved [(account, body)], waiting [(issue, account, body)]), oldest first."""
     raw = gh("issue", "list", "--repo", REPO, "--label", "loot-data", "--state", "all",
@@ -81,8 +97,8 @@ def from_issues():
     approved, waiting = [], []
     for issue in sorted(json.loads(raw), key=lambda i: i["createdAt"]):
         who = (issue.get("author") or {}).get("login") or f"issue{issue['number']}"
-        ok = who == OWNER or any(l.get("name") == APPROVED for l in issue.get("labels") or [])
-        if ok:
+        labelled = any(l.get("name") == APPROVED for l in issue.get("labels") or [])
+        if who == OWNER or (labelled and approved_unedited(issue["number"])):
             approved.append((who, issue["body"] or ""))
         else:
             waiting.append((issue["number"], who, issue["body"] or ""))
