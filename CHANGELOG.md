@@ -5,6 +5,9 @@ Versions follow the rules in `CLAUDE.md` ("Versions and changelog"). Newest firs
 ## 0.12.0, not released yet
 
 ### New
+- **Map checkbox:** a "Lootwright" checkbox in the world map's bottom-left corner shows or hides Lootwright's pins (also in Options).
+- **Pins step aside for other addons:** Lootwright moves its pins a little to the side when they would cover Questie's or RareScanner's pins, and redraws them when you accept or turn in a quest. Option "Let Lootwright pins overlap other addons' pins" (off by default) turns this off.
+- **A thank-you at login** for players who help build drop rates, with how many corpses you've counted so far.
 - **Map pins with more than one farm item:** when mobs on one pin drop several things you're farming, the pin shows the item you still need most, with a small light-gold "+1" (or "+2") badge at its corner. Hover lists every farm item with its icon and how many you still need.
 - **New map pins:** the item you're hunting, shown round on a light disc with a dark rim: brass for the mob you clicked on the Search tab, green for farm spawns (now 12 px, with the spawn count beside it, not on top). Replaces the raid skull, so Lootwright's pins no longer look like other addons' markers and stand out on orange maps.
 

@@ -12,21 +12,30 @@ local TOGGLES = {
       onChange = function() ns.UI.ClearTooltipCache() end },
     { key = "farmTooltip", label = "\"Farm:\" line on mob tooltips",
       tip = "Mobs that drop something on your farm list say so on their tooltip." },
-    { key = "farmPins", label = "Map skulls on mobs that drop farm items",
-      tip = "Grouped skulls on every mob that drops a farm item or a material you still need.",
+    { key = "farmPins", label = "Pins mobs on Map that drops your items",
+      tip = "Grouped pins on every mob that drops a farm item or a material you still need.",
       onChange = function() ns.Map.RefreshFarmPins(true) end },
-    { key = "arrow", label = "Waypoint arrow when you click a map skull",
+    { key = "arrow", label = "Waypoint arrow when you click a Lootwright Pin",
       tip = "Shows an arrow and distance to the spawn. The map marker is set either way." },
-    { key = "farmAlerts", label = "Farm messages in the middle of the screen",
+    { key = "farmAlerts", label = "Farm updates displayed on screen",
       tip = "Goal reached, material ready and \"craft it\" messages. They always go to chat." },
     { key = "minimapButton", label = "Minimap button",
       tip = "The Lootwright emblem on the minimap. Left-click opens the window, right-click opens these options.",
       onChange = function() ns.MinimapButton.Refresh() end },
+    { key = "mapPins", label = "Lootwright pins on the world map",
+      tip = "Pins for the mob you clicked and for farm spawns. Also the \"Lootwright\" checkbox on the map itself.",
+      onChange = function()
+          if ns.Map.toggle then ns.Map.toggle:SetChecked(LootwrightDB.mapPins ~= false) end
+          ns.Map.RefreshFarmPins(true)
+      end },
     -- Off by default (defaultOff): only true turns it on.
+    { key = "pinOverlap", label = "Let Lootwright pins overlap other addons' pins", defaultOff = true,
+      tip = "Off: Lootwright moves its pins a little to the side when they would cover Questie's or RareScanner's pins.",
+      onChange = function() ns.Map.RefreshFarmPins(true) end },
     { key = "recordLoot", label = "Help improve drop rates: record my loot", defaultOff = true,
       tip = "Counts the corpses you loot and what was on them, on this PC only, so mob tooltips show your own drop rate. "
           .. "Share it with /if share; Lootwright reminds you now and then. No names or positions." },
-    { key = "tracker", label = "Farm tracker on screen", defaultOff = true,
+    { key = "tracker", label = "Display Farm Tracker on HUD", defaultOff = true,
       tip = "A small panel that shows your farm list all the time. Drag an item from your bags onto it to farm it. "
           .. "Also /if mini.",
       onChange = function() ns.Tracker.Refresh() end },

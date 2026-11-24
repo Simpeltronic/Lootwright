@@ -24,6 +24,42 @@ local farmPins = {} -- { { mapId, x, y, mob = { name, minLevel, maxLevel, farmIt
 local provider
 
 local pinMixin -- built on first use, once MapCanvasPinMixin is surely loaded
+
+-- Moves our pins sideways off other addons' pins (Questie, RareScanner...) unless the player allows
+-- overlap (option pinOverlap). Compares positions in canvas pixels at the current zoom.
+-- shortcut: checked when our pins are drawn, not again when the map is zoomed; re-check on zoom if players see overlaps.
+local function nudgeOffOthers()
+    if not (WorldMapFrame and WorldMapFrame:IsShown() and WorldMapFrame.EnumerateAllPins) then return end
+    local canvas = WorldMapFrame:GetCanvas()
+    local w, h = canvas:GetSize()
+    if not w or w == 0 or h == 0 then return end
+    local others, ours = {}, {}
+    local ok = pcall(function()
+        for pin in WorldMapFrame:EnumerateAllPins() do
+            if pin.normalizedX and pin:IsShown() then
+                if pin.pinTemplate == TEMPLATE then ours[#ours + 1] = pin
+                else others[#others + 1] = pin end
+            end
+        end
+    end)
+    if not ok or #others == 0 then return end
+    for _, pin in ipairs(ours) do
+        local size = pin:GetWidth()
+        for _ = 1, 3 do -- at most three steps to the right
+            local x, y = pin.normalizedX, pin.normalizedY
+            local hit = false
+            for _, o in ipairs(others) do
+                local reach = (size + o:GetWidth()) / 2
+                if math.abs((o.normalizedX - x) * w) < reach and math.abs((o.normalizedY - y) * h) < reach then
+                    hit = true
+                    break
+                end
+            end
+            if not hit then break end
+            pin:SetPosition(x + (size + 2) / w, y)
+        end
+    end
+end
 local missing  -- defined with the farm pins below; the tooltip uses it too
 
 local function setup()
@@ -156,6 +192,7 @@ local function setup()
     end
     function provider:RefreshAllData()
         self:RemoveAllData()
+        if LootwrightDB.mapPins == false then return end -- hidden with the map checkbox or Options
         local mapId = self:GetMap():GetMapID()
         for _, p in ipairs(pins) do
             if p.mapId == mapId then self:GetMap():AcquirePin(TEMPLATE, p, mob) end
@@ -163,8 +200,32 @@ local function setup()
         for _, p in ipairs(farmPins) do
             if p.mapId == mapId then self:GetMap():AcquirePin(TEMPLATE, p, p.mob) end
         end
+        -- Other addons' pins (Questie, RareScanner...) may be added after ours: nudge on the next frame.
+        if LootwrightDB.pinOverlap ~= true then C_Timer.After(0, nudgeOffOthers) end
     end
     WorldMapFrame:AddDataProvider(provider)
+
+    -- A "Lootwright" checkbox in the map's bottom-left corner shows or hides our pins.
+    local host = WorldMapFrame.ScrollContainer or WorldMapFrame
+    local cb = CreateFrame("CheckButton", "LootwrightMapToggle", host, "UICheckButtonTemplate")
+    cb:SetSize(22, 22)
+    cb:SetPoint("BOTTOMLEFT", host, "BOTTOMLEFT", 4, 4)
+    cb:SetFrameLevel(host:GetFrameLevel() + 20)
+    local label = cb:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+    label:SetPoint("LEFT", cb, "RIGHT", 0, 1)
+    label:SetText("Lootwright")
+    cb:SetChecked(LootwrightDB.mapPins ~= false)
+    cb:SetScript("OnClick", function(self)
+        LootwrightDB.mapPins = self:GetChecked() and true or false
+        provider:RefreshAllData()
+    end)
+    cb:SetScript("OnEnter", function(self)
+        GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
+        GameTooltip:AddLine("Show Lootwright's pins on the map")
+        GameTooltip:Show()
+    end)
+    cb:SetScript("OnLeave", function() GameTooltip:Hide() end)
+    Map.toggle = cb
     return true
 end
 
@@ -318,4 +379,15 @@ loginFrame:SetScript("OnEvent", function()
         setup() -- the provider must exist so the pins show when the map opens
         Map.RefreshFarmPins(true)
     end)
+end)
+
+-- Questie and others redraw their pins when quests change: redraw ours too, so the nudging stays right.
+local questWatch = CreateFrame("Frame")
+for _, ev in ipairs({ "QUEST_TURNED_IN", "QUEST_ACCEPTED", "QUEST_REMOVED" }) do
+    pcall(questWatch.RegisterEvent, questWatch, ev)
+end
+questWatch:SetScript("OnEvent", function()
+    if provider and WorldMapFrame and WorldMapFrame:IsShown() then
+        C_Timer.After(0.5, function() provider:RefreshAllData() end)
+    end
 end)

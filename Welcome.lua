@@ -150,6 +150,11 @@ end
 function Welcome.OnLogin()
     -- A little after login, so the window doesn't fight the loading screen.
     C_Timer.After(3, function()
-        if not LootwrightDB.welcomed then Welcome.Show() else remind() end
+        if not LootwrightDB.welcomed then Welcome.Show() return end
+        if LootwrightDB.recordLoot == true and ns.Loot then
+            ns.say("Thank you for helping build real Forever drop rates: " .. ns.Loot.Total()
+                .. " corpses counted so far. /if share sends them in.")
+        end
+        remind()
     end)
 end
