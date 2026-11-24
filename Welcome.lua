@@ -160,13 +160,24 @@ events:SetScript("OnEvent", function()
     if ready and not asked then C_Timer.After(5, remind) end
 end)
 
+-- A clickable chat link, |Hlootwright:share|h[...]|h, opens the share window. Questie does the same on
+-- Forever with LinkUtil.RegisterLinkHandler: replacing ItemRefTooltip.SetHyperlink would taint link clicks.
+local SHARE_LINK = "|cff71d5ff|Hlootwright:share|h[Share your loot data]|h|r"
+if LinkUtil and LinkUtil.RegisterLinkHandler and LinkProcessorResponse then
+    pcall(LinkUtil.RegisterLinkHandler, "lootwright", function()
+        if IsModifiedClick() then return LinkProcessorResponse.Unhandled end -- shift-click still pastes the link
+        if ns.Loot then ns.Loot.ShowExport() end
+        return LinkProcessorResponse.Handled
+    end)
+end
+
 function Welcome.OnLogin()
     -- A little after login, so the window doesn't fight the loading screen.
     C_Timer.After(3, function()
         if not LootwrightDB.welcomed then Welcome.Show() return end
         if LootwrightDB.recordLoot == true and ns.Loot then
             ns.say("Thank you for helping build real Forever drop rates: " .. ns.Loot.Total()
-                .. " corpses counted so far. /if share sends them in.")
+                .. " corpses counted so far. " .. SHARE_LINK .. " (or /if share) sends them in.")
         end
         remind()
         ready = true

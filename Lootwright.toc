@@ -4,7 +4,7 @@
 ## X-Credits: Data from ForeverDB.net (https://foreverdb.net), GPL-3.0 with an attribution term. Item, NPC and spawn data from QuestieDB (GPL-3.0). Mob drop rates from CMaNGOS classic-db (GPL-3.0).
 ## Author: Simpeltronic
 ## X-Email: lootwright-dev@proton.me
-## Version: 0.14.1
+## Version: 0.15.0
 ## Dependencies: QuestieDB
 ## X-QuestieDB-Contract: 4
 ## SavedVariables: LootwrightDB

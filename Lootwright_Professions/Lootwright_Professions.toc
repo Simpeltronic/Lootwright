@@ -2,7 +2,7 @@
 ## Title: Lootwright - Professions
 ## Notes: The Professions tab for Lootwright: your recipes, their materials, and "Farm recipe". Turn it off if you don't craft.
 ## Author: Simpeltronic
-## Version: 0.14.1
+## Version: 0.15.0
 ## Dependencies: Lootwright
 
 Prof.lua

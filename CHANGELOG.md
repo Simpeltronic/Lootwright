@@ -2,7 +2,10 @@
 
 Versions follow the rules in `CLAUDE.md` ("Versions and changelog"). Newest first.
 
-## 0.14.1, not released yet
+## 0.15.0, not released yet
+
+### New
+- **Click to share:** the thank-you line in chat at login now has a clickable "[Share your loot data]" that opens the share window, like Questie's links. `/if share` still works.
 
 ### Changed
 - **The "Share your loot data?" reminder is easier to catch:** if you were in combat at login, or play a long session without logging in again, it now appears at your next loading screen (a zone change or instance) once you have 100 or more new counted corpses. It still shows at most once per session, and only if you turned on loot counting.
