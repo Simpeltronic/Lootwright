@@ -3,7 +3,7 @@
 Players paste their `/if share` text into a Google Form. Nothing counts until **you** approve it.
 Think of it as an inbox: rows arrive unchecked, you check them, only checked rows go into the data.
 
-## Setup (done 25 Nov 2026)
+## Setup (done 24 Nov 2026)
 
 - Form "Share Lootwright loot data" (file "Lootwright loot shares" in your Google Drive): one required paragraph question, no email collection, no sign-in.
 - Player link (in `Loot.lua` `SHARE_URL`): https://docs.google.com/forms/d/e/1FAIpQLSdIGto84x7yXrYVuymZ4tesnzN8PcrUmV0tHfGXat3XFk770A/viewform

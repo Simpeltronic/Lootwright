@@ -21,7 +21,7 @@ Type `/if` in game, or click the minimap button. `/if help` lists every command.
 
 ## Help build real Forever drop rates
 
-Most normal-mob rates today are rough Classic 1.12 numbers. If you opt in (welcome window or `/if options`), Lootwright counts what you loot, on your PC only: mob and item IDs with counts, no names or positions. Type `/if share` and paste the text into the [Share loot data form](https://github.com/Simpeltronic/Lootwright/issues/new?template=loot-data.yml), or email it to lootwright-dev@proton.me.
+Most normal-mob rates today are rough Classic 1.12 numbers. If you opt in (welcome window or `/if options`), Lootwright counts what you loot, on your PC only: mob and item IDs with counts, no names or positions. Type `/if share` and paste the text into the [Share loot data form](https://docs.google.com/forms/d/e/1FAIpQLSdIGto84x7yXrYVuymZ4tesnzN8PcrUmV0tHfGXat3XFk770A/viewform) (no account needed), or email it to lootwright-dev@proton.me.
 
 Shared counts are merged with `tools/merge_loot.py` and published as **open data under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/)**: anyone may use them, with credit to Lootwright.
 
