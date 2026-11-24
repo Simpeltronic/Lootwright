@@ -121,10 +121,11 @@ def from_form_text(text):
     approved, waiting = [], []
     for number, row in enumerate(rows[1:], start=2):  # row 1 is the header, as in the sheet
         body = " ".join(row)
-        if not SHARE.search(body.replace("\n", "")):
+        blocks = [m.group(0) for m in SHARE.finditer(body.replace("\n", ""))]
+        if not blocks:
             continue
         if ok is not None and ok < len(row) and row[ok].strip():
-            approved.append((None, body))
+            approved.append((None, blocks[-1]))  # one row = one player: extra share blocks in a row never count
         else:
             waiting.append((number, row[0] if row else "", body))
     return approved, waiting
@@ -141,6 +142,8 @@ def show_form_waiting(waiting, approved):
     known = {sid for _, text in approved for _, _, sid, _ in parse(text)}
     print(f"\n{len(waiting)} form rows wait for your review (they don't count until you type x in the OK column):")
     for number, when, body in waiting:
+        if len(list(parse(body))) > 1:
+            print(f"  row {number}: WARNING, {len(list(parse(body)))} share blocks in one row; only the last would count, look closely")
         for _, build, sid, mobs in parse(body):
             print(f"  row {number} ({when}): id {sid}{' (update of an approved share)' if sid in known else ''}, "
                   f"build {build}, {len(mobs)} mob kinds, {sum(m['n'] for m in mobs.values())} corpses, "
@@ -171,6 +174,8 @@ def self_check():
     sheet = f'Timestamp,Share,OK\n2026-11-25,"{s}",x\n2026-11-26,"{s}",\nnoise,hello,x\n'
     ok, wait = from_form_text(sheet)
     assert len(ok) == 1 and [w[0] for w in wait] == [3], (ok, wait)
+    two = f'Timestamp,Share,OK\n1,"{s} {s.replace("0a1b2c3d", "ffffffff")}",x\n'
+    assert len(list(parse(from_form_text(two)[0][0][1]))) == 1  # a row with two blocks counts once
     old = {3240: {"n": 5, "e": 0, "items": {5128: 1}}}
     merged, players = merge([("1.60.1", "a", old), ("1.60.1", "a", mobs), ("1.60.1", "b", old)])
     assert players == 2 and merged["1.60.1"][3240] == {"n": 25, "e": 3, "items": {5128: 10, 5470: 2},
@@ -186,9 +191,10 @@ def main():
         texts, waiting = from_issues()
         form_ok, form_waiting = from_form()
         texts += form_ok
-    # One player may share through GitHub and the form: a share ID already seen on a GitHub issue
-    # belongs to that account, so the later share replaces the earlier one instead of adding up.
-    owner = {sid: who for who, text in texts if who for _, _, sid, _ in parse(text)}
+    # The repo owner may share through GitHub and the form: a share ID on the owner's own issue belongs
+    # to the owner, so the later form share replaces it instead of adding up. Other accounts' share IDs
+    # are never linked to a form row (the ID is chosen by the poster and public in the issue).
+    owner = {sid: who for who, text in texts if who == OWNER for _, _, sid, _ in parse(text)}
     shares = [(build, who or owner.get(sid, sid), mobs) for who, text in texts for _, build, sid, mobs in parse(text)]
     merged, players = merge(shares)
     OUT.parent.mkdir(exist_ok=True)
