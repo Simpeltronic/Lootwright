@@ -2,15 +2,13 @@
 
 Versions follow the rules in `CLAUDE.md` ("Versions and changelog"). Newest first.
 
-## 0.13.0, not released yet
+## 0.13.0, 24 November 2026
 
 ### New
 - **Hide the map checkbox:** a new option hides the small "Lootwright" checkbox in the map's corner, if it covers something. Your pins still follow the "Lootwright pins on the world map" option.
 
 ### Changed
 - **Options in groups:** the Options panel now has headings (Tooltips, World map, Farming, General), with the four map options together, and shorter labels.
-
-### Fixed
 
 ## 0.12.0, 24 November 2026
 

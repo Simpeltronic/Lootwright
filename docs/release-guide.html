@@ -1,0 +1,138 @@
+<title>Lootwright Release Guide</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;600&family=JetBrains+Mono:wght@400&display=swap">
+<style>
+/* Layout: one reading column of numbered steps (a real sequence); each command in its own block with a Copy button. Same tokens as the changelog and phase pages. */
+:root {
+  --bg: #f6f7f9; --surface: #ffffff; --fg: #1c2027; --muted: #5d6573; --line: #dfe3ea;
+  --accent: #1f5fd1; --accent-bg: #e4edfc; --code-bg: #eef1f5; --warn: #9a6400; --warn-bg: #fbf0d9;
+  --display: "Space Grotesk", "Segoe UI", system-ui, sans-serif;
+  --body: "Inter", "Segoe UI", system-ui, sans-serif;
+  --mono: "JetBrains Mono", Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #12151a; --surface: #1a1e25; --fg: #e6e9ee; --muted: #9aa3b2; --line: #2b313b;
+  --accent: #6ea2ff; --accent-bg: #172744; --code-bg: #0f1216; --warn: #e8b960; --warn-bg: #2e2412; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #12151a; --surface: #1a1e25; --fg: #e6e9ee; --muted: #9aa3b2; --line: #2b313b;
+  --accent: #6ea2ff; --accent-bg: #172744; --code-bg: #0f1216; --warn: #e8b960; --warn-bg: #2e2412; color-scheme: dark }
+body { background: var(--bg); color: var(--fg); font: 15px/1.6 var(--body);
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+.wrap { max-width: 760px; margin: 0 auto; padding-block: 40px 56px; display: grid; gap: 20px; }
+h1 { font: 600 30px/1.15 var(--display); margin: 0; text-wrap: balance; }
+.lede { color: var(--muted); margin: 6px 0 0; max-width: 62ch; }
+ol.steps { list-style: none; margin: 0; padding: 0; display: grid; gap: 14px; counter-reset: s; }
+.step { border: 1px solid var(--line); border-radius: 10px; background: var(--surface); padding: 16px 18px; display: grid; gap: 10px; min-width: 0; counter-increment: s; }
+.step h2 { font: 600 19px/1.25 var(--display); margin: 0; display: flex; gap: 10px; align-items: baseline; }
+.step h2::before { content: counter(s); font: 500 13px/1 var(--mono); color: var(--accent); background: var(--accent-bg); border-radius: 999px; padding: 5px 8px; }
+p { margin: 0; }
+ul { margin: 0; padding-left: 18px; } li { margin: 3px 0; }
+code { font: 13px var(--mono); background: var(--code-bg); padding: 1px 5px; border-radius: 4px; }
+.cmd { display: flex; align-items: stretch; border: 1px solid var(--line); border-radius: 8px; background: var(--code-bg); min-width: 0; }
+.cmd pre { margin: 0; padding: 10px 12px; font: 13px/1.5 var(--mono); overflow-x: auto; flex: 1; min-width: 0; white-space: pre; }
+.cmd button { font: 500 13px var(--body); border: 0; border-left: 1px solid var(--line); background: transparent; color: var(--accent); padding: 0 14px; cursor: pointer; border-radius: 0 8px 8px 0; }
+.cmd button:hover { background: var(--accent-bg); }
+.cmd button:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+.note { background: var(--warn-bg); color: var(--fg); border-radius: 8px; padding: 10px 12px; font-size: 14px; }
+.note b { color: var(--warn); }
+table { border-collapse: collapse; width: 100%; font-size: 14px; }
+td, th { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { color: var(--muted); font-weight: 500; font-size: 12px; text-transform: uppercase; letter-spacing: .06em; }
+.tbl { overflow-x: auto; }
+h3 { font: 600 12px/1 var(--body); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin: 8px 0 0; }
+.foot { color: var(--muted); font-size: 13px; }
+</style>
+
+<div class="wrap">
+  <header>
+    <h1>Releasing Lootwright</h1>
+    <p class="lede">How to put a new version on CurseForge yourself, from a finished change to a live file. Takes about ten minutes, most of it waiting for CurseForge.</p>
+  </header>
+
+  <ol class="steps">
+    <li class="step">
+      <h2>Check the version and changelog</h2>
+      <p>Open <code>CHANGELOG.md</code>. The top section should read <code>## 0.x.y, not released yet</code> and list every change under New, Changed or Fixed, in words a player understands. Delete any empty heading.</p>
+      <p>If the top section is an already released version, open a new one first:</p>
+      <table><tr><th>What changed</th><th>Command</th></tr>
+        <tr><td>Only fixes, text or colour tweaks, a data rebuild</td><td><code>bump patch</code> (0.13.0 → 0.13.1)</td></tr>
+        <tr><td>A new feature, command or option, or saved data changed</td><td><code>bump minor</code> (0.13.0 → 0.14.0)</td></tr></table>
+      <div class="cmd"><pre>python -I tools/release.py bump patch</pre><button type="button">Copy</button></div>
+      <p>Test it in game (<code>/reload</code>) and commit before you go on.</p>
+    </li>
+
+    <li class="step">
+      <h2>Open PowerShell in the project folder</h2>
+      <div class="cmd"><pre>cd "I:\VibeStuff\Wow addons\ItemFinder"</pre><button type="button">Copy</button></div>
+      <p>On Bazzite use a terminal and <code>python3</code> instead of <code>python</code>:</p>
+      <div class="cmd"><pre>cd "/var/mnt/I/VibeStuff/Wow addons/ItemFinder"</pre><button type="button">Copy</button></div>
+    </li>
+
+    <li class="step">
+      <h2>Build the zip</h2>
+      <div class="cmd"><pre>python -I tools/release.py</pre><button type="button">Copy</button></div>
+      <p>This rebuilds the data, makes <code>dist\Lootwright-0.x.y.zip</code>, checks that all version numbers match, and <b>copies the changelog to your clipboard</b>, ready to paste. It also saves it as <code>dist\changelog-0.x.y.md</code>.</p>
+      <p>Copied something else since? Put the changelog back on the clipboard with:</p>
+      <div class="cmd"><pre>python -I tools/release.py notes</pre><button type="button">Copy</button></div>
+    </li>
+
+    <li class="step">
+      <h2>Upload on CurseForge</h2>
+      <ul>
+        <li>Go to <a href="https://authors.curseforge.com/#/projects/1815024/files">authors.curseforge.com → Lootwright → Files</a> and press <b>Add File</b>.</li>
+        <li><b>Upload file:</b> Choose File → <code>dist\Lootwright-0.x.y.zip</code>.</li>
+        <li><b>Display name:</b> <code>Lootwright 0.x.y</code> (it starts as the zip's file name).</li>
+        <li><b>Release options:</b> leave "Publish this file automatically once approved".</li>
+        <li><b>Game version:</b> 1.60.1 (copied from the last file; change it when Forever updates).</li>
+        <li><b>Release type:</b> Release. Never Beta: Beta files are hidden in the CurseForge app.</li>
+        <li><b>Changelog:</b> switch the dropdown above the box from WYSIWYG to <b>Markdown</b>, click in the box and press Ctrl+V.</li>
+        <li><b>Related projects:</b> QuestieDB should show as Required Dependency (from the default relations). Leave it.</li>
+        <li>Press <b>Add File</b>.</li>
+      </ul>
+      <p>The Files tab then shows the new row: Uploading → Processing → Under Review → Approved. Review usually takes from a few minutes to a few hours.</p>
+      <div class="note"><b>Check it went in.</b> Once the upload failed to save without an error. If the new version isn't on the Files tab, upload it again.</div>
+    </li>
+
+    <li class="step">
+      <h2>Mark it released and push</h2>
+      <p>This dates the top changelog section:</p>
+      <div class="cmd"><pre>python -I tools/release.py released</pre><button type="button">Copy</button></div>
+      <div class="cmd"><pre>git commit -am "0.x.y released"</pre><button type="button">Copy</button></div>
+      <div class="cmd"><pre>git push</pre><button type="button">Copy</button></div>
+      <p>Replace <code>0.x.y</code> with the version number.</p>
+    </li>
+
+    <li class="step">
+      <h2>Update the pinned pages</h2>
+      <p>Ask Claude in any Lootwright chat: "0.x.y is released, update the changelog and phase pages." That republishes the changelog page, the phase summary and the notes in CLAUDE.md.</p>
+    </li>
+  </ol>
+
+  <section class="step" style="counter-increment:none">
+    <h3>When to update the CurseForge page too</h3>
+    <ul>
+      <li><b>Description:</b> Description tab, Markdown editor, Save. The inline images load from GitHub (<code>docs/curseforge/screens/</code>), so replace a picture by pushing a new file with the same name.</li>
+      <li><b>Gallery:</b> Media tab → Add media. Images must be under 850 px wide. Hover a picture for the edit (title, description, star = featured) and delete buttons.</li>
+    </ul>
+    <h3>If something goes wrong</h3>
+    <ul>
+      <li><b>"Core.lua says … but the TOCs say …"</b>: run <code>bump</code> again with the version you want; it sets all of them.</li>
+      <li><b>"CHANGELOG.md has no section for …"</b>: add a <code>## 0.x.y, not released yet</code> section at the top.</li>
+      <li><b>"No clipboard tool found"</b>: open <code>dist\changelog-0.x.y.md</code> and copy from there.</li>
+      <li><b>A Lua error after release:</b> fix it, <code>bump patch</code>, and release again. CurseForge keeps every older file.</li>
+    </ul>
+  </section>
+
+  <p class="foot">Project: CurseForge 1815024 (lootwright) · github.com/Simpeltronic/Lootwright · Updated 24 November 2026 (0.13.0).</p>
+</div>
+
+<script>
+document.querySelectorAll('.cmd button').forEach(function (b) {
+  b.addEventListener('click', function () {
+    var pre = b.parentElement.querySelector('pre');
+    var done = function () { b.textContent = 'Copied'; setTimeout(function () { b.textContent = 'Copy'; }, 1500); };
+    var select = function () { var r = document.createRange(); r.selectNodeContents(pre); var s = getSelection(); s.removeAllRanges(); s.addRange(r); b.textContent = 'Ctrl+C'; };
+    try { navigator.clipboard.writeText(pre.textContent).then(done, select); } catch (e) { select(); }
+  });
+});
+</script>

@@ -4,6 +4,7 @@
   python -I tools/release.py bump patch      0.10.0 -> 0.10.1 (fixes, data rebuilds, tweaks)
   python -I tools/release.py bump minor      0.10.1 -> 0.11.0 (new features, options, data sources)
   python -I tools/release.py bump 1.0.0      an exact version
+  python -I tools/release.py notes           copies the changelog section to the clipboard (build does it too)
   python -I tools/release.py released        dates the top CHANGELOG.md section (after uploading)
 
 bump sets ## Version in the three TOCs and VERSION in Core.lua, and opens a
@@ -92,6 +93,28 @@ def section(version):
     return None
 
 
+def notes(version=None):
+    """Copy this version's changelog (without its heading line) to the clipboard and save it to dist/."""
+    version = version or current()
+    text = section(version)
+    if not text:
+        raise SystemExit(f"CHANGELOG.md has no section for {version}")
+    body = text.split("\n", 1)[1].strip() + "\n"
+    out = ROOT / "dist" / f"changelog-{version}.md"
+    out.parent.mkdir(exist_ok=True)
+    out.write_text(body, encoding="utf-8")
+    tries = ([["clip"]] if sys.platform == "win32" else [["wl-copy"], ["xclip", "-selection", "clipboard"]])
+    for cmd in tries:
+        try:
+            data = body.encode("utf-16-le") if cmd == ["clip"] else body.encode("utf-8")
+            if subprocess.run(cmd, input=data).returncode == 0:
+                print(f"Changelog for {version} copied to the clipboard (also in {out.relative_to(ROOT)}).")
+                return
+        except FileNotFoundError:
+            pass
+    print(f"No clipboard tool found; open {out.relative_to(ROOT)} and copy it from there.")
+
+
 def build():
     version = current()
     for script in ("build_data.py", "package.py"):
@@ -105,7 +128,8 @@ def build():
     text = section(version)
     if not text:
         raise SystemExit(f"CHANGELOG.md has no section for {version}: run bump or add one")
-    print(f"\n--- Changelog for CurseForge ({version})\n{text}")
+    print(f"\n--- Changelog for CurseForge ({version})\n{text}\n")
+    notes(version)
     print(f"\nUpload dist/Lootwright-{version}.zip, then run: python -I tools/release.py released")
 
 
@@ -122,6 +146,8 @@ def main():
         build()
     elif args[0] == "bump" and len(args) == 2:
         bump(args[1])
+    elif args == ["notes"]:
+        notes()
     elif args == ["released"]:
         released()
     else:
