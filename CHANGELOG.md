@@ -2,7 +2,7 @@
 
 Versions follow the rules in `CLAUDE.md` ("Versions and changelog"). Newest first.
 
-## 0.12.0, not released yet
+## 0.12.0, 24 November 2026
 
 ### New
 - **Map checkbox:** a "Lootwright" checkbox in the world map's bottom-right corner shows or hides Lootwright's pins (also in Options).
