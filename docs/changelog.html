@@ -43,8 +43,25 @@ code { font: 13px var(--mono); }
 <div class="wrap">
   <header>
     <h1>Lootwright changelog</h1>
-    <p class="lede">What changed in each version of the WoW Forever addon, newest first. A version marked "not released yet" is what the next CurseForge upload will hold; 0.14.0 is the latest release.</p>
+    <p class="lede">What changed in each version of the WoW Forever addon, newest first. A version marked "not released yet" is what the next CurseForge upload will hold; 0.15.0 is the next one.</p>
   </header>
+
+  <section class="version upcoming">
+    <div class="head"><h2>0.15.0</h2><span class="chip pending">Not released yet</span><span class="date">Early version</span></div>
+    <h3>New</h3>
+    <ul>
+      <li><b>Click to share:</b> the thank-you line in chat at login now has a clickable "[Share your loot data]" that opens the share window, like Questie's links. <code>/if share</code> still works.</li>
+    </ul>
+    <h3>Changed</h3>
+    <ul>
+      <li><b>The share reminder is a chat line with a click link now,</b> not a window in the middle of the screen. If you were in combat at login, or play a long session without logging in again, it appears at your next loading screen (a zone change or instance) once you have 100 or more new counted corpses. It shows at most once per session, and only if you turned on loot counting.</li>
+      <li><b>New option "Share reminder as a pop-up window"</b> (off by default) in Options &gt; General: tick it to get the small reminder window in the middle of the screen instead of the chat line.</li>
+    </ul>
+    <h3>For developers</h3>
+    <ul>
+      <li><code>tools/merge_loot.py</code>: only a plain <code>x</code> in the form sheet's OK column approves a row; one form row counts as one player; a form share is linked to a GitHub account only for the repo owner's own shares. Steps in <code>docs/loot-review.md</code>.</li>
+    </ul>
+  </section>
 
   <section class="version">
     <div class="head"><h2>0.14.0</h2><span class="chip released">Released</span><span class="date">Early version, Release file · 24 November 2026</span></div>

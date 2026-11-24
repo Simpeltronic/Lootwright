@@ -1,8 +1,10 @@
 -- Lootwright Welcome.lua: the first-start window and the share reminder.
 -- Welcome (once, LootwrightDB.welcomed; again with /if welcome): what Lootwright does, and two
 -- opt-ins, both off until ticked: the farm tracker (LootwrightDB.tracker) and recording your loot
--- (LootwrightDB.recordLoot). Reminder (players who opted in): at login, once you've counted
--- REMIND_EVERY corpses since your last share, a small window offers /if share.
+-- (LootwrightDB.recordLoot). Reminder (players who opted in): at login (or the next loading screen
+-- if you were in combat), once you've counted REMIND_EVERY corpses since your last share, a chat line
+-- with a click link offers the share window; with option reminderBox (default off) a small window
+-- in the middle of the screen does. At most once per session.
 
 local _, ns = ...
 local Welcome = {}
@@ -117,6 +119,17 @@ function Welcome.Show()
 end
 
 -- Share reminder -----------------------------------------------------------------------------------
+-- A clickable chat link, |Hlootwright:share|h[...]|h, opens the share window. Questie does the same on
+-- Forever with LinkUtil.RegisterLinkHandler: replacing ItemRefTooltip.SetHyperlink would taint link clicks.
+local SHARE_LINK = "|cff71d5ff|Hlootwright:share|h[Share your loot data]|h|r"
+if LinkUtil and LinkUtil.RegisterLinkHandler and LinkProcessorResponse then
+    pcall(LinkUtil.RegisterLinkHandler, "lootwright", function()
+        if IsModifiedClick() then return LinkProcessorResponse.Unhandled end -- shift-click still pastes the link
+        if ns.Loot then ns.Loot.ShowExport() end
+        return LinkProcessorResponse.Handled
+    end)
+end
+
 local reminder, reminderText
 
 local function buildReminder()
@@ -137,15 +150,37 @@ local function buildReminder()
     end)
 end
 
-local function remind()
-    if LootwrightDB.recordLoot ~= true or not ns.Loot or type(LootwrightDB.loot) ~= "table" then return end
+local asked -- we asked this session; later loading screens don't ask again
+
+-- Default: a line in chat with the click link. The pop-up window in the middle of the screen is
+-- opt-in (option reminderBox, default off) so it can't annoy anyone.
+local function remind(fromLogin)
+    if asked or LootwrightDB.recordLoot ~= true or not ns.Loot or type(LootwrightDB.loot) ~= "table" then return end
     local new = ns.Loot.Total() - (LootwrightDB.loot.sharedN or 0)
     if new < REMIND_EVERY or InCombatLockdown() then return end
+    asked = true
+    if LootwrightDB.reminderBox ~= true then
+        -- at login the thank-you line already holds the link
+        if not fromLogin then
+            ns.say("You've counted " .. new .. " corpses since you last shared. " .. SHARE_LINK
+                .. " helps work out real Forever drop rates.")
+        end
+        return
+    end
     if not reminder then buildReminder() end
     reminderText:SetText("You've counted " .. new .. " corpses since you last shared. Sharing them helps work out "
         .. "real Forever drop rates for everyone. It takes a minute: copy, paste into the form, done.")
     reminder:Show()
 end
+
+-- A second chance during play: the login check is skipped in combat, and long sessions never log in
+-- again. Each loading screen (zone, instance) tries once the login check has run, until it has asked.
+local ready
+local events = CreateFrame("Frame")
+events:RegisterEvent("PLAYER_ENTERING_WORLD")
+events:SetScript("OnEvent", function()
+    if ready and not asked then C_Timer.After(5, remind) end
+end)
 
 function Welcome.OnLogin()
     -- A little after login, so the window doesn't fight the loading screen.
@@ -153,8 +188,9 @@ function Welcome.OnLogin()
         if not LootwrightDB.welcomed then Welcome.Show() return end
         if LootwrightDB.recordLoot == true and ns.Loot then
             ns.say("Thank you for helping build real Forever drop rates: " .. ns.Loot.Total()
-                .. " corpses counted so far. /if share sends them in.")
+                .. " corpses counted so far. " .. SHARE_LINK .. " (or /if share) sends them in.")
         end
-        remind()
+        remind(true)
+        ready = true
     end)
 end
