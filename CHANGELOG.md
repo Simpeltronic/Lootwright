@@ -4,6 +4,9 @@ Versions follow the rules in `CLAUDE.md` ("Versions and changelog"). Newest firs
 
 ## 0.15.3, not released yet
 
+### Changed
+- **First drop rates from players:** the shared loot now has enough corpses from two players for one mob (NPC 422, 24 corpses), so its 10 drops show rates measured in Forever.
+
 ### For developers
 - `LibLootwright.CommunityItemCount()` (added to contract 1): how many items have community rates. `/if status` uses it instead of reading the raw data table, so only `API.lua` knows how community rates are stored.
 

@@ -48,6 +48,10 @@ code { font: 13px var(--mono); }
 
   <section class="version upcoming">
     <div class="head"><h2>0.15.3</h2><span class="chip pending">Not released yet</span><span class="date">Early version</span></div>
+    <h3>Changed</h3>
+    <ul>
+      <li><b>First drop rates from players:</b> the shared loot now has enough corpses from two players for one mob (NPC 422, 24 corpses), so its 10 drops show rates measured in Forever.</li>
+    </ul>
     <h3>For developers</h3>
     <ul>
       <li><code>LibLootwright.CommunityItemCount()</code> (added to contract 1): how many items have community rates. <code>/if status</code> uses it instead of reading the raw data table, so only <code>API.lua</code> knows how community rates are stored.</li>
