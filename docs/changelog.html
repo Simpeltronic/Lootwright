@@ -46,6 +46,14 @@ code { font: 13px var(--mono); }
     <p class="lede">What changed in each version of the WoW Forever addon, newest first. A version marked "not released yet" is what the next CurseForge upload will hold; 0.15.2 is the latest release.</p>
   </header>
 
+  <section class="version upcoming">
+    <div class="head"><h2>0.15.3</h2><span class="chip pending">Not released yet</span><span class="date">Early version</span></div>
+    <h3>For developers</h3>
+    <ul>
+      <li><code>LibLootwright.CommunityItemCount()</code> (added to contract 1): how many items have community rates. <code>/if status</code> uses it instead of reading the raw data table, so only <code>API.lua</code> knows how community rates are stored.</li>
+    </ul>
+  </section>
+
   <section class="version">
     <div class="head"><h2>0.15.2</h2><span class="chip released">Released</span><span class="date">Early version, Release file · 24 November 2026</span></div>
     <h3>Changed</h3>

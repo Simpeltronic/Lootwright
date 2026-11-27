@@ -14,6 +14,7 @@
 --   LibLootwright.CommunityRates(itemId)   { [npcId] = { k = corpses with the item, n = looted corpses } } from
 --                                          Lootwright players' shared loot in Forever (mobs with 20+ corpses;
 --                                          open data, CC BY 4.0, credit "Lootwright players"), or nil
+--   LibLootwright.CommunityItemCount()     number of items with community rates
 --   LibLootwright.BossLoot(itemId)         { [npcId] = { rate = percent or nil, kills = n, measured = bool } }
 --                                          dungeon and raid bosses; measured = rate measured in Forever
 --                                          (ForeverDB.net, over `kills` kills), else Classic data; or nil
@@ -52,6 +53,13 @@ function Lib.CommunityRates(itemId)
     local t = {}
     for npc, k, n in s:gmatch("(%d+):(%d+):(%d+)") do t[tonumber(npc)] = { k = tonumber(k), n = tonumber(n) } end
     return t
+end
+
+-- Added to contract 1 in Lootwright 0.15.3: how many items have community rates.
+function Lib.CommunityItemCount()
+    local n = 0
+    for _ in pairs(data.communityRates or {}) do n = n + 1 end
+    return n
 end
 
 function Lib.BossLoot(itemId)

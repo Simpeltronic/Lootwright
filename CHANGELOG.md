@@ -2,6 +2,11 @@
 
 Versions follow the rules in `CLAUDE.md` ("Versions and changelog"). Newest first.
 
+## 0.15.3, not released yet
+
+### For developers
+- `LibLootwright.CommunityItemCount()` (added to contract 1): how many items have community rates. `/if status` uses it instead of reading the raw data table, so only `API.lua` knows how community rates are stored.
+
 ## 0.15.2, 24 November 2026
 
 ### Changed
