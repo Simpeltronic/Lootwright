@@ -5,6 +5,7 @@ Versions follow the rules in `CLAUDE.md` ("Versions and changelog"). Newest firs
 ## 0.15.3, not released yet
 
 ### Changed
+- **Thank-you list:** the loot share form now has an optional nickname field. Players whose shares are approved are listed by that nickname in `CONTRIBUTORS.md`. Leave it empty to stay anonymous.
 - **First drop rates from players:** the shared loot now has enough corpses from two players for one mob (NPC 422, 24 corpses), so its 10 drops show rates measured in Forever.
 
 ### For developers

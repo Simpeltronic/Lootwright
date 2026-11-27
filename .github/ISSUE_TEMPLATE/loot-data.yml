@@ -20,6 +20,13 @@ body:
       render: text
     validations:
       required: true
+  - type: input
+    id: nickname
+    attributes:
+      label: Nickname for the thank-you list (optional)
+      description: Shown publicly in Lootwright's list of players who shared loot. Leave it empty to stay anonymous. Use the same name each time you share.
+    validations:
+      required: false
   - type: checkboxes
     id: licence
     attributes:

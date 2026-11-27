@@ -7,7 +7,7 @@ Think of it as an inbox: rows arrive unchecked, you check them, only checked row
 
 - Form "Share Lootwright loot data" (file "Lootwright loot shares" in your Google Drive): one required paragraph question, no email collection, no sign-in.
 - Player link (in `Loot.lua` `SHARE_URL`): https://docs.google.com/forms/d/e/1FAIpQLSdIGto84x7yXrYVuymZ4tesnzN8PcrUmV0tHfGXat3XFk770A/viewform
-- Answers go to the sheet "Untitled form (Responses)" (Drive, private). Columns: Timestamp, Paste your share text, **OK** (yours).
+- Answers go to the sheet "Untitled form (Responses)" (Drive, private). Columns: Timestamp, Paste your share text, Nickname for the thank-you list (optional, added 27 Nov 2026), **OK** (yours).
 
 ## Each time you want new shares in (about once per release)
 
@@ -28,6 +28,7 @@ Think of it as an inbox: rows arrive unchecked, you check them, only checked row
 - **The same player sharing again:** their new row replaces their older one (same share ID). Approve the newer row with an `x`.
 - **GitHub shares** still come in through `gh` automatically. Only the form sheet needs the CSV step.
 - **Old addon versions:** a share from an addon older than 0.15.2 may include loot counted while in a group (that version pauses counting in groups), which makes rates too high. The review list marks such rows with the addon version and a warning, and the merge prints the already-approved old ones at the end. It's your call: players you know played solo are fine. Even an updated player's share still holds their old counts, so the version only tells you when they last shared.
+- **Nicknames:** the form (and the GitHub form) has an optional "Nickname for the thank-you list" field. The merge writes the nicknames of approved players to `CONTRIBUTORS.md` (only letters, digits, spaces and _ . -, at most 24 characters; the latest approved share decides). Commit that file after a merge. A rude or impersonating nickname? Leave the row unapproved, or ask the player to share again with another name.
 - **One row = one player.** If a row holds several share blocks, only the last counts, and the merge warns about it.
 
 ## Rules the data still has to pass (nothing to do by hand)

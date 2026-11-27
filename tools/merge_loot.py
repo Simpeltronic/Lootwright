@@ -108,8 +108,26 @@ def from_issues():
     return approved, waiting
 
 
+NICK_BAD = re.compile(r"[^\w .\-]")
+CREDITS = pathlib.Path(__file__).resolve().parent.parent / "CONTRIBUTORS.md"
+
+
+def clean_nick(text):
+    """A nickname for the public thank-you list: letters, digits, space, _ . - only, at most 24 characters.
+    Shared text is untrusted, and the list is published, so nothing else gets through."""
+    nick = NICK_BAD.sub("", text or "").strip()[:24].strip()
+    return "" if nick.lower().strip("_ ") in ("", "no response") else nick
+
+
+def nick_from_issue(body):
+    """The optional nickname field of the GitHub issue form ("### Nickname ..." heading), or ""."""
+    m = re.search(r"###\s*Nickname[^\n]*\n+([^\n#]*)", body or "")
+    return clean_nick(m[1]) if m else ""
+
+
 def from_form_text(text):
-    """(approved [(None, row text)], waiting [(row number, time, row text)]) from the Google Form sheet.
+    """(approved [(None, row text)], waiting [(row number, time, row text)], nicknames {share ID: nick})
+    from the Google Form sheet.
 
     Export the sheet as CSV. A row counts only when its "OK" column is exactly x (you type it there
     after reviewing it). Approved shares are keyed by their share ID, since a form has no accounts.
@@ -118,21 +136,25 @@ def from_form_text(text):
     if not rows:
         return [], []
     ok = next((i for i, h in enumerate(rows[0]) if h.strip().lower() == "ok"), None)
-    approved, waiting = [], []
+    nick = next((i for i, h in enumerate(rows[0]) if "nickname" in h.lower()), None)
+    approved, waiting, nicks = [], [], {}
     for number, row in enumerate(rows[1:], start=2):  # row 1 is the header, as in the sheet
-        body = " ".join(row)
+        body = " ".join(c for i, c in enumerate(row) if i != nick)
         blocks = [m.group(0) for m in SHARE.finditer(body.replace("\n", ""))]
         if not blocks:
             continue
         if ok is not None and ok < len(row) and row[ok].strip().lower() == "x":  # "no", "?" etc. stay waiting
             approved.append((None, blocks[-1]))  # one row = one player: extra share blocks in a row never count
+            if nick is not None and nick < len(row):
+                for _, _, sid, _ in parse(blocks[-1]):
+                    nicks[sid] = clean_nick(row[nick])  # the latest approved row decides, even an empty one
         else:
             waiting.append((number, row[0] if row else "", body))
-    return approved, waiting
+    return approved, waiting, nicks
 
 
 def from_form():
-    return from_form_text(FORM.read_text(encoding="utf-8-sig")) if FORM.exists() else ([], [])
+    return from_form_text(FORM.read_text(encoding="utf-8-sig")) if FORM.exists() else ([], [], {})
 
 
 CLEAN_FROM = (0, 15, 2)  # first addon version that pauses loot counting in a group
@@ -187,8 +209,13 @@ def self_check():
     assert old_note("0.15.2") == "" and old_note("0.16.0") == "" and old_note("0.14.0") and old_note("x") and old_note("0.9.1")
     assert mobs == {3240: {"n": 20, "e": 3, "items": {5128: 9, 5470: 2}}, 99: {"n": 5, "e": 5, "items": {}}}, mobs
     sheet = f'Timestamp,Share,OK\n2026-11-25,"{s}",x\n2026-11-26,"{s}",\nnoise,hello,x\n'
-    ok, wait = from_form_text(sheet)
+    ok, wait, _ = from_form_text(sheet)
     assert len(ok) == 1 and [w[0] for w in wait] == [3], (ok, wait)
+    nicked = f'Timestamp,Share,Nickname (optional),OK\n1,"{s}",  Ra<b>vi!n_7 ,x\n2,"{s}",,\n'
+    assert from_form_text(nicked)[2] == {"0a1b2c3d": "Rabvin_7"}, from_form_text(nicked)[2]
+    assert clean_nick("_No response_") == "" and clean_nick("x" * 40) == "x" * 24
+    assert nick_from_issue("### Loot data\n\n...\n\n### Nickname for the thank-you list (optional)\n\nBob\n") == "Bob"
+    assert nick_from_issue("### Nickname for the thank-you list (optional)\n\n_No response_\n") == ""
     assert not from_form_text(f'Timestamp,Share,OK\n1,"{s}",no\n')[0]  # only x approves
     two = f'Timestamp,Share,OK\n1,"{s} {s.replace("0a1b2c3d", "ffffffff")}",x\n'
     assert len(list(parse(from_form_text(two)[0][0][1]))) == 1  # a row with two blocks counts once
@@ -200,13 +227,15 @@ def self_check():
 
 def main():
     self_check()
-    waiting = []
+    waiting, nicks = [], {}
     if len(sys.argv) > 1:  # a file you saved yourself (emailed shares): trusted, keyed by share ID
         texts = [(None, pathlib.Path(sys.argv[1]).read_text(encoding="utf-8"))]
     else:
         texts, waiting = from_issues()
-        form_ok, form_waiting = from_form()
+        nicks = {who: nick_from_issue(text) for who, text in texts}  # oldest first, so the latest wins
+        form_ok, form_waiting, form_nicks = from_form()
         texts += form_ok
+        nicks.update(form_nicks)
     # The repo owner may share through GitHub and the form: a share ID on the owner's own issue belongs
     # to the owner, so the later form share replaces it instead of adding up. Other accounts' share IDs
     # are never linked to a form row (the ID is chosen by the poster and public in the issue).
@@ -224,6 +253,12 @@ def main():
     olds = sorted({f"{who or sid} ({version})" for who, text in texts for version, _, sid, _ in parse(text) if old_note(version)})
     if olds:  # already approved: your call, e.g. trusted solo players are fine
         print("Approved shares from addons older than 0.15.2 (may include group loot): " + ", ".join(olds))
+    names = sorted({n for n in nicks.values() if n}, key=str.lower)
+    if len(sys.argv) == 1:  # only a full merge knows every approved player
+        CREDITS.write_text("# Thank you\n\nPlayers who shared their loot to build Lootwright's drop rates "
+                           "(nicknames they chose; approved shares only):\n\n"
+                           + ("".join(f"- {n}\n" for n in names) or "No nicknames yet.\n"), encoding="utf-8")
+        print(f"Thank-you list: {len(names)} nicknames -> CONTRIBUTORS.md")
     show_waiting(waiting)
     if len(sys.argv) == 1:
         show_form_waiting(form_waiting, form_ok)

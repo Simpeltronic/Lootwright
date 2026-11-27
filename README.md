@@ -60,6 +60,6 @@ The repo root is the `Lootwright` addon; `Lootwright_Data/` and `Lootwright_Prof
 - **[QuestieDB](https://github.com/Questie/QuestieDB):** item, mob, spawn and map data, read at runtime. GPL-3.0.
 - **[CMaNGOS classic-db](https://github.com/cmangos/classic-db):** Classic 1.12 drop rates for normal mobs. GPL-3.0.
 
-Details are in [NOTICE.md](NOTICE.md). Lootwright is free software under the [GPL-3.0](LICENSE).
+Details are in [NOTICE.md](NOTICE.md). Players who shared loot are thanked in [CONTRIBUTORS.md](CONTRIBUTORS.md). Lootwright is free software under the [GPL-3.0](LICENSE).
 
 If Lootwright saves you some farming time, you can [support it on Ko-fi](https://ko-fi.com/simpeltron).
