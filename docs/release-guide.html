@@ -115,6 +115,13 @@ h3 { font: 600 12px/1 var(--body); letter-spacing: .08em; text-transform: upperc
       <li><b>Description:</b> Description tab, Markdown editor, Save. The inline images load from GitHub (<code>docs/curseforge/screens/</code>), so replace a picture by pushing a new file with the same name.</li>
       <li><b>Gallery:</b> Media tab → Add media. Images must be under 850 px wide. Hover a picture for the edit (title, description, star = featured) and delete buttons.</li>
     </ul>
+    <h3>Data release: new drop rates from players</h3>
+    <p>New rates only reach players in a new file, so each one is a small patch version. Approve shares as they come in, then about once a week run:</p>
+    <div class="cmd"><pre>python -I tools/release.py data</pre><button type="button">Copy</button></div>
+    <ul>
+      <li><b>"Community rates didn't change"</b>: nothing new reached 20+ corpses. No release needed; try again next week.</li>
+      <li><b>Otherwise</b> it bumps the patch version (or uses the one already waiting), adds the line "Updated drop rates from players: N items on M mobs …" to the changelog, builds the zip and copies the changelog. Then continue from <b>Upload on CurseForge</b> (step 4) as usual.</li>
+    </ul>
     <h3>Approving loot shares</h3>
     <p>Anyone can post a share on GitHub, so a share only counts toward drop rates after you add the <code>loot-ok</code> label. Only you can add labels on your repo.</p>
     <ul>
@@ -134,7 +141,7 @@ h3 { font: 600 12px/1 var(--body); letter-spacing: .08em; text-transform: upperc
     </ul>
   </section>
 
-  <p class="foot">Project: CurseForge 1815024 (lootwright) · github.com/Simpeltronic/Lootwright · Updated 24 November 2026 (0.13.0).</p>
+  <p class="foot">Project: CurseForge 1815024 (lootwright) · github.com/Simpeltronic/Lootwright · Updated 28 November 2026 (data releases).</p>
 </div>
 
 <script>
