@@ -15,6 +15,7 @@
 --                                          Lootwright players' shared loot in Forever (mobs with 20+ corpses;
 --                                          open data, CC BY 4.0, credit "Lootwright players"), or nil
 --   LibLootwright.CommunityItemCount()     number of items with community rates
+--   LibLootwright.Contributors()           { "nickname", ... } of players who shared loot (may be empty)
 --   LibLootwright.BossLoot(itemId)         { [npcId] = { rate = percent or nil, kills = n, measured = bool } }
 --                                          dungeon and raid bosses; measured = rate measured in Forever
 --                                          (ForeverDB.net, over `kills` kills), else Classic data; or nil
@@ -60,6 +61,13 @@ function Lib.CommunityItemCount()
     local n = 0
     for _ in pairs(data.communityRates or {}) do n = n + 1 end
     return n
+end
+
+-- Added to contract 1 in Lootwright 0.15.3: nicknames of players who shared loot (a copy).
+function Lib.Contributors()
+    local t = {}
+    for i, name in ipairs(data.thanks or {}) do t[i] = name end
+    return t
 end
 
 function Lib.BossLoot(itemId)

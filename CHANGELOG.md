@@ -5,11 +5,12 @@ Versions follow the rules in `CLAUDE.md` ("Versions and changelog"). Newest firs
 ## 0.15.3, not released yet
 
 ### Changed
-- **Thank-you list:** the loot share form now has an optional nickname field. Players whose shares are approved are listed by that nickname in `CONTRIBUTORS.md`. Leave it empty to stay anonymous.
+- **Thank-you list:** the loot share form now has an optional nickname field. Players whose shares are approved are listed by that nickname in `CONTRIBUTORS.md` and under "Thank you" in Lootwright's Options. Leave it empty to stay anonymous.
 - **First drop rates from players:** the shared loot now has enough corpses from two players for one mob (NPC 422, 24 corpses), so its 10 drops show rates measured in Forever.
 
 ### For developers
 - `LibLootwright.CommunityItemCount()` (added to contract 1): how many items have community rates. `/if status` uses it instead of reading the raw data table, so only `API.lua` knows how community rates are stored.
+- `LibLootwright.Contributors()` (added to contract 1): the thank-you nicknames, read by `build_data.py` from `CONTRIBUTORS.md`.
 
 ## 0.15.2, 24 November 2026
 

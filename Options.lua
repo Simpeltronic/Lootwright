@@ -80,6 +80,10 @@ local function refresh()
     for _, l in ipairs(subLines) do
         l.fs:SetText(l.sub.label .. ": |cffffffff" .. subAddonState(l.sub.name) .. "|r  |cff999999(" .. l.sub.what .. ")|r")
     end
+    local lib = ns.Lib()
+    local names = lib and lib.Contributors and lib.Contributors() or {}
+    panel.thanks:SetText(#names > 0 and table.concat(names, ", ")
+        or "Players who share their loot (/if share) and give a nickname are thanked here.")
 end
 
 local function build()
@@ -138,6 +142,14 @@ local function build()
         subLines[#subLines + 1] = { fs = fs, sub = s }
         prev = fs
     end
+
+    local thanksHead = panel:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    thanksHead:SetPoint("TOPLEFT", prev, "BOTTOMLEFT", 0, -14)
+    thanksHead:SetText("Thank you")
+    panel.thanks = panel:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+    panel.thanks:SetPoint("TOPLEFT", thanksHead, "BOTTOMLEFT", 0, -6)
+    panel.thanks:SetPoint("RIGHT", panel, "RIGHT", -16, 0)
+    panel.thanks:SetJustifyH("LEFT")
 
     panel:SetScript("OnShow", refresh)
 

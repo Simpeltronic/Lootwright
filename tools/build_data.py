@@ -382,6 +382,7 @@ def self_check():
 
 
 COMMUNITY = pathlib.Path(__file__).resolve().parent / "data" / "community_loot.json"
+CREDITS = pathlib.Path(__file__).resolve().parent.parent / "CONTRIBUTORS.md"
 COMMUNITY_MIN_CORPSES = 20  # same as Loot.MIN_CORPSES in game
 COMMUNITY_MIN_PLAYERS = 2   # one account alone can't set a rate
 COMMUNITY_MAX_PART = 0.75   # nor can one account hold more than this part of a mob's corpses
@@ -471,6 +472,9 @@ def main():
     community = build_community(json.loads(COMMUNITY.read_text(encoding="utf-8")), dropped) if COMMUNITY.exists() else {}
     for who, npc in dropped:
         print(f"Shared loot: {who}'s counts for npc {npc} don't fit the other players' and are left out")
+    # The thank-you list merge_loot.py writes ("- name" lines, already cleaned), shown in Options in game.
+    thanks = [l[2:].strip() for l in CREDITS.read_text(encoding="utf-8").splitlines()
+              if l.startswith("- ")] if CREDITS.exists() else []
 
     body = lua({
         "version": meta.get("version", "?"),
@@ -481,6 +485,7 @@ def main():
         "mobRates": mob_rates,
         "mobRatesFrom": dump.name,
         "communityRates": community,
+        "thanks": thanks,
     })
     OUT.write_text(
         credit + "\n"

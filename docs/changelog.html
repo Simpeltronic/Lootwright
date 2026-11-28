@@ -50,12 +50,13 @@ code { font: 13px var(--mono); }
     <div class="head"><h2>0.15.3</h2><span class="chip pending">Not released yet</span><span class="date">Early version</span></div>
     <h3>Changed</h3>
     <ul>
-      <li><b>Thank-you list:</b> the loot share form now has an optional nickname field. Players whose shares are approved are listed by that nickname in <code>CONTRIBUTORS.md</code>. Leave it empty to stay anonymous.</li>
+      <li><b>Thank-you list:</b> the loot share form now has an optional nickname field. Players whose shares are approved are listed by that nickname in <code>CONTRIBUTORS.md</code> and under "Thank you" in Lootwright's Options. Leave it empty to stay anonymous.</li>
       <li><b>First drop rates from players:</b> the shared loot now has enough corpses from two players for one mob (NPC 422, 24 corpses), so its 10 drops show rates measured in Forever.</li>
     </ul>
     <h3>For developers</h3>
     <ul>
       <li><code>LibLootwright.CommunityItemCount()</code> (added to contract 1): how many items have community rates. <code>/if status</code> uses it instead of reading the raw data table, so only <code>API.lua</code> knows how community rates are stored.</li>
+      <li><code>LibLootwright.Contributors()</code> (added to contract 1): the thank-you nicknames, read by <code>build_data.py</code> from <code>CONTRIBUTORS.md</code>.</li>
     </ul>
   </section>
 
