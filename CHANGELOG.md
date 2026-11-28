@@ -2,7 +2,7 @@
 
 Versions follow the rules in `CLAUDE.md` ("Versions and changelog"). Newest first.
 
-## 0.15.3, not released yet
+## 0.15.3, 28 November 2026
 
 ### Changed
 - **Thank-you list:** the loot share form now has an optional nickname field. Players whose shares are approved are listed by that nickname in `CONTRIBUTORS.md` and under "Thank you" in Lootwright's Options. Leave it empty to stay anonymous.
